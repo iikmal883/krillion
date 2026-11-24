@@ -3,2390 +3,2206 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Krillion — Dive Deeper, Guess Rarer</title>
-  <!-- Tailwind CSS for responsive layout and modern styling -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PeerJS for serverless WebRTC multiplayer on GitHub Pages -->
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <!-- Google Fonts: Fredoka & Inter -->
+  <title>KRILLION — Deep Sea Rarity Trivia</title>
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    /* ==========================================================================
-       CUSTOM OCEAN THEME, ANIMATIONS & DEPTH TRANSITIONS
-       ========================================================================== */
     :root {
-      --depth-top: #0ea5e9;
-      --depth-mid: #0284c7;
-      --depth-bot: #0369a1;
+      --bg-top: #0ea5e9;
+      --bg-mid: #0369a1;
+      --bg-bot: #0c4a6e;
+      --glass: rgba(7, 25, 48, 0.68);
+      --glass-border: rgba(125, 211, 252, 0.25);
+      --text-main: #f0f9ff;
+      --text-muted: #bae6fd;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.45);
+      --tier-1: #94a3b8;
+      --tier-2: #34d399;
+      --tier-3: #38bdf8;
+      --tier-4: #c084fc;
+      --tier-5: #fbbf24;
     }
 
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      user-select: none;
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text-main);
       min-height: 100vh;
       overflow-x: hidden;
-      color: #f8fafc;
-      background: linear-gradient(180deg, var(--depth-top) 0%, var(--depth-mid) 50%, var(--depth-bot) 100%);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 48%, var(--bg-bot) 100%);
       transition: background 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
     }
 
-    .font-display {
+    h1, h2, h3, .brand-font {
       font-family: 'Fredoka', sans-serif;
+      letter-spacing: 0.02em;
     }
 
-    /* Animated Ocean Surface Waves */
-    .ocean-waves {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 120px;
-      pointer-events: none;
-      z-index: 1;
-      transition: transform 1.2s ease, opacity 1.2s ease;
-    }
-
-    .wave-path-1 {
-      animation: waveMove 11s linear infinite;
-    }
-    .wave-path-2 {
-      animation: waveMoveReverse 15s linear infinite;
-    }
-
-    @keyframes waveMove {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    @keyframes waveMoveReverse {
-      0% { transform: translateX(-50%); }
-      100% { transform: translateX(0); }
-    }
-
-    /* Sunbeams piercing the surface water */
-    .sun-rays {
-      position: fixed;
-      top: -10%;
-      left: 10%;
-      width: 80%;
-      height: 75vh;
-      background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.28) 0%, rgba(186, 230, 253, 0.08) 45%, transparent 75%);
-      pointer-events: none;
-      z-index: 1;
-      transform-origin: top center;
-      animation: rayShimmer 8s ease-in-out infinite alternate;
-      transition: opacity 1.2s ease;
-    }
-
-    @keyframes rayShimmer {
-      0% { transform: skewX(-6deg) scaleY(1); }
-      100% { transform: skewX(6deg) scaleY(1.06); }
-    }
-
-    /* Fullscreen Particle Canvas */
+    /* Ocean Background & Surface Scene */
     #ocean-canvas {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 2;
+      z-index: 0;
     }
 
-    /* Glassmorphism Cards */
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.45);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 20px 45px rgba(2, 6, 23, 0.35);
+    .surface-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 220px;
+      pointer-events: none;
+      z-index: 1;
+      transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.1s ease;
     }
 
-    .glass-panel-dark {
-      background: rgba(2, 6, 23, 0.58);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(56, 189, 248, 0.25);
+    .sun-rays {
+      position: absolute;
+      top: -20px;
+      left: 10%;
+      width: 80%;
+      height: 360px;
+      background: repeating-linear-gradient(
+        102deg,
+        rgba(255, 255, 255, 0.14) 0px,
+        rgba(255, 255, 255, 0.02) 45px,
+        transparent 95px
+      );
+      filter: blur(8px);
+      transform-origin: top center;
+      animation: swayRays 9s ease-in-out infinite alternate;
     }
 
-    /* Submarine / Diver Bobbing & Dive Animation */
-    @keyframes floatBob {
-      0%, 100% { transform: translateY(0px) rotate(-1deg); }
-      50% { transform: translateY(-8px) rotate(2deg); }
+    @keyframes swayRays {
+      0% { transform: skewX(-6deg) scaleY(1); }
+      100% { transform: skewX(6deg) scaleY(1.06); }
     }
+
+    .wave-band {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 64px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,32 C200,88 400,-12 600,32 C800,76 1000,-12 1200,32 L1200,0 L0,0 Z' fill='%23e0f2fe' fill-opacity='0.45'/%3E%3C/svg%3E");
+      background-size: 50% 100%;
+      animation: waveMove 7s linear infinite;
+    }
+
+    .wave-band.second {
+      top: 6px;
+      opacity: 0.55;
+      animation: waveMove 11s linear infinite reverse;
+    }
+
+    @keyframes waveMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Animated Diver Avatar Stage */
+    #diver-stage {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      overflow: hidden;
+    }
+
+    #diver-actor {
+      position: absolute;
+      left: 50%;
+      top: 44px;
+      transform: translate(-50%, 0);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: top 1.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s ease;
+      will-change: top, transform;
+    }
+
     .diver-bob {
-      animation: floatBob 3.2s ease-in-out infinite;
+      animation: surfaceFloat 2.4s ease-in-out infinite;
     }
 
-    @keyframes divePlunge {
-      0% { transform: translateY(-24px) scale(0.92) rotate(8deg); }
-      45% { transform: translateY(18px) scale(1.06) rotate(-5deg); }
-      100% { transform: translateY(0px) scale(1) rotate(0deg); }
-    }
-    .dive-plunge-anim {
-      animation: divePlunge 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    @keyframes surfaceFloat {
+      0%, 100% { transform: translateY(0px) rotate(-3deg); }
+      50% { transform: translateY(-9px) rotate(3deg); }
     }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.3);
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(56, 189, 248, 0.45);
-      border-radius: 9999px;
+    .diver-diving {
+      animation: diveWiggle 0.42s ease-in-out infinite !important;
     }
 
-    /* Rarity Tier Badges */
-    .tier-common { background: linear-gradient(135deg, #64748b, #475569); border-color: #cbd5e1; }
-    .tier-uncommon { background: linear-gradient(135deg, #10b981, #047857); border-color: #6ee7b7; }
-    .tier-rare { background: linear-gradient(135deg, #0ea5e9, #1d4ed8); border-color: #7dd3fc; }
-    .tier-deepcut { background: linear-gradient(135deg, #8b5cf6, #5b21b6); border-color: #c4b5fd; }
-    .tier-krillion {
-      background: linear-gradient(135deg, #f59e0b, #ea580c, #db2777);
-      border-color: #fde68a;
-      box-shadow: 0 0 24px rgba(245, 158, 11, 0.65);
+    @keyframes diveWiggle {
+      0%, 100% { transform: rotate(168deg) scale(1.12); }
+      50% { transform: rotate(192deg) scale(1.16); }
+    }
+
+    .diver-bubble-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.42), rgba(56, 189, 248, 0.16));
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 8px 28px rgba(14, 165, 233, 0.45), inset 0 0 14px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.3rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .diver-tag {
+      margin-top: 6px;
+      background: rgba(7, 25, 48, 0.82);
+      border: 1px solid rgba(125, 211, 252, 0.4);
+      color: #f0f9ff;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Depth Gauge Sidebar */
+    #depth-gauge {
+      position: fixed;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 6;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 12px 10px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .gauge-track {
+      width: 10px;
+      height: 190px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6%;
+      background: linear-gradient(180deg, #38bdf8, #c084fc, #fbbf24);
+      border-radius: 999px;
+      transition: height 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Top Bar */
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 22px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .logo-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      backdrop-filter: blur(12px);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn:hover {
+      background: rgba(56, 189, 248, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* Main Container */
+    .app-shell {
+      position: relative;
+      z-index: 8;
+      max-width: 780px;
+      margin: 88px auto 40px;
+      padding: 0 18px;
+    }
+
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      border-radius: 26px;
+      padding: 28px;
+      box-shadow: 0 22px 50px rgba(2, 12, 27, 0.42);
+      animation: cardPop 0.35s ease;
+    }
+
+    @keyframes cardPop {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .title-hero {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .title-hero h1 {
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      background: linear-gradient(180deg, #ffffff 15%, #7dd3fc 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 16px rgba(14, 165, 233, 0.45));
+      line-height: 1.05;
+    }
+
+    .title-hero p {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      margin-top: 6px;
+    }
+
+    /* Rarity Legend Pills */
+    .rarity-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+
+    .rarity-pill {
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Form Controls */
+    .field-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .text-input {
+      width: 100%;
+      background: rgba(6, 20, 38, 0.72);
+      border: 1.5px solid rgba(125, 211, 252, 0.32);
+      border-radius: 14px;
+      padding: 13px 16px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .text-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Avatar Picker */
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 580px) {
+      .avatar-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      #depth-gauge {
+        display: none !important;
+      }
+    }
+
+    .avatar-btn {
+      background: rgba(6, 20, 38, 0.62);
+      border: 2px solid rgba(125, 211, 252, 0.18);
+      border-radius: 14px;
+      padding: 10px 4px;
+      font-size: 1.65rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .avatar-btn span {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .avatar-btn.selected {
+      background: rgba(14, 165, 233, 0.32);
+      border-color: #38bdf8;
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+    }
+
+    /* Mode & Option Selectors */
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 540px) {
+      .mode-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .mode-card {
+      background: linear-gradient(145deg, rgba(14, 116, 144, 0.38), rgba(7, 25, 48, 0.78));
+      border: 1.5px solid rgba(125, 211, 252, 0.3);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: left;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      font-family: inherit;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-3px);
+      border-color: #38bdf8;
+      box-shadow: 0 14px 28px rgba(14, 165, 233, 0.3);
+    }
+
+    .mode-card .mode-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .mode-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+    }
+
+    .mode-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .chip-btn {
+      flex: 1;
+      min-width: 82px;
+      background: rgba(6, 20, 38, 0.65);
+      border: 1.5px solid rgba(125, 211, 252, 0.22);
+      color: #e0f2fe;
+      padding: 11px 14px;
+      border-radius: 13px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .chip-btn.active {
+      background: #0284c7;
+      border-color: #7dd3fc;
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45);
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      border: none;
+      border-radius: 16px;
+      padding: 15px 22px;
+      color: #fff;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 10px 26px rgba(14, 165, 233, 0.42);
+      transition: all 0.2s ease;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .primary-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 14px;
+      padding: 11px 18px;
+      color: #fff;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* Lobby & Room Code */
+    .room-banner {
+      background: rgba(6, 20, 38, 0.78);
+      border: 1.5px dashed #38bdf8;
+      border-radius: 18px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .room-code-display {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 2.3rem;
+      letter-spacing: 0.18em;
+      color: #7dd3fc;
+      margin: 4px 0;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #fbbf24;
+      margin-right: 6px;
+    }
+
+    .status-dot.online {
+      background: #34d399;
+      box-shadow: 0 0 10px #34d399;
+    }
+
+    .player-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 10px;
+      margin: 14px 0 20px;
+    }
+
+    .player-chip {
+      background: rgba(15, 38, 68, 0.72);
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Gameplay HUD */
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hud-badge {
+      background: rgba(6, 20, 38, 0.72);
+      border: 1px solid rgba(125, 211, 252, 0.24);
+      padding: 7px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .timer-bar-wrap {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .timer-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #34d399, #38bdf8);
+      transition: width 0.25s linear, background 0.3s ease;
+    }
+
+    .question-box {
+      background: rgba(6, 20, 38, 0.65);
+      border: 1px solid rgba(125, 211, 252, 0.25);
+      border-radius: 20px;
+      padding: 22px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .category-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7dd3fc;
+      background: rgba(14, 165, 233, 0.2);
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      font-size: clamp(1.25rem, 3vw, 1.65rem);
+      line-height: 1.35;
+    }
+
+    .answer-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    @media (max-width: 500px) {
+      .answer-form {
+        flex-direction: column;
+      }
+    }
+
+    /* Dive Result Card */
+    .dive-result-panel {
+      margin-top: 18px;
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(4, 15, 32, 0.85);
+      border: 1.5px solid rgba(125, 211, 252, 0.35);
+      text-align: center;
+      animation: cardPop 0.35s ease;
+    }
+
+    .tier-badge {
+      display: inline-block;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.35rem;
+      padding: 6px 18px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      color: #061326;
+      font-weight: 700;
+    }
+
+    .sample-answers {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .sample-chip {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Podium */
+    .podium-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      align-items: end;
+      margin: 22px 0;
+    }
+
+    .podium-col {
+      background: rgba(6, 20, 38, 0.76);
+      border: 1.5px solid rgba(125, 211, 252, 0.28);
+      border-radius: 18px;
+      padding: 16px 10px;
+      text-align: center;
+    }
+
+    .podium-col.rank-1 {
+      border-color: #fbbf24;
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.24), rgba(6, 20, 38, 0.85));
+      padding-top: 26px;
+      box-shadow: 0 12px 32px rgba(251, 191, 36, 0.25);
+    }
+
+    .podium-col.rank-2 {
+      border-color: #cbd5e1;
+      padding-top: 18px;
+    }
+
+    .podium-col.rank-3 {
+      border-color: #d97706;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(90px);
+      background: rgba(7, 25, 48, 0.94);
+      border: 1px solid #38bdf8;
+      color: #fff;
+      padding: 11px 20px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 50;
+      transition: transform 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
     }
   </style>
 </head>
-<body class="selection:bg-cyan-400 selection:text-slate-950">
-
-  <!-- Ambient Ocean Canvas (Bubbles, Plankton, Bioluminescence, Speed Lines) -->
+<body>
   <canvas id="ocean-canvas"></canvas>
 
-  <!-- Sunbeams (Fades out as player dives deeper) -->
-  <div id="sun-rays" class="sun-rays"></div>
-
-  <!-- Top Sea Surface Waves (Rises off-screen as player dives deeper) -->
-  <div id="ocean-waves" class="ocean-waves">
-    <svg class="w-[200%] h-full" viewBox="0 0 1440 120" preserveAspectRatio="none">
-      <path class="wave-path-1" fill="rgba(255,255,255,0.22)" d="M0,32 C240,78 480,-10 720,32 C960,78 1200,-10 1440,32 L1440,0 L0,0 Z"></path>
-      <path class="wave-path-2" fill="rgba(186,230,253,0.18)" d="M0,48 C320,10 640,85 960,42 C1160,18 1320,62 1440,48 L1440,0 L0,0 Z"></path>
-    </svg>
+  <!-- Ocean Surface Waves & Sunbeams -->
+  <div class="surface-layer" id="surface-layer">
+    <div class="sun-rays"></div>
+    <div class="wave-band"></div>
+    <div class="wave-band second"></div>
   </div>
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs sm:max-w-sm pointer-events-none"></div>
-
-  <!-- Source Code Modal (Fallback & One-Click Copy Viewer) -->
-  <div id="source-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-    <div class="glass-panel-dark w-full max-w-3xl rounded-3xl p-5 sm:p-6 flex flex-col gap-4 border border-cyan-400/30 shadow-2xl max-h-[90vh]">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h3 class="font-display text-xl font-bold text-white flex items-center gap-2">
-            <span>📄</span> Standalone GitHub Pages Source (`index.html`)
-          </h3>
-          <p class="text-xs text-cyan-200/80">Copy this entire file and save it as <code class="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300">index.html</code> in your GitHub repository.</p>
-        </div>
-        <button onclick="app.closeSourceModal()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition">✕</button>
-      </div>
-      <textarea id="source-textarea" readonly class="w-full flex-1 min-h-[260px] bg-slate-950/90 text-emerald-300 font-mono text-xs p-3.5 rounded-2xl border border-slate-700 focus:outline-none resize-none"></textarea>
-      <div class="flex flex-wrap items-center justify-end gap-2">
-        <button onclick="app.closeSourceModal()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition">Close</button>
-        <button onclick="app.copyFromModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg transition active:scale-95">
-          📋 Copy All Code to Clipboard
-        </button>
-      </div>
+  <!-- Animated Diver Avatar -->
+  <div id="diver-stage">
+    <div id="diver-actor" class="diver-bob">
+      <div class="diver-bubble-ring" id="diver-emoji">🐬</div>
+      <div class="diver-tag" id="diver-tag">Surface • 0m</div>
     </div>
   </div>
 
-  <!-- ==========================================================================
-       MAIN APPLICATION SHELL
-       ========================================================================== -->
-  <div class="relative z-10 min-h-screen flex flex-col justify-between p-3 sm:p-6">
-
-    <!-- TOP NAVIGATION & DEPTH HUD -->
-    <header class="w-full max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 pt-1 pb-2">
-      <div class="flex items-center gap-3 cursor-pointer" onclick="app.returnToMenu()">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-2xl shadow-lg shadow-cyan-500/30 border border-white/30">
-          🦐
-        </div>
-        <div>
-          <h1 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow">
-            KRILLION
-          </h1>
-          <p class="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-cyan-200/90">
-            Dive Deeper • Guess Rarer
-          </p>
-        </div>
-      </div>
-
-      <!-- Depth Meter, Copy Source & Sound Controls -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div id="hud-depth-pill" class="glass-panel-dark px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold text-cyan-200">
-          <span>🌊</span>
-          <span id="hud-depth-text">0m • Sunlit Surface</span>
-        </div>
-        <button id="btn-copy-source" onclick="app.copyFullSourceCode()" class="glass-panel-dark px-3 py-2 rounded-full text-xs sm:text-sm font-bold text-emerald-200 hover:bg-emerald-500/25 border border-emerald-400/30 transition active:scale-95 flex items-center gap-1.5" title="Copy standalone index.html code for GitHub">
-          <span>📋</span>
-          <span class="hidden sm:inline">Copy HTML Code</span>
-        </button>
-        <button id="btn-mute" onclick="app.toggleMute()" class="glass-panel-dark p-2.5 rounded-full text-cyan-100 hover:bg-white/15 transition active:scale-95" title="Toggle Ocean Audio">
-          🔊
-        </button>
-      </div>
-    </header>
-
-    <!-- MAIN CONTENT STAGE -->
-    <main class="w-full max-w-5xl mx-auto my-auto py-3">
-
-      <!-- ======================================================================
-           VIEW 1: MAIN MENU (Profile, Avatar, Mode Selection)
-           ====================================================================== -->
-      <section id="view-menu" class="transition-all duration-300">
-        <div class="glass-panel rounded-3xl p-5 sm:p-8 max-w-3xl mx-auto">
-          <!-- Hero Intro -->
-          <div class="text-center mb-6">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-400/20 border border-cyan-300/30 text-cyan-100 text-xs font-bold uppercase tracking-wider mb-3">
-              <span>⚓</span> Sunlit Surface • Ready to Dive
-            </div>
-            <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mb-2">
-              How Deep Can Your Knowledge Go?
-            </h2>
-            <p class="text-sm sm:text-base text-cyan-100/90 max-w-xl mx-auto">
-              Everyone knows the obvious answers. Name <span class="font-bold text-amber-300">rarer, obscure, real-world</span> answers to plunge into the abyss and score up to <span class="font-bold text-amber-300">5× points</span>!
-            </p>
-          </div>
-
-          <!-- Player Setup Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-            <!-- Name Input -->
-            <div class="bg-slate-950/35 rounded-2xl p-4 border border-white/10">
-              <label for="input-player-name" class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2">
-                1. Diver Callsign
-              </label>
-              <input
-                id="input-player-name"
-                type="text"
-                maxlength="18"
-                placeholder="Enter your name..."
-                class="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-cyan-400/30 text-white placeholder-slate-400 font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
-              <p class="text-[11px] text-cyan-200/70 mt-2">
-                Shown on live dive leaderboards &amp; multiplayer rooms.
-              </p>
-            </div>
-
-            <!-- Sea Creature Avatar Picker -->
-            <div class="bg-slate-950/35 rounded-2xl p-4 border border-white/10">
-              <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2">
-                2. Choose Sea Creature Avatar
-              </label>
-              <div id="avatar-grid" class="grid grid-cols-4 gap-2">
-                <!-- Populated dynamically by JS -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Game Mode Selector Buttons -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button
-              onclick="app.selectMode('single')"
-              class="group relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-left border border-white/30 shadow-xl shadow-blue-950/40 transition transform hover:-translate-y-0.5 active:scale-98"
-            >
-              <div class="flex items-center justify-between mb-1">
-                <span class="font-display text-2xl font-bold text-white">Singleplayer</span>
-                <span class="text-3xl group-hover:scale-110 transition">🤿</span>
-              </div>
-              <p class="text-xs sm:text-sm text-cyan-100">
-                Solo deep-sea expedition. Customize question count &amp; dive timer.
-              </p>
-            </button>
-
-            <button
-              onclick="app.selectMode('multi-choice')"
-              class="group relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-400 hover:to-pink-500 text-left border border-white/30 shadow-xl shadow-purple-950/40 transition transform hover:-translate-y-0.5 active:scale-98"
-            >
-              <div class="flex items-center justify-between mb-1">
-                <span class="font-display text-2xl font-bold text-white">Multiplayer</span>
-                <span class="text-3xl group-hover:scale-110 transition">🐙</span>
-              </div>
-              <p class="text-xs sm:text-sm text-purple-100">
-                Create or join a live room via code on GitHub Pages. Race to the trench!
-              </p>
-            </button>
-          </div>
-
-          <!-- Rarity Legend Footer & Source Link -->
-          <div class="mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 text-xs text-cyan-100/80">
-            <div class="flex flex-wrap items-center gap-1.5">
-              <span class="font-bold text-cyan-200 mr-1">Rarity Tiers:</span>
-              <span class="px-2 py-0.5 rounded-full bg-slate-500/35 border border-slate-300/30">Common (+1)</span>
-              <span class="px-2 py-0.5 rounded-full bg-emerald-500/35 border border-emerald-300/30">Uncommon (+2)</span>
-              <span class="px-2 py-0.5 rounded-full bg-sky-500/35 border border-sky-300/30">Rare (+3)</span>
-              <span class="px-2 py-0.5 rounded-full bg-purple-500/35 border border-purple-300/30">Deep Cut (+4)</span>
-              <span class="px-2 py-0.5 rounded-full bg-amber-500/35 border border-amber-300/40 text-amber-200 font-bold">One in Krillion (+5)</span>
-            </div>
-            <button onclick="app.openSourceModal()" class="text-emerald-300 hover:text-emerald-200 underline font-semibold transition">
-              📋 View / Copy GitHub HTML
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-           VIEW 2: SINGLEPLAYER CONFIGURATION
-           ====================================================================== -->
-      <section id="view-single-setup" class="hidden">
-        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-xl mx-auto">
-          <div class="flex items-center justify-between mb-6">
-            <button onclick="app.showView('view-menu')" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-bold transition">
-              ← Back
-            </button>
-            <span class="text-xs font-bold uppercase tracking-widest text-cyan-200">Solo Dive Setup</span>
-          </div>
-
-          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-6 text-center">
-            Configure Your Dive
-          </h2>
-
-          <!-- Number of Questions -->
-          <div class="mb-6">
-            <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
-              Number of Questions
-            </label>
-            <div id="single-q-options" class="grid grid-cols-4 gap-2.5">
-              <button data-val="5" onclick="app.setOption('singleQuestions', 5, 'single-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">5</button>
-              <button data-val="10" onclick="app.setOption('singleQuestions', 10, 'single-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg">10</button>
-              <button data-val="15" onclick="app.setOption('singleQuestions', 15, 'single-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">15</button>
-              <button data-val="20" onclick="app.setOption('singleQuestions', 20, 'single-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">20</button>
-            </div>
-          </div>
-
-          <!-- Time per Question -->
-          <div class="mb-8">
-            <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
-              Time to Answer (Per Question)
-            </label>
-            <div id="single-t-options" class="grid grid-cols-3 gap-3">
-              <button data-val="15" onclick="app.setOption('singleTime', 15, 'single-t-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">⏱️ 15s</button>
-              <button data-val="30" onclick="app.setOption('singleTime', 30, 'single-t-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg">⏱️ 30s</button>
-              <button data-val="45" onclick="app.setOption('singleTime', 45, 'single-t-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">⏱️ 45s</button>
-            </div>
-          </div>
-
-          <button
-            onclick="app.startSingleplayer()"
-            class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-display text-xl font-extrabold shadow-xl shadow-teal-950/50 transition transform hover:-translate-y-0.5 active:scale-98"
-          >
-            🚀 PLAY SOLO DIVE
-          </button>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-           VIEW 3: MULTIPLAYER CHOICE (Create Room vs Join Room)
-           ====================================================================== -->
-      <section id="view-multi-choice" class="hidden">
-        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-2xl mx-auto">
-          <div class="flex items-center justify-between mb-6">
-            <button onclick="app.showView('view-menu')" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-bold transition">
-              ← Back
-            </button>
-            <span class="text-xs font-bold uppercase tracking-widest text-purple-200">Multiplayer Expedition</span>
-          </div>
-
-          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white text-center mb-6">
-            Choose Your Crew Entry
-          </h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Create Room Card -->
-            <div class="bg-slate-950/45 rounded-2xl p-5 border border-white/15 flex flex-col justify-between">
-              <div>
-                <div class="text-3xl mb-2">🚢</div>
-                <h3 class="font-display text-xl font-bold text-white mb-1">Create a Room</h3>
-                <p class="text-xs text-cyan-100/80 mb-4">
-                  Host a custom dive, configure questions &amp; timer, and share your 5-character room code or invite link.
-                </p>
-              </div>
-              <button
-                onclick="app.showView('view-multi-create')"
-                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold shadow-lg transition active:scale-98"
-              >
-                Create Room
-              </button>
-            </div>
-
-            <!-- Join Room Card -->
-            <div class="bg-slate-950/45 rounded-2xl p-5 border border-white/15 flex flex-col justify-between">
-              <div>
-                <div class="text-3xl mb-2">🧭</div>
-                <h3 class="font-display text-xl font-bold text-white mb-1">Join a Room</h3>
-                <p class="text-xs text-cyan-100/80 mb-3">
-                  Enter the 5-character room code shared by your host.
-                </p>
-                <input
-                  id="input-room-code"
-                  type="text"
-                  maxlength="5"
-                  placeholder="E.G. K7M2P"
-                  oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"
-                  class="w-full px-4 py-3 mb-3 rounded-xl bg-slate-900/90 border border-purple-400/40 text-center font-mono text-xl font-extrabold tracking-widest text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-              </div>
-              <button
-                id="btn-join-room"
-                onclick="app.joinMultiplayerRoom()"
-                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white font-bold shadow-lg transition active:scale-98"
-              >
-                Join Room
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-           VIEW 4: MULTIPLAYER HOST ROOM CONFIGURATION
-           ====================================================================== -->
-      <section id="view-multi-create" class="hidden">
-        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-xl mx-auto">
-          <div class="flex items-center justify-between mb-6">
-            <button onclick="app.showView('view-multi-choice')" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-bold transition">
-              ← Back
-            </button>
-            <span class="text-xs font-bold uppercase tracking-widest text-cyan-200">Host Settings</span>
-          </div>
-
-          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-6 text-center">
-            Create Multiplayer Room
-          </h2>
-
-          <!-- Questions per run -->
-          <div class="mb-6">
-            <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
-              Questions in 1 Run
-            </label>
-            <div id="multi-q-options" class="grid grid-cols-4 gap-2.5">
-              <button data-val="5" onclick="app.setOption('multiQuestions', 5, 'multi-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">5</button>
-              <button data-val="10" onclick="app.setOption('multiQuestions', 10, 'multi-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg">10</button>
-              <button data-val="15" onclick="app.setOption('multiQuestions', 15, 'multi-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">15</button>
-              <button data-val="20" onclick="app.setOption('multiQuestions', 20, 'multi-q-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">20</button>
-            </div>
-          </div>
-
-          <!-- Selectable Time -->
-          <div class="mb-8">
-            <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
-              Time to Answer
-            </label>
-            <div id="multi-t-options" class="grid grid-cols-3 gap-3">
-              <button data-val="15" onclick="app.setOption('multiTime', 15, 'multi-t-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">⏱️ 15s</button>
-              <button data-val="30" onclick="app.setOption('multiTime', 30, 'multi-t-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg">⏱️ 30s</button>
-              <button data-val="45" onclick="app.setOption('multiTime', 45, 'multi-t-options')" class="opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15">⏱️ 45s</button>
-            </div>
-          </div>
-
-          <button
-            id="btn-generate-room"
-            onclick="app.createMultiplayerRoom()"
-            class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-slate-950 font-display text-xl font-extrabold shadow-xl transition active:scale-98"
-          >
-            🌊 Generate Room Code
-          </button>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-           VIEW 5: MULTIPLAYER LOBBY (Live Relay Status, Role Toggle & Roster)
-           ====================================================================== -->
-      <section id="view-lobby" class="hidden">
-        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-3xl mx-auto">
-          <!-- Top Lobby Bar -->
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-white/15">
-            <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">Submarine Staging Dock</span>
-              <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Multiplayer Lobby</h2>
-            </div>
-
-            <!-- Room Code & Invite Link Share Box -->
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="bg-slate-950/75 px-4 py-2 rounded-2xl border border-cyan-400/40 flex items-center gap-2.5">
-                <div>
-                  <div class="text-[10px] uppercase font-bold text-cyan-300">Room Code</div>
-                  <div id="lobby-room-code" class="font-mono text-2xl font-extrabold tracking-widest text-white">-----</div>
-                </div>
-                <button onclick="app.copyRoomCode()" class="px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-300/30 text-xs font-bold text-cyan-100 transition active:scale-95">
-                  📋 Copy
-                </button>
-              </div>
-              <button onclick="app.copyInviteLink()" class="px-3.5 py-3 rounded-2xl bg-indigo-500/25 hover:bg-indigo-500/40 border border-indigo-300/30 text-xs font-bold text-indigo-100 transition active:scale-95">
-                🔗 Invite Link
-              </button>
-            </div>
-          </div>
-
-          <!-- Live Ocean Relay Connection Status Bar -->
-          <div id="relay-status-bar" class="mb-5 px-4 py-2.5 rounded-2xl bg-amber-500/20 border border-amber-300/40 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-amber-100">
-            <span id="relay-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-            <span id="relay-status-text">Connecting to Ocean Relay...</span>
-          </div>
-
-          <!-- Match Rules Summary & Host Role Switch -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="bg-slate-950/40 rounded-2xl p-4 border border-white/10 flex items-center justify-around text-center">
-              <div>
-                <div class="text-xs text-cyan-200/80 font-semibold">Questions</div>
-                <div id="lobby-q-count" class="font-display text-2xl font-bold text-white">10</div>
-              </div>
-              <div class="h-8 w-px bg-white/15"></div>
-              <div>
-                <div class="text-xs text-cyan-200/80 font-semibold">Timer</div>
-                <div id="lobby-t-count" class="font-display text-2xl font-bold text-white">30s</div>
-              </div>
-              <div class="h-8 w-px bg-white/15"></div>
-              <div>
-                <div class="text-xs text-cyan-200/80 font-semibold">Crew Size</div>
-                <div id="lobby-player-count" class="font-display text-2xl font-bold text-emerald-300">1</div>
-              </div>
-            </div>
-
-            <!-- Host Role Selector (Player vs Spectator) -->
-            <div id="host-role-box" class="bg-slate-950/40 rounded-2xl p-4 border border-white/10">
-              <div class="text-xs font-bold uppercase tracking-wider text-amber-300 mb-2">
-                Host Participation Mode
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <button
-                  id="btn-role-player"
-                  onclick="app.setHostRole('player')"
-                  class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition bg-emerald-500 text-slate-950 border-emerald-300"
-                >
-                  🤿 Play as Diver
-                </button>
-                <button
-                  id="btn-role-spectator"
-                  onclick="app.setHostRole('spectator')"
-                  class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition bg-slate-900/70 text-slate-200 border-white/15"
-                >
-                  🔭 Spectator
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Connected Crew Roster -->
-          <div class="mb-6">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-200 mb-3">
-              Connected Divers &amp; Spectators
-            </h3>
-            <div id="lobby-roster" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              <!-- Populated dynamically -->
-            </div>
-          </div>
-
-          <!-- Lobby Action Controls -->
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <button onclick="app.leaveMultiplayer()" class="px-5 py-3 rounded-xl bg-rose-500/25 hover:bg-rose-500/40 border border-rose-400/40 text-rose-100 font-bold text-sm transition">
-              Leave Room
-            </button>
-
-            <button
-              id="btn-host-start"
-              onclick="app.hostStartGame()"
-              class="flex-1 sm:flex-initial px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-display text-lg font-extrabold shadow-xl transition active:scale-98"
-            >
-              🚀 START DIVE FOR EVERYONE
-            </button>
-
-            <div id="guest-waiting-msg" class="hidden text-sm font-semibold text-cyan-200 animate-pulse">
-              ⏳ Waiting for host to launch the expedition...
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-           VIEW 6: ACTIVE GAMEPLAY ARENA
-           ====================================================================== -->
-      <section id="view-game" class="hidden">
-        <div class="max-w-3xl mx-auto flex flex-col gap-4">
-
-          <!-- Top Match Progress & Countdown Bar -->
-          <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <span id="game-q-badge" class="px-3 py-1 rounded-xl bg-cyan-500/25 border border-cyan-300/30 font-display font-bold text-sm text-cyan-100">
-                Question 1 / 10
-              </span>
-              <span id="game-category-badge" class="px-3 py-1 rounded-xl bg-white/10 text-xs font-bold uppercase tracking-wider text-slate-200">
-                Geography
-              </span>
-            </div>
-
-            <!-- Live Score & Timer -->
-            <div class="flex items-center gap-4">
-              <div class="text-right">
-                <div class="text-[10px] uppercase font-bold text-cyan-200/80">Your Points</div>
-                <div id="game-score-display" class="font-display text-xl font-extrabold text-amber-300">0 pts</div>
-              </div>
-              <div class="w-14 h-14 rounded-2xl bg-slate-950/70 border border-cyan-400/40 flex flex-col items-center justify-center">
-                <span id="game-timer-text" class="font-display text-xl font-extrabold text-white">30</span>
-                <span class="text-[9px] uppercase font-bold text-cyan-300">SEC</span>
-              </div>
-            </div>
-
-            <!-- Smooth Timer Progress Bar -->
-            <div class="w-full h-2 bg-slate-950/70 rounded-full overflow-hidden">
-              <div id="game-timer-bar" class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-amber-400 transition-all duration-300" style="width: 100%;"></div>
-            </div>
-          </div>
-
-          <!-- Question Card & Answer Input -->
-          <div id="question-card" class="glass-panel rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden">
-            <div class="text-xs font-bold uppercase tracking-widest text-cyan-300 mb-2">
-              Name an uncommon real-world answer
-            </div>
-            <h2 id="game-question-text" class="font-display text-2xl sm:text-4xl font-bold text-white leading-snug mb-6">
-              Loading question...
-            </h2>
-
-            <!-- Player Answer Form -->
-            <form id="answer-form" onsubmit="app.submitAnswer(event)" class="max-w-xl mx-auto">
-              <div class="flex flex-col sm:flex-row gap-3">
-                <input
-                  id="input-answer"
-                  type="text"
-                  autocomplete="off"
-                  placeholder="Type your rarest answer..."
-                  class="flex-1 px-5 py-4 rounded-2xl bg-slate-950/80 border-2 border-cyan-400/40 text-white text-lg font-semibold placeholder-slate-400 focus:outline-none focus:border-amber-400 transition"
-                />
-                <button
-                  id="btn-submit-answer"
-                  type="submit"
-                  class="px-7 py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-display text-lg font-extrabold shadow-lg transition active:scale-95"
-                >
-                  DIVE! 🤿
-                </button>
-              </div>
-            </form>
-
-            <!-- Spectator Banner (Shown if Host chose Spectator) -->
-            <div id="spectator-banner" class="hidden max-w-lg mx-auto py-4 px-5 rounded-2xl bg-indigo-950/60 border border-indigo-400/30 text-indigo-100 text-sm font-semibold">
-              🔭 You are spectating this expedition. Watching divers submit their answers...
-            </div>
-
-            <!-- Submitted Waiting State -->
-            <div id="submitted-banner" class="hidden mt-5 py-3 px-4 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-sm font-bold">
-              ✅ Answer locked in! Waiting for timer or crew...
-            </div>
-          </div>
-
-          <!-- ==================================================================
-               DIVE RESULT & DEPTH PLUNGE OVERLAY CARD (Shown after each question)
-               ================================================================== -->
-          <div id="round-result-card" class="hidden glass-panel-dark rounded-3xl p-6 sm:p-8 border-2 border-cyan-400/40 text-center">
-            <!-- Animated Diver Submarine Visual -->
-            <div class="flex justify-center mb-3">
-              <div id="result-diver-icon" class="w-20 h-20 rounded-3xl bg-gradient-to-br from-cyan-400/30 to-blue-600/30 border border-white/25 flex items-center justify-center text-5xl shadow-2xl diver-bob">
-                🤿
-              </div>
-            </div>
-
-            <!-- Rarity Tier Badge -->
-            <div class="mb-2">
-              <span id="result-tier-badge" class="inline-block px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-widest text-white border shadow-lg tier-common">
-                COMMON • +1 PT
-              </span>
-            </div>
-
-            <h3 id="result-headline" class="font-display text-2xl sm:text-3xl font-bold text-white mb-1">
-              You dove +120m deeper!
-            </h3>
-            <p id="result-fact-text" class="text-xs sm:text-sm text-cyan-100/90 max-w-xl mx-auto mb-5">
-              Real-world data insight appears here.
-            </p>
-
-            <!-- Examples of All 5 Tiers for this Question -->
-            <div class="bg-slate-950/65 rounded-2xl p-4 mb-5 text-left border border-white/10">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-cyan-300 mb-2.5">
-                Real-World Rarity Breakdown for This Question:
-              </div>
-              <div id="result-tier-examples" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
-                <!-- Populated dynamically -->
-              </div>
-            </div>
-
-            <!-- Multiplayer Round Standings Mini-List -->
-            <div id="round-multi-standings" class="hidden mb-5 text-left">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-purple-300 mb-2">
-                Crew Dive Depths &amp; Points:
-              </div>
-              <div id="round-multi-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
-            </div>
-
-            <button
-              id="btn-next-question"
-              onclick="app.nextQuestion()"
-              class="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-display text-lg font-extrabold shadow-lg transition active:scale-95"
-            >
-              Next Question →
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ======================================================================
-           VIEW 7: FINAL PODIUM & RANKINGS (Top 1, 2, 3 + Full Leaderboard)
-           ====================================================================== -->
-      <section id="view-podium" class="hidden">
-        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-3xl mx-auto text-center">
-          <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-200 text-xs font-extrabold uppercase tracking-widest mb-2">
-            🏆 Expedition Complete
-          </div>
-          <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-white mb-2">
-            Final Abyssal Rankings
-          </h2>
-          <p id="podium-subtitle" class="text-sm text-cyan-100/85 mb-8">
-            Deepest divers and rarest minds of the ocean!
-          </p>
-
-          <!-- Top 1, 2, 3 Visual Podium -->
-          <div id="podium-top3" class="grid grid-cols-1 sm:grid-cols-3 items-end gap-4 max-w-2xl mx-auto mb-8">
-            <!-- Populated dynamically (2nd, 1st, 3rd on desktop) -->
-          </div>
-
-          <!-- Rest of the Players Leaderboard -->
-          <div id="podium-rest-container" class="hidden text-left max-w-xl mx-auto mb-8">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
-              All Crew Rankings
-            </h3>
-            <div id="podium-rest-list" class="flex flex-col gap-2"></div>
-          </div>
-
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <button
-              onclick="app.returnToMenu()"
-              class="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-slate-950 font-display text-lg font-extrabold shadow-xl transition active:scale-95"
-            >
-              🌊 Surface &amp; Play Again
-            </button>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="w-full max-w-5xl mx-auto text-center text-[11px] text-cyan-100/65 py-2">
-      Krillion • Real-World Rarity Trivia • Ready for GitHub Pages Static Hosting
-    </footer>
+  <!-- Depth Meter -->
+  <div id="depth-gauge">
+    <span style="font-size:0.72rem;font-weight:800;color:#7dd3fc;">0m</span>
+    <div class="gauge-track">
+      <div class="gauge-fill" id="gauge-fill"></div>
+    </div>
+    <span id="gauge-depth-label" style="font-size:0.75rem;font-weight:800;color:#fbbf24;">0m</span>
   </div>
 
-  <!-- ==========================================================================
-       JAVASCRIPT GAME ENGINE, TRIVIA DATABASE, AUDIO & PEERJS MULTIPLAYER
-       ========================================================================== -->
+  <!-- Top Navigation -->
+  <header class="top-bar">
+    <div class="logo-pill">
+      <span>🌊</span>
+      <span class="brand-font">KRILLION</span>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="sound-toggle-btn" title="Toggle Ocean Audio">🔊 Sound On</button>
+      <button class="icon-btn" id="home-btn" style="display:none;">🏠 Menu</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <!-- SCREEN 1: MAIN MENU -->
+    <section id="screen-menu" class="screen active glass-card">
+      <div class="title-hero">
+        <h1>KRILLION</h1>
+        <p>Think outside the shoal. Rarer real-world answers dive deeper into the abyss!</p>
+      </div>
+
+      <div class="rarity-strip">
+        <span class="rarity-pill" style="color:var(--tier-1)">⚪ Common +1</span>
+        <span class="rarity-pill" style="color:var(--tier-2)">🟢 Uncommon +2</span>
+        <span class="rarity-pill" style="color:var(--tier-3)">🔵 Rare +3</span>
+        <span class="rarity-pill" style="color:var(--tier-4)">🟣 Deep Cut +4</span>
+        <span class="rarity-pill" style="color:var(--tier-5)">🟡 One in Krillion +5</span>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label class="field-label" for="player-name-input">1. Enter Diver Name</label>
+        <input id="player-name-input" class="text-input" type="text" maxlength="18" placeholder="e.g. Captain Coral" value="Diver" />
+      </div>
+
+      <div>
+        <label class="field-label">2. Choose Sea Creature Avatar</label>
+        <div class="avatar-grid" id="avatar-grid"></div>
+      </div>
+
+      <div>
+        <label class="field-label">3. Select Game Mode</label>
+        <div class="mode-grid">
+          <button class="mode-card" id="btn-choose-single">
+            <span class="mode-icon">🤿</span>
+            <h3>Singleplayer</h3>
+            <p>Solo deep-sea expedition. Pick your question count and round timer.</p>
+          </button>
+          <button class="mode-card" id="btn-choose-multi">
+            <span class="mode-icon">🐋</span>
+            <h3>Multiplayer</h3>
+            <p>Create or join a live room via code and compete in real time.</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: SINGLEPLAYER SETUP -->
+    <section id="screen-single-setup" class="screen glass-card">
+      <h2 style="font-size:1.75rem;margin-bottom:6px;">🤿 Singleplayer Dive Setup</h2>
+      <p style="color:var(--text-muted);margin-bottom:20px;">Configure your expedition before plunging beneath the waves.</p>
+
+      <label class="field-label">Number of Questions</label>
+      <div class="chip-row" id="sp-count-chips">
+        <button class="chip-btn active" data-val="5">5 Questions</button>
+        <button class="chip-btn" data-val="10">10 Questions</button>
+        <button class="chip-btn" data-val="15">15 Questions</button>
+      </div>
+
+      <label class="field-label">Time Per Question</label>
+      <div class="chip-row" id="sp-time-chips">
+        <button class="chip-btn" data-val="15">15 Seconds</button>
+        <button class="chip-btn active" data-val="30">30 Seconds</button>
+        <button class="chip-btn" data-val="45">45 Seconds</button>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:24px;">
+        <button class="secondary-btn" id="sp-back-btn">← Back</button>
+        <button class="primary-btn" id="sp-start-btn">🌊 Play Now</button>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: MULTIPLAYER ENTRY -->
+    <section id="screen-multi-entry" class="screen glass-card">
+      <h2 style="font-size:1.75rem;margin-bottom:6px;">🐋 Multiplayer Ocean Lobby</h2>
+      <p style="color:var(--text-muted);margin-bottom:20px;">Host a room for friends or enter a 5-character room code to join.</p>
+
+      <div class="mode-grid">
+        <div style="background:rgba(6,20,38,0.65);border:1px solid rgba(125,211,252,0.24);border-radius:20px;padding:18px;">
+          <h3 style="margin-bottom:10px;">⚓ Create a Room</h3>
+          <label class="field-label">Questions in 1 Run</label>
+          <div class="chip-row" id="mp-count-chips" style="margin-bottom:12px;">
+            <button class="chip-btn active" data-val="5">5 Qs</button>
+            <button class="chip-btn" data-val="10">10 Qs</button>
+            <button class="chip-btn" data-val="15">15 Qs</button>
+          </div>
+
+          <label class="field-label">Time Per Question</label>
+          <div class="chip-row" id="mp-time-chips" style="margin-bottom:14px;">
+            <button class="chip-btn" data-val="15">15s</button>
+            <button class="chip-btn active" data-val="30">30s</button>
+            <button class="chip-btn" data-val="45">45s</button>
+          </div>
+
+          <button class="primary-btn" id="mp-create-btn">Create Room</button>
+        </div>
+
+        <div style="background:rgba(6,20,38,0.65);border:1px solid rgba(125,211,252,0.24);border-radius:20px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <h3 style="margin-bottom:10px;">🧭 Join a Room</h3>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Enter the room code shared by your host.</p>
+            <label class="field-label" for="join-code-input">Room Code</label>
+            <input id="join-code-input" class="text-input" type="text" maxlength="8" placeholder="e.g. KRL42" style="text-transform:uppercase;letter-spacing:0.15em;text-align:center;font-size:1.3rem;" />
+          </div>
+          <div style="margin-top:16px;">
+            <button class="primary-btn" id="mp-join-btn">Join Room</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <button class="secondary-btn" id="mp-entry-back-btn">← Back to Menu</button>
+      </div>
+    </section>
+
+    <!-- SCREEN 4: MULTIPLAYER WAITING ROOM -->
+    <section id="screen-lobby" class="screen glass-card">
+      <div class="room-banner">
+        <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Room Code</div>
+        <div class="room-code-display" id="lobby-room-code">-----</div>
+        <div style="font-size:0.85rem;margin-bottom:10px;">
+          <span class="status-dot" id="relay-dot"></span>
+          <span id="relay-status-text">Connecting to Ocean Relay...</span>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+          <button class="secondary-btn" id="copy-code-btn">📋 Copy Code</button>
+          <button class="secondary-btn" id="copy-link-btn">🔗 Copy Invite Link</button>
+        </div>
+      </div>
+
+      <div id="host-role-box" style="display:none;margin-bottom:16px;background:rgba(14,165,233,0.14);border:1px solid rgba(56,189,248,0.3);border-radius:16px;padding:14px;">
+        <label class="field-label" style="margin-bottom:6px;">Host Role Selection</label>
+        <div class="chip-row" style="margin-bottom:0;">
+          <button class="chip-btn active" id="role-player-btn">🤿 Play as Diver</button>
+          <button class="chip-btn" id="role-spectator-btn">🔭 Watch as Spectator</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="field-label" style="margin:0;">Connected Crew (<span id="lobby-player-count">1</span>)</span>
+        <span id="lobby-settings-summary" style="font-size:0.82rem;color:#7dd3fc;font-weight:700;"></span>
+      </div>
+
+      <div class="player-list" id="lobby-player-list"></div>
+
+      <div style="display:flex;gap:12px;">
+        <button class="secondary-btn" id="lobby-leave-btn">Leave</button>
+        <button class="primary-btn" id="lobby-start-btn" style="display:none;">🚀 Start Expedition</button>
+      </div>
+      <p id="guest-wait-msg" style="text-align:center;color:var(--text-muted);font-size:0.9rem;margin-top:12px;display:none;">
+        Waiting for the host to start the game...
+      </p>
+    </section>
+
+    <!-- SCREEN 5: GAMEPLAY -->
+    <section id="screen-game" class="screen glass-card">
+      <div class="hud-header">
+        <div class="hud-badge" id="hud-q-counter">Question 1 / 5</div>
+        <div class="hud-badge" id="hud-timer">⏱️ 30s</div>
+        <div class="hud-badge" id="hud-score">🌊 0 pts</div>
+      </div>
+
+      <div class="timer-bar-wrap">
+        <div class="timer-bar-fill" id="timer-bar-fill"></div>
+      </div>
+
+      <div class="question-box">
+        <div class="category-tag" id="q-category">General Knowledge</div>
+        <h2 class="question-text" id="q-prompt">Name a fruit!</h2>
+      </div>
+
+      <div id="answer-input-area">
+        <form class="answer-form" id="answer-form" autocomplete="off">
+          <input id="answer-input" class="text-input" type="text" placeholder="Type an uncommon real-world answer..." />
+          <button type="submit" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
+        </form>
+      </div>
+
+      <div id="spectator-banner" style="display:none;text-align:center;padding:14px;background:rgba(14,165,233,0.15);border-radius:14px;font-weight:700;color:#7dd3fc;">
+        🔭 Spectator Mode — Watching divers plunge in real time...
+      </div>
+
+      <div id="waiting-others-banner" style="display:none;text-align:center;padding:12px;margin-top:12px;color:var(--text-muted);font-weight:600;">
+        ⏳ Answer locked! Waiting for other divers...
+      </div>
+
+      <!-- Post-Answer Dive Result -->
+      <div id="dive-result-panel" class="dive-result-panel" style="display:none;">
+        <div id="result-tier-badge" class="tier-badge">ONE IN KRILLION • +5 PTS</div>
+        <div id="result-answer-echo" style="font-size:1.15rem;font-weight:700;margin-bottom:4px;"></div>
+        <div id="result-depth-msg" style="color:#7dd3fc;font-size:0.95rem;font-weight:600;"></div>
+
+        <div id="mp-round-feed" style="margin-top:12px;display:none;text-align:left;background:rgba(255,255,255,0.05);padding:10px 14px;border-radius:12px;"></div>
+
+        <div style="margin-top:12px;font-size:0.8rem;color:var(--text-muted);">Examples across rarity tiers:</div>
+        <div class="sample-answers" id="sample-answers"></div>
+
+        <button class="primary-btn" id="next-q-btn" style="margin-top:18px;">Next Question →</button>
+      </div>
+    </section>
+
+    <!-- SCREEN 6: FINAL RANKING & PODIUM -->
+    <section id="screen-results" class="screen glass-card">
+      <div class="title-hero" style="margin-bottom:10px;">
+        <h1>Expedition Complete!</h1>
+        <p id="final-depth-summary">Final Ocean Depth Reached: 0m</p>
+      </div>
+
+      <div class="podium-grid" id="podium-grid"></div>
+
+      <div id="rest-leaderboard" style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;"></div>
+
+      <div style="display:flex;gap:12px;">
+        <button class="primary-btn" id="play-again-btn">🌊 Return to Surface</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast">Copied!</div>
+
   <script>
-    /**
-     * 1. SEA CREATURE AVATARS
-     */
+    // ==========================================
+    // 1. AVATARS & REAL-WORLD QUESTION BANK
+    // ==========================================
     const AVATARS = [
-      { id: 'krill', emoji: '🦐', name: 'Krill' },
-      { id: 'octopus', emoji: '🐙', name: 'Octopus' },
-      { id: 'whale', emoji: '🐋', name: 'Blue Whale' },
-      { id: 'shark', emoji: '🦈', name: 'Great White' },
-      { id: 'turtle', emoji: '🐢', name: 'Sea Turtle' },
-      { id: 'jelly', emoji: '🪼', name: 'Jellyfish' },
-      { id: 'puffer', emoji: '🐡', name: 'Pufferfish' },
-      { id: 'dolphin', emoji: '🐬', name: 'Dolphin' }
+      { emoji: '🐬', name: 'Dolphin' },
+      { emoji: '🐙', name: 'Octopus' },
+      { emoji: '🦈', name: 'Shark' },
+      { emoji: '🐢', name: 'Turtle' },
+      { emoji: '🪼', name: 'Jellyfish' },
+      { emoji: '🐋', name: 'Whale' },
+      { emoji: '🦀', name: 'Crab' },
+      { emoji: '🐡', name: 'Puffer' }
     ];
 
-    /**
-     * 2. RARITY TIERS & DEPTH CONFIGURATION
-     * Points: Common = 1, Uncommon = 2, Rare = 3, Deep Cut = 4, One in Krillion = 5
-     */
-    const RARITY_TIERS = {
-      common: {
-        key: 'common',
-        label: 'Common',
-        points: 1,
-        depthGain: 80,
-        badgeClass: 'tier-common',
-        headline: 'Shallow Splash! +80m Dive'
-      },
-      uncommon: {
-        key: 'uncommon',
-        label: 'Uncommon',
-        points: 2,
-        depthGain: 220,
-        badgeClass: 'tier-uncommon',
-        headline: 'Coral Reef Descent! +220m Dive'
-      },
-      rare: {
-        key: 'rare',
-        label: 'Rare',
-        points: 3,
-        depthGain: 480,
-        badgeClass: 'tier-rare',
-        headline: 'Twilight Zone Plunge! +480m Dive'
-      },
-      deepcut: {
-        key: 'deepcut',
-        label: 'Deep Cut',
-        points: 4,
-        depthGain: 950,
-        badgeClass: 'tier-deepcut',
-        headline: 'Midnight Abyssal Drop! +950m Dive'
-      },
-      krillion: {
-        key: 'krillion',
-        label: 'One in Krillion',
-        points: 5,
-        depthGain: 1850,
-        badgeClass: 'tier-krillion',
-        headline: 'MARIANA TRENCH MEGA-DIVE! +1,850m'
-      },
-      miss: {
-        key: 'miss',
-        label: 'Surface Drift',
-        points: 0,
-        depthGain: 0,
-        badgeClass: 'bg-slate-800 border-slate-600',
-        headline: 'Stayed at Current Depth (+0m)'
-      }
-    };
-
-    /**
-     * 3. REAL-WORLD GENERAL KNOWLEDGE DATABASE (5 Rarity Tiers per Question)
-     * Each tier contains real, factual answers + common aliases for smart matching.
-     */
-    const QUESTION_BANK = [
+    // Tiers: 1 = Common (+1), 2 = Uncommon (+2), 3 = Rare (+3), 4 = Deep Cut (+4), 5 = One in Krillion (+5)
+    const QUESTIONS = [
       {
-        category: 'Geography',
-        prompt: 'Name a country that has NO permanent natural rivers.',
-        fact: 'According to the CIA World Factbook & FAO, 19 sovereign nations—mostly desert states and small islands—have zero permanent rivers.',
-        tiers: {
-          common: ['saudi arabia', 'kuwait', 'qatar', 'united arab emirates', 'uae'],
-          uncommon: ['bahrain', 'oman', 'libya', 'vatican city', 'vatican', 'monaco'],
-          rare: ['maldives', 'malta', 'djibouti', 'yemen', 'bahamas'],
-          deepcut: ['comoros', 'kiribati', 'marshall islands', 'nauru', 'tonga'],
-          krillion: ['tuvalu', 'niue', 'tokelau']
-        },
-        samples: {
-          common: 'Saudi Arabia',
-          uncommon: 'Oman / Monaco',
-          rare: 'Maldives / Malta',
-          deepcut: 'Kiribati / Nauru',
-          krillion: 'Tuvalu'
+        category: 'Everyday Food',
+        prompt: 'Name a real fruit!',
+        answers: {
+          1: ['apple', 'banana', 'orange', 'grape', 'grapes', 'strawberry', 'watermelon', 'mango', 'pineapple'],
+          2: ['peach', 'pear', 'kiwi', 'blueberry', 'cherry', 'lemon', 'lime', 'coconut', 'papaya', 'plum', 'raspberry'],
+          3: ['pomegranate', 'apricot', 'fig', 'guava', 'lychee', 'passion fruit', 'dragon fruit', 'cantaloupe', 'blackberry', 'nectarine', 'tangerine'],
+          4: ['persimmon', 'starfruit', 'star fruit', 'jackfruit', 'durian', 'kumquat', 'mulberry', 'boysenberry', 'quince', 'rambutan', 'plantain'],
+          5: ['mangosteen', 'soursop', 'salak', 'snake fruit', 'jabuticaba', 'cherimoya', 'ackee', 'miracle fruit', 'cloudberry', 'pawpaw', 'feijoa', 'longan', 'tamarillo', 'loquat']
         }
       },
       {
-        category: 'Chemistry',
-        prompt: 'Name a chemical element whose symbol does NOT match its English name.',
-        fact: '11 elements use symbols derived from Latin, Greek, or German roots (such as Natrium for Sodium and Wolfram for Tungsten).',
-        tiers: {
-          common: ['gold', 'silver', 'iron', 'sodium', 'potassium'],
-          uncommon: ['lead', 'tin', 'mercury', 'copper'],
-          rare: ['tungsten', 'antimony'],
-          deepcut: ['wolfram', 'natrium', 'kalium', 'hydrargyrum', 'stibium'],
-          krillion: ['plumbum', 'stannum', 'ferrum', 'aurum', 'argentum']
-        },
-        samples: {
-          common: 'Gold (Au) / Iron (Fe)',
-          uncommon: 'Mercury (Hg) / Lead (Pb)',
-          rare: 'Tungsten (W)',
-          deepcut: 'Antimony (Sb)',
-          krillion: 'Stibium / Wolfram'
+        category: 'Colors & Shades',
+        prompt: 'Name a real color or named shade!',
+        answers: {
+          1: ['red', 'blue', 'green', 'yellow', 'black', 'white', 'orange', 'purple', 'pink', 'brown', 'gray', 'grey'],
+          2: ['gold', 'silver', 'cyan', 'magenta', 'teal', 'navy', 'maroon', 'beige', 'ivory', 'violet', 'indigo', 'turquoise'],
+          3: ['crimson', 'scarlet', 'emerald', 'amber', 'coral', 'lavender', 'lilac', 'olive', 'khaki', 'burgundy', 'peach', 'mint', 'tan'],
+          4: ['cerulean', 'chartreuse', 'vermilion', 'ochre', 'mauve', 'periwinkle', 'fuchsia', 'cobalt', 'aquamarine', 'sienna', 'umber', 'sepia'],
+          5: ['viridian', 'celadon', 'puce', 'amaranth', 'gamboge', 'heliotrope', 'smalt', 'coquelicot', 'fulvous', 'glaucous', 'xanthic', 'sarcoline', 'incarnadine']
         }
       },
       {
-        category: 'Marine Biology',
-        prompt: 'Name a real sea creature that lives in the Hadalpelagic Zone (below 6,000 meters).',
-        fact: 'The Hadal zone (6,000m–11,000m) is inhabited by specially adapted snailfish, amphipods, cuskeels, and xenophyophores.',
-        tiers: {
-          common: ['anglerfish', 'angler fish', 'giant squid', 'jellyfish', 'octopus'],
-          uncommon: ['dumbo octopus', 'gulper eel', 'viperfish', 'vampire squid', 'goblin shark'],
-          rare: ['sea cucumber', 'holothurian', 'amphipod', 'isopod', 'giant isopod'],
-          deepcut: ['mariana snailfish', 'snailfish', 'hadal snailfish', 'cusk eel', 'grenadier'],
-          krillion: ['xenophyophore', 'hirondellea gigas', 'alicella gigantea', 'pseudoliparis swirei']
-        },
-        samples: {
-          common: 'Anglerfish / Giant Squid',
-          uncommon: 'Dumbo Octopus',
-          rare: 'Giant Isopod',
-          deepcut: 'Mariana Snailfish',
-          krillion: 'Xenophyophore'
+        category: 'Wildlife',
+        prompt: 'Name a land mammal!',
+        answers: {
+          1: ['dog', 'cat', 'lion', 'tiger', 'bear', 'elephant', 'horse', 'cow', 'monkey', 'rabbit', 'wolf', 'deer'],
+          2: ['giraffe', 'zebra', 'kangaroo', 'koala', 'panda', 'gorilla', 'fox', 'squirrel', 'mouse', 'rat', 'pig', 'sheep', 'goat', 'camel'],
+          3: ['cheetah', 'leopard', 'rhino', 'rhinoceros', 'hippo', 'hippopotamus', 'hyena', 'bison', 'buffalo', 'moose', 'otter', 'beaver', 'badger', 'raccoon', 'hedgehog'],
+          4: ['platypus', 'armadillo', 'anteater', 'sloth', 'meerkat', 'lemur', 'wombat', 'chinchilla', 'porcupine', 'lynx', 'ocelot', 'tapir', 'wolverine'],
+          5: ['okapi', 'pangolin', 'axolotl', 'quokka', 'numbat', 'fossa', 'binturong', 'saiga', 'tarsier', 'kinkajou', 'echidna', 'capybara', 'aye-aye', 'narwhal']
         }
       },
       {
-        category: 'Geography',
-        prompt: 'Name a landlocked country located entirely inside another single country (an enclave).',
-        fact: 'There are only three sovereign enclave countries in the world: Lesotho (in South Africa), and San Marino & Vatican City (in Italy).',
-        tiers: {
-          common: ['vatican city', 'vatican', 'holy see'],
-          uncommon: ['san marino'],
-          rare: ['lesotho'],
-          deepcut: ['kingdom of lesotho', 'most serene republic of san marino'],
-          krillion: ['basutoland']
-        },
-        samples: {
-          common: 'Vatican City',
-          uncommon: 'San Marino',
-          rare: 'Lesotho',
-          deepcut: 'Kingdom of Lesotho',
-          krillion: 'Basutoland (historic)'
+        category: 'World Geography',
+        prompt: 'Name a real country in the world!',
+        answers: {
+          1: ['usa', 'united states', 'america', 'china', 'india', 'japan', 'uk', 'united kingdom', 'france', 'germany', 'canada', 'brazil', 'australia', 'russia', 'italy', 'spain', 'mexico'],
+          2: ['south korea', 'korea', 'thailand', 'vietnam', 'indonesia', 'malaysia', 'singapore', 'philippines', 'egypt', 'south africa', 'argentina', 'sweden', 'norway', 'switzerland', 'netherlands', 'turkey'],
+          3: ['peru', 'chile', 'colombia', 'poland', 'greece', 'portugal', 'ireland', 'new zealand', 'nigeria', 'kenya', 'morocco', 'saudi arabia', 'ukraine', 'finland', 'denmark', 'belgium'],
+          4: ['iceland', 'croatia', 'mongolia', 'nepal', 'cambodia', 'laos', 'myanmar', 'kazakhstan', 'uzbekistan', 'ethiopia', 'ghana', 'tanzania', 'bolivia', 'ecuador', 'uruguay', 'slovenia', 'estonia'],
+          5: ['bhutan', 'liechtenstein', 'andorra', 'san marino', 'tuvalu', 'nauru', 'palau', 'kiribati', 'djibouti', 'eritrea', 'suriname', 'guyana', 'lesotho', 'eswatini', 'comoros', 'vanuatu', 'brunei']
         }
       },
       {
-        category: 'Astronomy',
-        prompt: 'Name a moon in our Solar System that is larger than the dwarf planet Pluto.',
-        fact: 'Seven moons in our Solar System exceed Pluto’s 2,377 km diameter: Ganymede, Titan, Callisto, Io, Earth’s Moon, Europa, and Triton.',
-        tiers: {
-          common: ['moon', 'the moon', 'luna', 'titan', 'europa'],
-          uncommon: ['ganymede', 'io'],
-          rare: ['callisto'],
-          deepcut: ['triton'],
-          krillion: ['neptune i', 'jupiter iii', 'saturn vi']
-        },
-        samples: {
-          common: 'Earth’s Moon / Titan',
-          uncommon: 'Ganymede / Io',
-          rare: 'Callisto',
-          deepcut: 'Triton (Neptune)',
-          krillion: 'Jupiter III / Neptune I'
+        category: 'Sports & Games',
+        prompt: 'Name an official Olympic or widely played sport!',
+        answers: {
+          1: ['football', 'soccer', 'basketball', 'tennis', 'swimming', 'running', 'baseball', 'golf', 'volleyball', 'boxing'],
+          2: ['badminton', 'hockey', 'ice hockey', 'cricket', 'rugby', 'cycling', 'gymnastics', 'table tennis', 'ping pong', 'skiing', 'surfing', 'skateboarding'],
+          3: ['archery', 'fencing', 'judo', 'karate', 'taekwondo', 'wrestling', 'rowing', 'sailing', 'diving', 'triathlon', 'handball', 'bowling'],
+          4: ['curling', 'water polo', 'lacrosse', 'polo', 'squash', 'bobsled', 'luge', 'biathlon', 'decathlon', 'equestrian', 'weightlifting', 'kayaking'],
+          5: ['sepak takraw', 'kabaddi', 'pelota', 'hurling', 'boccia', 'goalball', 'skeleton', 'modern pentathlon', 'orienteering', 'bandy', 'korfball', 'petanque']
         }
       },
       {
-        category: 'World Currencies',
-        prompt: 'Name a real official national currency currently in use that is NOT the Dollar, Euro, Yen, or Pound.',
-        fact: 'The UN recognizes 180 currencies; some of the rarest names include Bhutan’s Ngultrum, Mauritania’s Ouguiya, and São Tomé’s Dobra.',
-        tiers: {
-          common: ['peso', 'rupee', 'won', 'yuan', 'renminbi', 'franc', 'ruble', 'ringgit'],
-          uncommon: ['baht', 'rupiah', 'lira', 'krona', 'krone', 'rand', 'dirham', 'riyal', 'dinar'],
-          rare: ['zloty', 'forint', 'shekel', 'sol', 'bolivar', 'colon', 'quetzal', 'lempira'],
-          deepcut: ['tugrik', 'kyat', 'kip', 'riel', 'birr', 'cedi', 'naira', 'kwacha', 'taka'],
-          krillion: ['ngultrum', 'ouguiya', 'dobra', 'lilangeni', 'loti', 'vatu', 'tala', 'paanga']
-        },
-        samples: {
-          common: 'Peso / Rupee / Ringgit',
-          uncommon: 'Baht / Rand / Dirham',
-          rare: 'Zloty / Quetzal',
-          deepcut: 'Tugrik / Kwacha',
-          krillion: 'Ngultrum / Ouguiya'
+        category: 'Marine Life',
+        prompt: 'Name a real sea creature or ocean animal!',
+        answers: {
+          1: ['shark', 'whale', 'dolphin', 'fish', 'octopus', 'crab', 'turtle', 'sea turtle', 'jellyfish', 'starfish'],
+          2: ['seal', 'sea lion', 'walrus', 'lobster', 'shrimp', 'squid', 'eel', 'stingray', 'seahorse', 'clownfish', 'salmon', 'tuna'],
+          3: ['orca', 'killer whale', 'manatee', 'swordfish', 'hammerhead', 'manta ray', 'clam', 'oyster', 'mussel', 'urchin', 'sea urchin', 'coral', 'sponge', 'penguin'],
+          4: ['narwhal', 'beluga', 'barracuda', 'moray eel', 'anglerfish', 'lionfish', 'pufferfish', 'cuttlefish', 'nautilus', 'krill', 'kelp', 'anemone', 'sea anemone', 'barnacle'],
+          5: ['coelacanth', 'vaquita', 'dugong', 'mantis shrimp', 'nudibranch', 'isopod', 'giant isopod', 'hagfish', 'lamprey', 'oarfish', 'blobfish', 'sunfish', 'mola mola', 'geoduck']
         }
       },
       {
-        category: 'Biology',
-        prompt: 'Name a mammal that lays eggs (a monotreme) or is venomous.',
-        fact: 'Monotremes (platypus & 4 species of echidna) lay eggs, while shrews, solenodons, vampire bats, and slow lorises produce venom.',
-        tiers: {
-          common: ['platypus', 'duck billed platypus', 'echidna'],
-          uncommon: ['spiny anteater', 'vampire bat', 'slow loris'],
-          rare: ['shrew', 'short tailed shrew', 'water shrew'],
-          deepcut: ['solenodon', 'cuban solenodon', 'hispaniolan solenodon', 'long beaked echidna'],
-          krillion: ['zaglossus', 'ornithorhynchus anatinus', 'european mole']
-        },
-        samples: {
-          common: 'Platypus / Echidna',
-          uncommon: 'Slow Loris / Vampire Bat',
-          rare: 'Short-tailed Shrew',
-          deepcut: 'Solenodon',
-          krillion: 'Zaglossus'
-        }
-      },
-      {
-        category: 'Geography',
-        prompt: 'Name a country that spans across MORE than one continent (transcontinental).',
-        fact: 'Countries like Russia, Turkey, Egypt, Kazakhstan, Indonesia, Panama, and France (via overseas departments) span multiple continents.',
-        tiers: {
-          common: ['russia', 'turkey', 'turkiye', 'egypt'],
-          uncommon: ['united states', 'usa', 'indonesia', 'kazakhstan', 'france'],
-          rare: ['spain', 'panama', 'azerbaijan', 'georgia'],
-          deepcut: ['colombia', 'chile', 'denmark', 'portugal', 'greece'],
-          krillion: ['yemen', 'iceland', 'papua new guinea']
-        },
-        samples: {
-          common: 'Russia / Turkey / Egypt',
-          uncommon: 'Kazakhstan / Indonesia',
-          rare: 'Panama / Azerbaijan',
-          deepcut: 'Chile / Denmark',
-          krillion: 'Yemen (Socotra)'
-        }
-      },
-      {
-        category: 'Sports',
-        prompt: 'Name an official Summer Olympic sport that involves water.',
-        fact: 'Aquatics, Rowing, Canoe/Kayak, Sailing, Triathlon, and Modern Pentathlon all feature official Olympic water disciplines.',
-        tiers: {
-          common: ['swimming', 'diving', 'water polo', 'rowing', 'surfing'],
-          uncommon: ['sailing', 'kayaking', 'canoeing', 'synchronized swimming', 'artistic swimming'],
-          rare: ['triathlon', 'marathon swimming', 'open water swimming'],
-          deepcut: ['canoe slalom', 'modern pentathlon', 'windsurfing', 'kitesurfing'],
-          krillion: ['formula kite', 'iqfoil', 'kayak cross']
-        },
-        samples: {
-          common: 'Swimming / Water Polo',
-          uncommon: 'Sailing / Artistic Swimming',
-          rare: 'Triathlon',
-          deepcut: 'Modern Pentathlon',
-          krillion: 'Kayak Cross / Formula Kite'
-        }
-      },
-      {
-        category: 'Human Body',
-        prompt: 'Name a bone located in the human ear or skull.',
-        fact: 'The three smallest bones in the human body—the malleus, incus, and stapes—sit inside the middle ear.',
-        tiers: {
-          common: ['skull', 'cranium', 'jaw', 'jawbone', 'mandible'],
-          uncommon: ['cheekbone', 'zygomatic', 'maxilla', 'frontal', 'temporal'],
-          rare: ['hammer', 'anvil', 'stirrup', 'occipital', 'parietal'],
-          deepcut: ['malleus', 'incus', 'stapes', 'sphenoid', 'ethmoid'],
-          krillion: ['hyoid', 'vomer', 'lacrimal', 'palatine', 'inferior nasal concha']
-        },
-        samples: {
-          common: 'Mandible / Cranium',
-          uncommon: 'Zygomatic / Temporal',
-          rare: 'Stirrup / Occipital',
-          deepcut: 'Stapes / Sphenoid',
-          krillion: 'Vomer / Ethmoid'
-        }
-      },
-      {
-        category: 'Botany',
-        prompt: 'Name a fruit that is botanically classified as a TRUE berry.',
-        fact: 'Botanically, bananas, tomatoes, kiwis, grapes, and eggplants are true berries—while strawberries and raspberries are aggregate fruits!',
-        tiers: {
-          common: ['grape', 'grapes', 'blueberry', 'blueberries', 'tomato', 'tomatoes'],
-          uncommon: ['banana', 'bananas', 'kiwi', 'kiwifruit', 'cranberry', 'cranberries'],
-          rare: ['watermelon', 'eggplant', 'aubergine', 'avocado', 'cucumber'],
-          deepcut: ['persimmon', 'guava', 'pomegranate', 'papaya', 'gooseberry'],
-          krillion: ['lingonberry', 'elderberry', 'currant', 'huckleberry', 'feijoa']
-        },
-        samples: {
-          common: 'Grape / Tomato',
-          uncommon: 'Banana / Kiwi',
-          rare: 'Watermelon / Avocado',
-          deepcut: 'Persimmon / Guava',
-          krillion: 'Feijoa / Lingonberry'
-        }
-      },
-      {
-        category: 'History',
-        prompt: 'Name one of the Seven Wonders of the Ancient World.',
-        fact: 'Only the Great Pyramid of Giza still stands today; the Colossus of Rhodes and Lighthouse of Alexandria fell to earthquakes.',
-        tiers: {
-          common: ['great pyramid', 'pyramids of giza', 'pyramid of giza', 'hanging gardens', 'hanging gardens of babylon'],
-          uncommon: ['colossus of rhodes', 'lighthouse of alexandria', 'pharos of alexandria'],
-          rare: ['statue of zeus', 'statue of zeus at olympia', 'temple of artemis'],
-          deepcut: ['mausoleum at halicarnassus', 'tomb of mausolus', 'temple of artemis at ephesus'],
-          krillion: ['great pyramid of khufu', 'pharos']
-        },
-        samples: {
-          common: 'Great Pyramid of Giza',
-          uncommon: 'Colossus of Rhodes',
-          rare: 'Statue of Zeus',
-          deepcut: 'Mausoleum at Halicarnassus',
-          krillion: 'Pyramid of Khufu'
-        }
-      },
-      {
-        category: 'World Languages',
-        prompt: 'Name an official language of the United Nations OR Switzerland.',
-        fact: 'The UN has 6 official languages (Arabic, Chinese, English, French, Russian, Spanish), while Switzerland has 4 (German, French, Italian, Romansh).',
-        tiers: {
-          common: ['english', 'spanish', 'french', 'chinese', 'mandarin'],
-          uncommon: ['arabic', 'russian', 'german', 'italian'],
-          rare: ['romansh'],
-          deepcut: ['rumantsch', 'standard arabic', 'putonghua'],
-          krillion: ['sursilvan', 'vallader', 'puter']
-        },
-        samples: {
-          common: 'English / Spanish / French',
-          uncommon: 'Arabic / German / Italian',
-          rare: 'Romansh',
-          deepcut: 'Rumantsch',
-          krillion: 'Sursilvan (Romansh dialect)'
+        category: 'Pizza & Food',
+        prompt: 'Name a real pizza topping!',
+        answers: {
+          1: ['cheese', 'pepperoni', 'mushroom', 'mushrooms', 'sausage', 'onion', 'onions', 'pepper', 'peppers', 'bell pepper', 'ham', 'bacon'],
+          2: ['pineapple', 'olive', 'olives', 'black olives', 'chicken', 'tomato', 'tomatoes', 'spinach', 'garlic', 'jalapeno', 'beef', 'ground beef'],
+          3: ['anchovy', 'anchovies', 'basil', 'mozzarella', 'parmesan', 'salami', 'meatball', 'meatballs', 'broccoli', 'corn', 'feta', 'ricotta'],
+          4: ['artichoke', 'prosciutto', 'arugula', 'sun-dried tomato', 'sundried tomato', 'goat cheese', 'gorgonzola', 'capers', 'eggplant', 'pesto', 'truffle'],
+          5: ['nduja', 'burrata', 'bresaola', 'pancetta', 'mortadella', 'fig', 'figs', 'pear', 'walnut', 'squid ink', 'clams', 'bottarga', 'taleggio']
         }
       },
       {
         category: 'Music',
-        prompt: 'Name an orchestral woodwind or brass instrument.',
-        fact: 'Standard symphony orchestras include flutes, oboes, clarinets, bassoons, horns, trumpets, trombones, and tubas.',
-        tiers: {
-          common: ['flute', 'clarinet', 'trumpet', 'saxophone', 'trombone'],
-          uncommon: ['oboe', 'bassoon', 'french horn', 'tuba', 'piccolo'],
-          rare: ['english horn', 'cor anglais', 'bass clarinet', 'euphonium'],
-          deepcut: ['contrabassoon', 'flugelhorn', 'sousaphone', 'cornet'],
-          krillion: ['heckelphone', 'bass flute', 'ophicleide', 'serpent']
-        },
-        samples: {
-          common: 'Flute / Trumpet',
-          uncommon: 'Oboe / Bassoon',
-          rare: 'Cor Anglais / Euphonium',
-          deepcut: 'Contrabassoon',
-          krillion: 'Heckelphone / Ophicleide'
+        prompt: 'Name a real musical instrument!',
+        answers: {
+          1: ['piano', 'guitar', 'drums', 'drum', 'violin', 'flute', 'trumpet', 'saxophone', 'bass', 'bass guitar'],
+          2: ['cello', 'clarinet', 'trombone', 'harp', 'ukulele', 'keyboard', 'organ', 'harmonica', 'banjo', 'tambourine'],
+          3: ['viola', 'oboe', 'bassoon', 'tuba', 'french horn', 'accordion', 'xylophone', 'marimba', 'mandolin', 'sitar', 'bagpipes'],
+          4: ['harpsichord', 'piccolo', 'timpani', 'bongo', 'conga', 'didgeridoo', 'kalimba', 'lute', 'zither', 'dulcimer', 'ocarina'],
+          5: ['theremin', 'hurdy-gurdy', 'hurdy gurdy', 'balalaika', 'koto', 'shamisen', 'erhu', 'oud', 'hang drum', 'handpan', 'glass armonica', 'nyckelharpa', 'vuvuzela']
         }
       },
       {
-        category: 'Geography',
-        prompt: 'Name a country whose national flag does NOT contain red, white, or blue.',
-        fact: 'Only Jamaica (black, green, gold) and Mauritania (before adding red stripes in 2017) famously avoided red, white, and blue!',
-        tiers: {
-          common: ['jamaica'],
-          uncommon: ['mauritania'],
-          rare: ['libya'],
-          deepcut: ['former flag of libya', 'kingdom of sikkim'],
-          krillion: ['great socialist peoples libyan arab jamahiriya']
-        },
-        samples: {
-          common: 'Jamaica',
-          uncommon: 'Mauritania (pre-2017)',
-          rare: 'Libya (1977–2011)',
-          deepcut: 'Old Libyan Green Flag',
-          krillion: 'Jamahiriya Flag'
+        category: 'School & Science',
+        prompt: 'Name a school subject or academic field!',
+        answers: {
+          1: ['math', 'mathematics', 'science', 'english', 'history', 'art', 'music', 'pe', 'physical education', 'geography'],
+          2: ['biology', 'chemistry', 'physics', 'literature', 'computer science', 'computing', 'spanish', 'french', 'economics', 'health'],
+          3: ['psychology', 'sociology', 'philosophy', 'geometry', 'algebra', 'calculus', 'statistics', 'drama', 'theater', 'accounting', 'business'],
+          4: ['astronomy', 'geology', 'anthropology', 'archaeology', 'linguistics', 'political science', 'botany', 'zoology', 'ecology', 'anatomy'],
+          5: ['epistemology', 'entomology', 'ichthyology', 'ornithology', 'mycology', 'paleontology', 'meteorology', 'seismology', 'etymology', 'numismatics', 'vexillology']
+        }
+      },
+      {
+        category: 'Transport',
+        prompt: 'Name a type of vehicle or mode of transport!',
+        answers: {
+          1: ['car', 'bus', 'train', 'airplane', 'plane', 'bike', 'bicycle', 'boat', 'truck', 'motorcycle'],
+          2: ['ship', 'subway', 'metro', 'taxi', 'van', 'helicopter', 'scooter', 'ferry', 'tram', 'jet'],
+          3: ['yacht', 'canoe', 'kayak', 'sailboat', 'submarine', 'ambulance', 'firetruck', 'tractor', 'bulldozer', 'moped', 'skateboard'],
+          4: ['hovercraft', 'blimp', 'zeppelin', 'gondola', 'rickshaw', 'tuk-tuk', 'tuktuk', 'monorail', 'catamaran', 'glider', 'seaplane'],
+          5: ['funicular', 'hydrofoil', 'bathyscaphe', 'dirigible', 'autogiro', 'velomobile', 'sampan', 'junk', 'coracle', 'maglev', 'snowcat']
+        }
+      },
+      {
+        category: 'Vegetables',
+        prompt: 'Name a real vegetable!',
+        answers: {
+          1: ['carrot', 'potato', 'broccoli', 'tomato', 'onion', 'lettuce', 'corn', 'cucumber', 'spinach', 'pea', 'peas'],
+          2: ['cabbage', 'garlic', 'pepper', 'bell pepper', 'celery', 'cauliflower', 'zucchini', 'mushroom', 'pumpkin', 'green bean', 'sweet potato'],
+          3: ['asparagus', 'eggplant', 'radish', 'beet', 'beetroot', 'kale', 'leek', 'turnip', 'brussels sprout', 'brussels sprouts', 'okra', 'yam'],
+          4: ['artichoke', 'fennel', 'parsnip', 'rutabaga', 'bok choy', 'watercress', 'rhubarb', 'shallot', 'collard greens', 'swiss chard', 'endive'],
+          5: ['kohlrabi', 'jicama', 'celeriac', 'salsify', 'romanesco', 'cardoon', 'chayote', 'daikon', 'taro', 'cassava', 'lotus root', 'burdock']
+        }
+      },
+      {
+        category: 'Solar System',
+        prompt: 'Name a planet, dwarf planet, or famous moon in our Solar System!',
+        answers: {
+          1: ['earth', 'mars', 'jupiter', 'saturn', 'venus', 'mercury', 'uranus', 'neptune', 'moon'],
+          2: ['pluto', 'europa', 'titan', 'io', 'ganymede', 'callisto', 'phobos', 'deimos'],
+          3: ['ceres', 'eris', 'makemake', 'haumea', 'enceladus', 'triton', 'charon', 'mimas'],
+          4: ['iapetus', 'rhea', 'dione', 'tethys', 'oberon', 'titania', 'miranda', 'ariel', 'umbriel'],
+          5: ['sedna', 'quaoar', 'orcus', 'gonggong', 'hyperion', 'phoebe', 'amalthea', 'nereid', 'proteus', 'pan']
+        }
+      },
+      {
+        category: 'Drinks & Beverages',
+        prompt: 'Name a common or traditional drink!',
+        answers: {
+          1: ['water', 'milk', 'coffee', 'tea', 'juice', 'orange juice', 'apple juice', 'soda', 'cola', 'coke'],
+          2: ['lemonade', 'hot chocolate', 'cocoa', 'smoothie', 'milkshake', 'green tea', 'iced tea', 'sparkling water', 'latte', 'espresso'],
+          3: ['cappuccino', 'mocha', 'matcha', 'kombucha', 'ginger ale', 'root beer', 'coconut water', 'cranberry juice', 'grape juice', 'americano'],
+          4: ['horchata', 'chai', 'yerba mate', 'kefir', 'lassi', 'mango lassi', 'seltzer', 'tonic water', 'cider', 'apple cider', 'boba', 'bubble tea'],
+          5: ['kvass', 'ayran', 'kumis', 'tepache', 'chicha', 'rooibos', 'pu-erh', 'oolong', 'genmaicha', 'barley tea', 'hibiscus tea', 'sorrel']
+        }
+      },
+      {
+        category: 'Weather & Nature',
+        prompt: 'Name a weather phenomenon or type of precipitation!',
+        answers: {
+          1: ['rain', 'snow', 'wind', 'sun', 'sunshine', 'cloud', 'clouds', 'storm', 'thunderstorm', 'fog'],
+          2: ['hail', 'sleet', 'lightning', 'thunder', 'hurricane', 'tornado', 'blizzard', 'rainbow', 'mist', 'frost', 'dew'],
+          3: ['drizzle', 'typhoon', 'cyclone', 'monsoon', 'drought', 'heatwave', 'heat wave', 'avalanche', 'sandstorm', 'dust storm', 'smog'],
+          4: ['aurora', 'northern lights', 'waterspout', 'haboob', 'freezing rain', 'black ice', 'ice storm', 'squall', 'gale', 'chinook'],
+          5: ['virga', 'graupel', 'petrichor', 'derecho', 'ball lightning', 'st elmos fire', 'sun dog', 'sundog', 'katabatic wind', 'sirocco', 'mistral']
+        }
+      },
+      {
+        category: 'Clothing & Wearables',
+        prompt: 'Name an item of clothing or footwear!',
+        answers: {
+          1: ['shirt', 't-shirt', 'tshirt', 'pants', 'jeans', 'shoes', 'socks', 'jacket', 'coat', 'dress', 'hat', 'shorts'],
+          2: ['sweater', 'hoodie', 'skirt', 'boots', 'sneakers', 'sandals', 'gloves', 'scarf', 'tie', 'suit', 'belt', 'pajamas'],
+          3: ['cardigan', 'blazer', 'vest', 'waistcoat', 'leggings', 'overalls', 'raincoat', 'slippers', 'heels', 'high heels', 'beanie', 'cap'],
+          4: ['trench coat', 'parka', 'poncho', 'kimono', 'tuxedo', 'loafers', 'moccasins', 'espadrilles', 'clogs', 'beret', 'fedora', 'shawl'],
+          5: ['dashiki', 'sarong', 'cheongsam', 'qipao', 'dirndl', 'lederhosen', 'kaftan', 'caftan', 'kilt', 'hanbok', 'sari', 'bolero', 'ascot']
+        }
+      },
+      {
+        category: 'Birds',
+        prompt: 'Name a real species or type of bird!',
+        answers: {
+          1: ['eagle', 'owl', 'penguin', 'duck', 'chicken', 'parrot', 'pigeon', 'crow', 'sparrow', 'robin', 'flamingo'],
+          2: ['hawk', 'falcon', 'swan', 'goose', 'turkey', 'peacock', 'seagull', 'hummingbird', 'woodpecker', 'ostrich', 'pelican', 'raven'],
+          3: ['toucan', 'puffin', 'stork', 'heron', 'crane', 'albatross', 'canary', 'parakeet', 'cockatoo', 'macaw', 'vulture', 'condor', 'kiwi'],
+          4: ['kingfisher', 'magpie', 'jay', 'blue jay', 'cardinal', 'oriole', 'starling', 'swallow', 'nightingale', 'emu', 'cassowary', 'kestrel', 'osprey'],
+          5: ['shoebill', 'quetzal', 'hoatzin', 'kakapo', 'lyrebird', 'bowerbird', 'secretary bird', 'ptarmigan', 'booby', 'frigatebird', 'hornbill', 'ibis']
         }
       }
     ];
 
-    /**
-     * 4. WEB AUDIO API UNDERWATER SOUND SYNTHESIZER (No external URLs needed)
-     */
-    class OceanAudio {
-      constructor() {
-        this.ctx = null;
-        this.muted = false;
-      }
+    // ==========================================
+    // 2. SOUND ENGINE (Web Audio API)
+    // ==========================================
+    let soundEnabled = true;
+    let audioCtx = null;
 
-      init() {
-        if (!this.ctx) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          if (AudioCtx) this.ctx = new AudioCtx();
-        }
-        if (this.ctx && this.ctx.state === 'suspended') {
-          this.ctx.resume();
-        }
-      }
-
-      playBubble(freq = 440, duration = 0.14) {
-        if (this.muted) return;
-        this.init();
-        if (!this.ctx) return;
-
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
-        osc.frequency.exponentialRampToValueAtTime(freq * 1.85, now + duration);
-
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
+    function playTone(freq, type = 'sine', duration = 0.25, delay = 0, vol = 0.14) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + duration);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + duration);
+      } catch (e) {}
+    }
+
+    function playDiveSound(tier) {
+      if (tier === 0) {
+        playTone(190, 'sawtooth', 0.25, 0, 0.08);
+        playTone(145, 'sawtooth', 0.3, 0.12, 0.08);
+        return;
       }
-
-      playDive(tierKey) {
-        if (this.muted) return;
-        this.init();
-        if (!this.ctx) return;
-
-        const tierChords = {
-          miss: [220, 196],
-          common: [330, 440],
-          uncommon: [392, 493.88, 587.33],
-          rare: [440, 554.37, 659.25, 880],
-          deepcut: [523.25, 659.25, 783.99, 1046.5],
-          krillion: [523.25, 659.25, 783.99, 987.77, 1318.51, 1567.98]
-        };
-
-        const notes = tierChords[tierKey] || tierChords.common;
-        notes.forEach((n, idx) => {
-          setTimeout(() => this.playBubble(n, 0.28), idx * 75);
-        });
-      }
-
-      playTick(urgent = false) {
-        if (this.muted) return;
-        this.playBubble(urgent ? 720 : 480, 0.06);
+      // Bubble splash + harmonic chord based on rarity
+      playTone(320, 'sine', 0.18, 0, 0.12);
+      playTone(480, 'sine', 0.22, 0.07, 0.12);
+      if (tier >= 2) playTone(600, 'triangle', 0.28, 0.14, 0.12);
+      if (tier >= 3) playTone(750, 'triangle', 0.32, 0.21, 0.13);
+      if (tier >= 4) playTone(900, 'sine', 0.38, 0.28, 0.14);
+      if (tier === 5) {
+        playTone(1200, 'sine', 0.55, 0.35, 0.16);
+        playTone(1500, 'triangle', 0.65, 0.44, 0.14);
       }
     }
 
-    /**
-     * 5. AMBIENT OCEAN PARTICLE ENGINE (Bubbles, Bioluminescent Plankton & Dive Speed Lines)
-     */
-    class OceanParticles {
-      constructor(canvasId) {
-        this.canvas = document.getElementById(canvasId);
-        this.ctx = this.canvas.getContext('2d');
-        this.particles = [];
-        this.depth = 0;
-        this.diveBoost = 0;
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-        this.spawnInitial();
+    // ==========================================
+    // 3. PARTICLE OCEAN CANVAS
+    // ==========================================
+    const canvas = document.getElementById('ocean-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let currentDepthMeters = 0;
+    let diveBurstSpeed = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 65; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 4 + 1.5,
+        vy: -(Math.random() * 0.9 + 0.3),
+        vx: (Math.random() - 0.5) * 0.4,
+        alpha: Math.random() * 0.5 + 0.2
+      });
+    }
+
+    function spawnSplashBurst(count = 26) {
+      const cx = window.innerWidth / 2;
+      const cy = 90;
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: cx + (Math.random() - 0.5) * 70,
+          y: cy + (Math.random() - 0.5) * 30,
+          r: Math.random() * 5 + 2,
+          vy: -(Math.random() * 3.2 + 1.2),
+          vx: (Math.random() - 0.5) * 3.5,
+          alpha: 0.85,
+          temp: true
+        });
       }
+    }
 
-      resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-      }
+    function animateOcean() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const isDeep = currentDepthMeters >= 600;
 
-      spawnInitial() {
-        this.particles = [];
-        const count = Math.min(85, Math.floor((window.innerWidth * window.innerHeight) / 16000));
-        for (let i = 0; i < count; i++) {
-          this.particles.push(this.createParticle(true));
-        }
-      }
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.y += p.vy - diveBurstSpeed;
+        p.x += p.vx;
 
-      createParticle(randomY = false) {
-        const isDeep = this.depth > 1500;
-        return {
-          x: Math.random() * this.canvas.width,
-          y: randomY ? Math.random() * this.canvas.height : this.canvas.height + 20,
-          r: isDeep ? Math.random() * 2.8 + 1 : Math.random() * 4.5 + 1.5,
-          speedY: Math.random() * 1.1 + 0.35,
-          wobble: Math.random() * Math.PI * 2,
-          wobbleSpeed: Math.random() * 0.03 + 0.01,
-          glow: isDeep && Math.random() > 0.35,
-          hue: isDeep ? (Math.random() > 0.5 ? 185 : 280) : 195
-        };
-      }
-
-      triggerDiveSurge(intensity = 1) {
-        this.diveBoost = 16 * intensity;
-      }
-
-      updateAndDraw() {
-        const ctx = this.ctx;
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        if (this.diveBoost > 0.1) {
-          this.diveBoost *= 0.94;
-        } else {
-          this.diveBoost = 0;
-        }
-
-        for (let i = 0; i < this.particles.length; i++) {
-          const p = this.particles[i];
-          p.wobble += p.wobbleSpeed;
-          p.x += Math.sin(p.wobble) * 0.65;
-          p.y -= p.speedY + this.diveBoost;
-
-          if (p.y < -25) {
-            this.particles[i] = this.createParticle(false);
+        if (p.y < -20) {
+          if (p.temp) {
+            particles.splice(i, 1);
             continue;
           }
-
-          ctx.save();
-          if (p.glow) {
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = `hsla(${p.hue}, 95%, 70%, 0.9)`;
-            ctx.fillStyle = `hsla(${p.hue}, 95%, 78%, 0.85)`;
-          } else {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-            ctx.fillStyle = 'rgba(224, 242, 254, 0.16)';
-            ctx.lineWidth = 1.2;
-          }
-
-          ctx.beginPath();
-          if (this.diveBoost > 4) {
-            // Stretch into vertical dive streaks during deep plunge
-            ctx.ellipse(p.x, p.y, p.r * 0.6, p.r + this.diveBoost * 1.6, 0, 0, Math.PI * 2);
-          } else {
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          }
-          ctx.fill();
-          if (!p.glow) ctx.stroke();
-          ctx.restore();
+          p.y = canvas.height + 15;
+          p.x = Math.random() * canvas.width;
         }
 
-        requestAnimationFrame(() => this.updateAndDraw());
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        if (isDeep) {
+          ctx.fillStyle = `rgba(192, 132, 252, ${p.alpha})`;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#38bdf8';
+        } else {
+          ctx.fillStyle = `rgba(224, 242, 254, ${p.alpha})`;
+          ctx.shadowBlur = 0;
+        }
+        ctx.fill();
+      }
+
+      if (diveBurstSpeed > 0.05) {
+        diveBurstSpeed *= 0.94;
+      } else {
+        diveBurstSpeed = 0;
+      }
+
+      requestAnimationFrame(animateOcean);
+    }
+    animateOcean();
+
+    // ==========================================
+    // 4. DIVER ANIMATION & DEPTH ENVIRONMENT
+    // ==========================================
+    const diverActor = document.getElementById('diver-actor');
+    const diverEmoji = document.getElementById('diver-emoji');
+    const diverTag = document.getElementById('diver-tag');
+    const surfaceLayer = document.getElementById('surface-layer');
+    const gaugeFill = document.getElementById('gauge-fill');
+    const gaugeDepthLabel = document.getElementById('gauge-depth-label');
+
+    function setOceanThemeByDepth(depth) {
+      currentDepthMeters = depth;
+      gaugeDepthLabel.textContent = `${depth}m`;
+      const pct = Math.min(100, Math.max(6, (depth / 1500) * 100));
+      gaugeFill.style.height = `${pct}%`;
+
+      const root = document.documentElement.style;
+      if (depth <= 50) {
+        // Surface sunlight zone
+        root.setProperty('--bg-top', '#0ea5e9');
+        root.setProperty('--bg-mid', '#0369a1');
+        root.setProperty('--bg-bot', '#0c4a6e');
+        surfaceLayer.style.transform = 'translateY(0px)';
+        surfaceLayer.style.opacity = '1';
+      } else if (depth <= 350) {
+        // Shallow reef
+        root.setProperty('--bg-top', '#0284c7');
+        root.setProperty('--bg-mid', '#075985');
+        root.setProperty('--bg-bot', '#0f172a');
+        surfaceLayer.style.transform = 'translateY(-90px)';
+        surfaceLayer.style.opacity = '0.55';
+      } else if (depth <= 750) {
+        // Twilight zone
+        root.setProperty('--bg-top', '#075985');
+        root.setProperty('--bg-mid', '#1e3a8a');
+        root.setProperty('--bg-bot', '#090d16');
+        surfaceLayer.style.transform = 'translateY(-190px)';
+        surfaceLayer.style.opacity = '0.15';
+      } else {
+        // Midnight / Abyssal Krillion zone
+        root.setProperty('--bg-top', '#1e1b4b');
+        root.setProperty('--bg-mid', '#0f172a');
+        root.setProperty('--bg-bot', '#020617');
+        surfaceLayer.style.transform = 'translateY(-230px)';
+        surfaceLayer.style.opacity = '0';
       }
     }
 
-    /**
-     * 6. MAIN KRILLION APPLICATION CONTROLLER
-     */
-    class KrillionApp {
-      constructor() {
-        this.audio = new OceanAudio();
-        this.particles = new OceanParticles('ocean-canvas');
+    function resetDiverToSurface() {
+      diverActor.classList.remove('diver-diving');
+      diverActor.classList.add('diver-bob');
+      diverActor.style.top = '44px';
+      diverTag.textContent = `${state.name} • Surface (0m)`;
+      setOceanThemeByDepth(0);
+    }
 
-        // Player Profile
-        this.playerName = '';
-        this.avatar = AVATARS[0];
-        this.playerId = 'diver-' + Math.random().toString(36).substring(2, 9);
+    function triggerAvatarDive(tier, totalCumulativeDepth) {
+      // Depth plunged on this specific answer
+      const tierDivePx = [52, 130, 230, 340, 450, 560][tier] || 52;
+      const tierDiveMeters = [0, 80, 220, 450, 780, 1200][tier] || 0;
 
-        // Configurable Settings
-        this.singleQuestions = 10;
-        this.singleTime = 30;
-        this.multiQuestions = 10;
-        this.multiTime = 30;
-
-        // Match State
-        this.mode = 'single'; // 'single' | 'multi'
-        this.questions = [];
-        this.currentIndex = 0;
-        this.timeLeft = 30;
-        this.totalTime = 30;
-        this.timerInterval = null;
-        this.hasSubmitted = false;
-        this.score = 0;
-        this.depth = 0;
-
-        // Multiplayer PeerJS State
-        this.peer = null;
-        this.isHost = false;
-        this.hostRole = 'player'; // 'player' | 'spectator'
-        this.roomCode = '';
-        this.hostConn = null; // Guest -> Host connection
-        this.guestConns = new Map(); // Host -> Guests map
-        this.roster = new Map(); // playerId -> { id, name, avatar, role, score, depth, lastResult, answered }
-
-        this.initUI();
-        this.checkInviteUrlParam();
+      if (tier > 0) {
+        spawnSplashBurst(12 + tier * 7);
+        diveBurstSpeed = 2.5 + tier * 1.8;
+        diverActor.classList.remove('diver-bob');
+        diverActor.classList.add('diver-diving');
       }
 
-      initUI() {
-        // Render Avatar Grid
-        const grid = document.getElementById('avatar-grid');
-        grid.innerHTML = '';
-        AVATARS.forEach((av, index) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = `avatar-btn p-2 rounded-xl border text-center transition flex flex-col items-center justify-center ${
-            index === 0
-              ? 'bg-cyan-500/35 border-cyan-300 shadow-md scale-105'
-              : 'bg-slate-900/50 border-white/10 hover:bg-white/10'
-          }`;
-          btn.innerHTML = `<span class="text-2xl">${av.emoji}</span><span class="text-[10px] font-semibold text-cyan-100 mt-0.5">${av.name}</span>`;
-          btn.onclick = () => {
-            this.avatar = av;
-            this.audio.playBubble(520, 0.1);
-            document.querySelectorAll('.avatar-btn').forEach(b => {
-              b.className = 'avatar-btn p-2 rounded-xl border text-center transition flex flex-col items-center justify-center bg-slate-900/50 border-white/10 hover:bg-white/10';
-            });
-            btn.className = 'avatar-btn p-2 rounded-xl border text-center transition flex flex-col items-center justify-center bg-cyan-500/35 border-cyan-300 shadow-md scale-105';
-          };
-          grid.appendChild(btn);
+      const targetTop = Math.min(window.innerHeight - 130, 44 + tierDivePx);
+      diverActor.style.top = `${targetTop}px`;
+      diverTag.textContent = tier > 0
+        ? `⬇️ Diving -${tierDiveMeters}m (Total: ${totalCumulativeDepth}m)`
+        : `💦 Stayed near surface (0m)`;
+
+      setOceanThemeByDepth(Math.max(tierDiveMeters, totalCumulativeDepth));
+
+      setTimeout(() => {
+        diverActor.classList.remove('diver-diving');
+        diverActor.classList.add('diver-bob');
+      }, 1450);
+    }
+
+    // ==========================================
+    // 5. GAME STATE & MULTIPLAYER ENGINE
+    // ==========================================
+    const state = {
+      name: 'Diver',
+      avatar: '🐬',
+      mode: 'single', // 'single' | 'multi'
+      questionCount: 5,
+      timeLimit: 30,
+      questions: [],
+      currentIndex: 0,
+      score: 0,
+      totalDepth: 0,
+      timerInterval: null,
+      timeLeft: 30,
+      answeredCurrent: false,
+
+      // Multiplayer
+      peer: null,
+      isHost: false,
+      roomCode: '',
+      hostRole: 'player', // 'player' | 'spectator'
+      connections: [], // host stores guest DataConnections
+      hostConn: null, // guest stores DataConnection to host
+      players: {} // id -> { id, name, avatar, score, depth, role, lastResult, answered }
+    };
+
+    const TIER_META = {
+      0: { label: 'NO MATCH • +0 PTS', color: '#64748b', depthGain: 0 },
+      1: { label: 'COMMON • +1 PT', color: '#94a3b8', depthGain: 80 },
+      2: { label: 'UNCOMMON • +2 PTS', color: '#34d399', depthGain: 220 },
+      3: { label: 'RARE • +3 PTS', color: '#38bdf8', depthGain: 450 },
+      4: { label: 'DEEP CUT • +4 PTS', color: '#c084fc', depthGain: 780 },
+      5: { label: 'ONE IN KRILLION • +5 PTS', color: '#fbbf24', depthGain: 1200 }
+    };
+
+    // ==========================================
+    // 6. UI HELPERS & NAVIGATION
+    // ==========================================
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+
+      const isMenu = screenId === 'screen-menu';
+      document.getElementById('home-btn').style.display = isMenu ? 'none' : 'inline-flex';
+      document.getElementById('depth-gauge').style.display = screenId === 'screen-game' ? 'flex' : 'none';
+
+      if (screenId !== 'screen-game') {
+        resetDiverToSurface();
+      }
+    }
+
+    function syncProfileFromInputs() {
+      const rawName = document.getElementById('player-name-input').value.trim();
+      state.name = rawName || 'Diver';
+      diverEmoji.textContent = state.avatar;
+      diverTag.textContent = `${state.name} • Surface (0m)`;
+    }
+
+    // Build Avatar Selector
+    const avatarGrid = document.getElementById('avatar-grid');
+    AVATARS.forEach((av, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'avatar-btn' + (idx === 0 ? ' selected' : '');
+      btn.innerHTML = `${av.emoji}<span>${av.name}</span>`;
+      btn.onclick = () => {
+        document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state.avatar = av.emoji;
+        syncProfileFromInputs();
+      };
+      avatarGrid.appendChild(btn);
+    });
+
+    document.getElementById('player-name-input').addEventListener('input', syncProfileFromInputs);
+
+    // Chip Group Helper
+    function bindChipGroup(containerId, callback) {
+      const container = document.getElementById(containerId);
+      container.querySelectorAll('.chip-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          container.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          callback(Number(btn.dataset.val));
         });
+      });
+    }
 
-        this.updateOceanVisuals(0);
+    bindChipGroup('sp-count-chips', val => { state.questionCount = val; });
+    bindChipGroup('sp-time-chips', val => { state.timeLimit = val; });
+    bindChipGroup('mp-count-chips', val => { state.questionCount = val; });
+    bindChipGroup('mp-time-chips', val => { state.timeLimit = val; });
+
+    // Sound Toggle
+    document.getElementById('sound-toggle-btn').addEventListener('click', (e) => {
+      soundEnabled = !soundEnabled;
+      e.target.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Muted';
+    });
+
+    // Return Home
+    function cleanupAndGoHome() {
+      clearInterval(state.timerInterval);
+      if (state.peer) {
+        try { state.peer.destroy(); } catch (e) {}
+        state.peer = null;
       }
+      state.connections = [];
+      state.hostConn = null;
+      state.players = {};
+      resetDiverToSurface();
+      showScreen('screen-menu');
+    }
 
-      checkInviteUrlParam() {
-        try {
-          const params = new URLSearchParams(window.location.search);
-          const roomParam = params.get('room');
-          if (roomParam) {
-            const cleanCode = roomParam.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
-            if (cleanCode.length === 5) {
-              document.getElementById('input-room-code').value = cleanCode;
-              this.toast(`Invite link detected for room ${cleanCode}! Enter your name & click Multiplayer.`, 'info');
-            }
+    document.getElementById('home-btn').addEventListener('click', cleanupAndGoHome);
+    document.getElementById('play-again-btn').addEventListener('click', cleanupAndGoHome);
+    document.getElementById('sp-back-btn').addEventListener('click', () => showScreen('screen-menu'));
+    document.getElementById('mp-entry-back-btn').addEventListener('click', () => showScreen('screen-menu'));
+
+    // Mode Selection
+    document.getElementById('btn-choose-single').addEventListener('click', () => {
+      syncProfileFromInputs();
+      state.mode = 'single';
+      showScreen('screen-single-setup');
+    });
+
+    document.getElementById('btn-choose-multi').addEventListener('click', () => {
+      syncProfileFromInputs();
+      state.mode = 'multi';
+      showScreen('screen-multi-entry');
+    });
+
+    // ==========================================
+    // 7. ANSWER EVALUATION ENGINE
+    // ==========================================
+    function normalizeText(str) {
+      return str
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, ' ');
+    }
+
+    function evaluateAnswer(questionObj, rawInput) {
+      const cleaned = normalizeText(rawInput);
+      if (!cleaned) return { tier: 0, points: 0, matched: '' };
+
+      // Check from rarest (5) down to common (1)
+      for (let tier = 5; tier >= 1; tier--) {
+        const list = questionObj.answers[tier] || [];
+        for (const candidate of list) {
+          const normCand = normalizeText(candidate);
+          if (cleaned === normCand || (cleaned.length >= 4 && normCand.includes(cleaned) && cleaned.length >= normCand.length - 2)) {
+            return { tier, points: tier, matched: candidate };
           }
-        } catch (e) {
-          // Ignore URL parsing issues in sandboxed frames
         }
       }
+      return { tier: 0, points: 0, matched: rawInput.trim() };
+    }
 
-      toast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        const el = document.createElement('div');
-        const colors = {
-          info: 'bg-slate-900/90 border-cyan-400/50 text-cyan-100',
-          success: 'bg-emerald-950/90 border-emerald-400/60 text-emerald-100',
-          warn: 'bg-amber-950/90 border-amber-400/60 text-amber-100',
-          error: 'bg-rose-950/90 border-rose-400/60 text-rose-100'
+    function pickRandomQuestions(count) {
+      const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, Math.min(count, shuffled.length));
+    }
+
+    // ==========================================
+    // 8. SINGLEPLAYER FLOW
+    // ==========================================
+    document.getElementById('sp-start-btn').addEventListener('click', () => {
+      syncProfileFromInputs();
+      state.mode = 'single';
+      state.questions = pickRandomQuestions(state.questionCount);
+      state.currentIndex = 0;
+      state.score = 0;
+      state.totalDepth = 0;
+      startQuestionRound();
+    });
+
+    function startQuestionRound() {
+      showScreen('screen-game');
+      resetDiverToSurface();
+
+      const q = state.questions[state.currentIndex];
+      state.answeredCurrent = false;
+      state.timeLeft = state.timeLimit;
+
+      document.getElementById('hud-q-counter').textContent = `Question ${state.currentIndex + 1} / ${state.questions.length}`;
+      document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
+      document.getElementById('q-category').textContent = q.category;
+      document.getElementById('q-prompt').textContent = q.prompt;
+
+      const isSpectator = state.mode === 'multi' && state.isHost && state.hostRole === 'spectator';
+      document.getElementById('answer-input-area').style.display = isSpectator ? 'none' : 'block';
+      document.getElementById('spectator-banner').style.display = isSpectator ? 'block' : 'none';
+      document.getElementById('waiting-others-banner').style.display = 'none';
+      document.getElementById('dive-result-panel').style.display = 'none';
+
+      const ansInput = document.getElementById('answer-input');
+      ansInput.value = '';
+      ansInput.disabled = false;
+      if (!isSpectator) setTimeout(() => ansInput.focus(), 60);
+
+      updateTimerUI();
+      clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(() => {
+        state.timeLeft -= 0.25;
+        updateTimerUI();
+        if (state.timeLeft <= 0) {
+          clearInterval(state.timerInterval);
+          handleRoundTimeout();
+        }
+      }, 250);
+    }
+
+    function updateTimerUI() {
+      const secs = Math.max(0, Math.ceil(state.timeLeft));
+      document.getElementById('hud-timer').textContent = `⏱️ ${secs}s`;
+      const pct = Math.max(0, (state.timeLeft / state.timeLimit) * 100);
+      const fill = document.getElementById('timer-bar-fill');
+      fill.style.width = `${pct}%`;
+      fill.style.background = pct < 28 ? 'linear-gradient(90deg, #f43f5e, #fb923c)' : 'linear-gradient(90deg, #34d399, #38bdf8)';
+    }
+
+    document.getElementById('answer-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (state.answeredCurrent) return;
+      const val = document.getElementById('answer-input').value.trim();
+      if (!val) return;
+      submitPlayerAnswer(val);
+    });
+
+    function submitPlayerAnswer(rawAnswer) {
+      state.answeredCurrent = true;
+      document.getElementById('answer-input').disabled = true;
+
+      const q = state.questions[state.currentIndex];
+      const evalRes = evaluateAnswer(q, rawAnswer);
+
+      if (state.mode === 'single') {
+        clearInterval(state.timerInterval);
+        state.score += evalRes.points;
+        state.totalDepth += TIER_META[evalRes.tier].depthGain;
+        document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
+        revealRoundResult(evalRes, rawAnswer);
+      } else {
+        // Multiplayer submission
+        document.getElementById('waiting-others-banner').style.display = 'block';
+        const payload = {
+          type: 'SUBMIT_ANSWER',
+          playerId: state.peer.id,
+          answer: rawAnswer,
+          tier: evalRes.tier,
+          points: evalRes.points
         };
-        el.className = `pointer-events-auto px-4 py-3 rounded-2xl border backdrop-blur-md shadow-xl text-xs sm:text-sm font-semibold transition-all duration-300 ${colors[type] || colors.info}`;
-        el.textContent = message;
-        container.appendChild(el);
-        setTimeout(() => {
-          el.style.opacity = '0';
-          el.style.transform = 'translateY(-8px)';
-          setTimeout(() => el.remove(), 300);
-        }, 3600);
-      }
-
-      toggleMute() {
-        this.audio.muted = !this.audio.muted;
-        document.getElementById('btn-mute').textContent = this.audio.muted ? '🔇' : '🔊';
-        this.toast(this.audio.muted ? 'Ocean audio muted' : 'Ocean audio enabled', 'info');
-      }
-
-      showView(viewId) {
-        const views = [
-          'view-menu',
-          'view-single-setup',
-          'view-multi-choice',
-          'view-multi-create',
-          'view-lobby',
-          'view-game',
-          'view-podium'
-        ];
-        views.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.classList.toggle('hidden', id !== viewId);
-        });
-      }
-
-      validateProfile() {
-        const raw = document.getElementById('input-player-name').value.trim();
-        if (!raw) {
-          this.toast('Please enter your Diver Callsign first!', 'warn');
-          document.getElementById('input-player-name').focus();
-          return false;
+        if (state.isHost) {
+          hostProcessSubmission(payload);
+        } else if (state.hostConn && state.hostConn.open) {
+          state.hostConn.send(payload);
         }
-        this.playerName = raw;
-        return true;
+      }
+    }
+
+    function handleRoundTimeout() {
+      if (state.mode === 'single') {
+        if (!state.answeredCurrent) {
+          state.answeredCurrent = true;
+          revealRoundResult({ tier: 0, points: 0, matched: '' }, '(Time Expired)');
+        }
+      } else if (state.isHost) {
+        // Host forces round reveal when timer hits zero
+        hostFinalizeRound();
+      }
+    }
+
+    function revealRoundResult(evalRes, submittedText) {
+      const meta = TIER_META[evalRes.tier];
+      playDiveSound(evalRes.tier);
+      triggerAvatarDive(evalRes.tier, state.totalDepth);
+
+      const panel = document.getElementById('dive-result-panel');
+      const badge = document.getElementById('result-tier-badge');
+      badge.textContent = meta.label;
+      badge.style.background = meta.color;
+
+      document.getElementById('result-answer-echo').textContent =
+        evalRes.tier > 0
+          ? `Your Answer: "${submittedText}"`
+          : `Answer: "${submittedText}" — Not in our real-world database!`;
+
+      document.getElementById('result-depth-msg').textContent =
+        evalRes.tier > 0
+          ? `Plunged ${meta.depthGain}m deep! Total expedition depth: ${state.totalDepth}m`
+          : `No depth gained this round. Total depth: ${state.totalDepth}m`;
+
+      // Show sample answers across tiers
+      const q = state.questions[state.currentIndex];
+      const samplesEl = document.getElementById('sample-answers');
+      samplesEl.innerHTML = '';
+      [1, 3, 5].forEach(t => {
+        const list = q.answers[t];
+        if (list && list.length) {
+          const pick = list[Math.floor(Math.random() * Math.min(4, list.length))];
+          const chip = document.createElement('span');
+          chip.className = 'sample-chip';
+          chip.style.borderColor = TIER_META[t].color;
+          chip.textContent = `${t === 1 ? 'Common' : t === 3 ? 'Rare' : 'One in Krillion'}: ${pick}`;
+          samplesEl.appendChild(chip);
+        }
+      });
+
+      const nextBtn = document.getElementById('next-q-btn');
+      if (state.mode === 'multi' && !state.isHost) {
+        nextBtn.style.display = 'none';
+      } else {
+        nextBtn.style.display = 'inline-block';
+        nextBtn.textContent = state.currentIndex + 1 >= state.questions.length ? '🏆 See Final Podium' : 'Next Question →';
       }
 
-      selectMode(target) {
-        if (!this.validateProfile()) return;
-        this.audio.playBubble(480, 0.12);
-        if (target === 'single') {
-          this.showView('view-single-setup');
+      panel.style.display = 'block';
+    }
+
+    document.getElementById('next-q-btn').addEventListener('click', () => {
+      if (state.mode === 'single') {
+        state.currentIndex++;
+        if (state.currentIndex >= state.questions.length) {
+          showFinalPodium([
+            { name: state.name, avatar: state.avatar, score: state.score, depth: state.totalDepth }
+          ]);
         } else {
-          this.showView('view-multi-choice');
+          startQuestionRound();
+        }
+      } else if (state.isHost) {
+        state.currentIndex++;
+        if (state.currentIndex >= state.questions.length) {
+          const rankings = getSortedMultiplayerPlayers();
+          broadcastToGuests({ type: 'GAME_OVER', rankings });
+          showFinalPodium(rankings);
+        } else {
+          hostStartNextQuestion();
         }
       }
+    });
 
-      setOption(prop, val, containerId) {
-        this[prop] = val;
-        this.audio.playBubble(540, 0.08);
-        const container = document.getElementById(containerId);
-        container.querySelectorAll('.opt-btn').forEach(btn => {
-          const isSelected = Number(btn.dataset.val) === val;
-          btn.className = isSelected
-            ? 'opt-btn py-3 rounded-xl font-bold border transition bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg'
-            : 'opt-btn py-3 rounded-xl font-bold border transition bg-slate-900/60 border-white/15 text-white hover:bg-white/10';
-        });
-      }
+    // ==========================================
+    // 9. PEERJS MULTIPLAYER (GITHUB PAGES READY)
+    // ==========================================
+    const ROOM_PREFIX = 'krillion-dive-2026-';
 
-      /**
-       * DYNAMIC DEPTH VISUALS (Shifts from sunlit turquoise surface down to pitch-black trench)
-       */
-      updateOceanVisuals(meters) {
-        this.depth = meters;
-        this.particles.depth = meters;
-
-        const root = document.documentElement;
-        const waves = document.getElementById('ocean-waves');
-        const rays = document.getElementById('sun-rays');
-        const hudText = document.getElementById('hud-depth-text');
-
-        let zoneLabel = 'Sunlit Surface';
-        let top = '#0ea5e9', mid = '#0284c7', bot = '#0369a1';
-
-        if (meters >= 6000) {
-          zoneLabel = 'Hadal Trench';
-          top = '#020617'; mid = '#030712'; bot = '#090d16';
-        } else if (meters >= 3500) {
-          zoneLabel = 'Abyssal Zone';
-          top = '#090d16'; mid = '#0f172a'; bot = '#1e1b4b';
-        } else if (meters >= 1000) {
-          zoneLabel = 'Midnight Zone';
-          top = '#0c4a6e'; mid = '#082f49'; bot = '#020617';
-        } else if (meters > 0) {
-          zoneLabel = 'Twilight Reef';
-          top = '#0284c7'; mid = '#0369a1'; bot = '#0c4a6e';
+    function getPeerConfig() {
+      return {
+        debug: 1,
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
         }
+      };
+    }
 
-        root.style.setProperty('--depth-top', top);
-        root.style.setProperty('--depth-mid', mid);
-        root.style.setProperty('--depth-bot', bot);
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
 
-        // Hide surface waves and sunbeams as player plunges below surface
-        const surfaceOpacity = Math.max(0, 1 - meters / 700);
-        waves.style.opacity = surfaceOpacity;
-        waves.style.transform = `translateY(${-Math.min(120, meters * 0.25)}px)`;
-        rays.style.opacity = Math.max(0, 1 - meters / 1400);
-
-        hudText.textContent = `${meters.toLocaleString()}m • ${zoneLabel}`;
-      }
-
-      /**
-       * FUZZY & ALIAS ANSWER EVALUATION ENGINE
-       */
-      evaluateAnswer(rawInput, questionObj) {
-        const clean = rawInput
-          .toLowerCase()
-          .trim()
-          .replace(/^(the|a|an)\s+/i, '')
-          .replace(/[^a-z0-9\s]/g, '')
-          .replace(/\s+/g, ' ');
-
-        if (!clean) return RARITY_TIERS.miss;
-
-        // Check from rarest tier down to common so players get maximum credit
-        const order = ['krillion', 'deepcut', 'rare', 'uncommon', 'common'];
-        for (const tierKey of order) {
-          const validList = questionObj.tiers[tierKey] || [];
-          for (const candidate of validList) {
-            if (clean === candidate || (clean.length >= 4 && candidate.includes(clean) && clean.length >= candidate.length - 3)) {
-              return RARITY_TIERS[tierKey];
-            }
-          }
+    // Check URL ?room=CODE parameter on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+      if (roomParam) {
+        const cleanCode = roomParam.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        if (cleanCode) {
+          document.getElementById('join-code-input').value = cleanCode;
+          showScreen('screen-multi-entry');
+          showToast(`Invite code ${cleanCode} loaded! Enter your name & click Join.`);
         }
-        return RARITY_TIERS.miss;
       }
+    });
 
-      pickShuffledQuestions(count) {
-        const pool = [...QUESTION_BANK];
-        for (let i = pool.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        const selected = [];
-        for (let i = 0; i < count; i++) {
-          selected.push(pool[i % pool.length]);
-        }
-        return selected;
-      }
+    // Create Room (Host)
+    document.getElementById('mp-create-btn').addEventListener('click', () => {
+      syncProfileFromInputs();
+      state.isHost = true;
+      state.hostRole = 'player';
+      state.roomCode = generateRoomCode();
+      state.connections = [];
+      state.players = {};
 
-      /* ======================================================================
-         SINGLEPLAYER GAMEPLAY FLOW
-         ====================================================================== */
-      startSingleplayer() {
-        this.mode = 'single';
-        this.questions = this.pickShuffledQuestions(this.singleQuestions);
-        this.totalTime = this.singleTime;
-        this.currentIndex = 0;
-        this.score = 0;
-        this.updateOceanVisuals(0);
-        this.audio.playBubble(600, 0.2);
-        this.showView('view-game');
-        this.loadQuestion();
-      }
+      showScreen('screen-lobby');
+      document.getElementById('lobby-room-code').textContent = state.roomCode;
+      document.getElementById('host-role-box').style.display = 'block';
+      document.getElementById('lobby-start-btn').style.display = 'block';
+      document.getElementById('guest-wait-msg').style.display = 'none';
+      document.getElementById('lobby-settings-summary').textContent = `${state.questionCount} Qs • ${state.timeLimit}s`;
+      document.getElementById('relay-dot').classList.remove('online');
+      document.getElementById('relay-status-text').textContent = 'Registering room on Ocean Relay...';
 
-      /* ======================================================================
-         MULTIPLAYER PEERJS ENGINE (Resilient STUN + Auto-Retry + Sync)
-         ====================================================================== */
-      getPeerConfig() {
-        return {
-          debug: 1,
-          config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' },
-              { urls: 'stun:global.stun.twilio.com:3478' }
-            ]
-          }
+      const fullPeerId = ROOM_PREFIX + state.roomCode;
+      state.peer = new Peer(fullPeerId, getPeerConfig());
+
+      state.peer.on('open', (id) => {
+        document.getElementById('relay-dot').classList.add('online');
+        document.getElementById('relay-status-text').textContent = 'Live & Discoverable — Share code with friends!';
+
+        state.players[id] = {
+          id,
+          name: state.name,
+          avatar: state.avatar,
+          score: 0,
+          depth: 0,
+          role: state.hostRole,
+          answered: false,
+          lastResult: null
         };
+        renderLobbyPlayers();
+      });
+
+      state.peer.on('connection', (conn) => {
+        state.connections.push(conn);
+        conn.on('data', (data) => handleHostReceivedData(conn, data));
+        conn.on('close', () => {
+          delete state.players[conn.peer];
+          state.connections = state.connections.filter(c => c !== conn);
+          broadcastLobbyState();
+        });
+      });
+
+      state.peer.on('error', (err) => {
+        console.error(err);
+        showToast('Relay notice: ' + err.type);
+      });
+    });
+
+    // Host Role Toggle (Player vs Spectator)
+    document.getElementById('role-player-btn').addEventListener('click', () => {
+      state.hostRole = 'player';
+      document.getElementById('role-player-btn').classList.add('active');
+      document.getElementById('role-spectator-btn').classList.remove('active');
+      if (state.peer && state.players[state.peer.id]) {
+        state.players[state.peer.id].role = 'player';
+        broadcastLobbyState();
+      }
+    });
+
+    document.getElementById('role-spectator-btn').addEventListener('click', () => {
+      state.hostRole = 'spectator';
+      document.getElementById('role-spectator-btn').classList.add('active');
+      document.getElementById('role-player-btn').classList.remove('active');
+      if (state.peer && state.players[state.peer.id]) {
+        state.players[state.peer.id].role = 'spectator';
+        broadcastLobbyState();
+      }
+    });
+
+    // Copy Code & Copy Invite Link
+    document.getElementById('copy-code-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(state.roomCode);
+      showToast(`Room code ${state.roomCode} copied!`);
+    });
+
+    document.getElementById('copy-link-btn').addEventListener('click', () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('room', state.roomCode);
+      navigator.clipboard.writeText(url.toString());
+      showToast('Invite link copied to clipboard!');
+    });
+
+    // Join Room (Guest) with Retry Logic
+    document.getElementById('mp-join-btn').addEventListener('click', () => {
+      syncProfileFromInputs();
+      const rawCode = document.getElementById('join-code-input').value;
+      const cleanCode = rawCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (cleanCode.length < 4) {
+        showToast('Please enter a valid 5-character room code.');
+        return;
       }
 
-      generateRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 5; i++) {
-          code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-      }
+      state.isHost = false;
+      state.roomCode = cleanCode;
 
-      setRelayStatus(state, text) {
-        const bar = document.getElementById('relay-status-bar');
-        const dot = document.getElementById('relay-status-dot');
-        const label = document.getElementById('relay-status-text');
-        label.textContent = text;
+      showScreen('screen-lobby');
+      document.getElementById('lobby-room-code').textContent = state.roomCode;
+      document.getElementById('host-role-box').style.display = 'none';
+      document.getElementById('lobby-start-btn').style.display = 'none';
+      document.getElementById('guest-wait-msg').style.display = 'block';
+      document.getElementById('relay-dot').classList.remove('online');
+      document.getElementById('relay-status-text').textContent = 'Connecting to host room...';
 
-        if (state === 'online') {
-          bar.className = 'mb-5 px-4 py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-emerald-100';
-          dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-        } else if (state === 'error') {
-          bar.className = 'mb-5 px-4 py-2.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-rose-100';
-          dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-400';
+      state.peer = new Peer(getPeerConfig());
+      state.peer.on('open', () => {
+        attemptConnectToHost(1);
+      });
+
+      state.peer.on('error', (err) => {
+        if (err.type === 'peer-unavailable') {
+          showToast('Room not found yet — retrying...');
         } else {
-          bar.className = 'mb-5 px-4 py-2.5 rounded-2xl bg-amber-500/20 border border-amber-300/40 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-amber-100';
-          dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
+          showToast('Connection error: ' + err.type);
         }
-      }
+      });
+    });
 
-      createMultiplayerRoom(attempt = 1) {
-        if (!this.validateProfile()) return;
-        this.destroyPeer();
+    function attemptConnectToHost(attempt) {
+      const targetId = ROOM_PREFIX + state.roomCode;
+      const conn = state.peer.connect(targetId, { reliable: true });
+      state.hostConn = conn;
 
-        this.mode = 'multi';
-        this.isHost = true;
-        this.hostRole = 'player';
-        this.roomCode = this.generateRoomCode();
-        this.roster.clear();
-        this.guestConns.clear();
+      let opened = false;
+      const timeout = setTimeout(() => {
+        if (!opened && attempt < 3) {
+          try { conn.close(); } catch (e) {}
+          document.getElementById('relay-status-text').textContent = `Retrying connection (${attempt + 1}/3)...`;
+          attemptConnectToHost(attempt + 1);
+        } else if (!opened) {
+          document.getElementById('relay-status-text').textContent = 'Could not reach room. Check code & try again.';
+        }
+      }, 3200);
 
-        document.getElementById('lobby-room-code').textContent = this.roomCode;
-        document.getElementById('lobby-q-count').textContent = this.multiQuestions;
-        document.getElementById('lobby-t-count').textContent = `${this.multiTime}s`;
-        document.getElementById('host-role-box').classList.remove('hidden');
-        document.getElementById('btn-host-start').classList.remove('hidden');
-        document.getElementById('guest-waiting-msg').classList.add('hidden');
-        this.setRelayStatus('connecting', `Connecting to Ocean Relay (Attempt ${attempt}/3)...`);
+      conn.on('open', () => {
+        opened = true;
+        clearTimeout(timeout);
+        document.getElementById('relay-dot').classList.add('online');
+        document.getElementById('relay-status-text').textContent = 'Connected to Host Crew!';
+        conn.send({
+          type: 'JOIN_REQUEST',
+          player: {
+            id: state.peer.id,
+            name: state.name,
+            avatar: state.avatar,
+            role: 'player'
+          }
+        });
+      });
 
-        this.roster.set(this.playerId, {
-          id: this.playerId,
-          name: this.playerName,
-          avatar: this.avatar,
-          role: 'player',
-          isHost: true,
+      conn.on('data', (data) => handleGuestReceivedData(data));
+      conn.on('close', () => {
+        showToast('Disconnected from host.');
+        cleanupAndGoHome();
+      });
+    }
+
+    function handleHostReceivedData(conn, data) {
+      if (data.type === 'JOIN_REQUEST') {
+        state.players[data.player.id] = {
+          ...data.player,
           score: 0,
           depth: 0,
           answered: false,
           lastResult: null
-        });
-        this.renderLobbyRoster();
-        this.showView('view-lobby');
-
-        const peerId = `krillion-room-${this.roomCode}`;
-        this.peer = new Peer(peerId, this.getPeerConfig());
-
-        this.peer.on('open', () => {
-          this.setRelayStatus('online', 'Connected to Ocean Relay — Room is live & discoverable!');
-          this.toast(`Room ${this.roomCode} created! Share the code or invite link.`, 'success');
-        });
-
-        this.peer.on('connection', conn => {
-          this.handleIncomingGuest(conn);
-        });
-
-        this.peer.on('error', err => {
-          if (attempt < 3) {
-            setTimeout(() => this.createMultiplayerRoom(attempt + 1), 900 * attempt);
-          } else {
-            this.setRelayStatus('error', `Relay error (${err.type}). Check internet connection and try again.`);
-          }
-        });
-      }
-
-      handleIncomingGuest(conn) {
-        conn.on('open', () => {
-          conn.on('data', msg => {
-            if (!msg || !msg.type) return;
-
-            if (msg.type === 'JOIN') {
-              this.guestConns.set(msg.player.id, conn);
-              this.roster.set(msg.player.id, {
-                id: msg.player.id,
-                name: msg.player.name,
-                avatar: msg.player.avatar,
-                role: 'player',
-                isHost: false,
-                score: 0,
-                depth: 0,
-                answered: false,
-                lastResult: null
-              });
-              this.toast(`${msg.player.avatar.emoji} ${msg.player.name} joined the crew!`, 'success');
-              this.broadcastLobbyState();
-            } else if (msg.type === 'SUBMIT_ANSWER') {
-              const p = this.roster.get(msg.playerId);
-              if (p && !p.answered) {
-                const q = this.questions[this.currentIndex];
-                const tier = this.evaluateAnswer(msg.answer, q);
-                p.answered = true;
-                p.score += tier.points;
-                p.depth += tier.depthGain;
-                p.lastResult = { answer: msg.answer, tier };
-                this.checkAllAnsweredHost();
-              }
-            }
-          });
-        });
-
-        conn.on('close', () => {
-          for (const [pid, c] of this.guestConns.entries()) {
-            if (c === conn) {
-              this.guestConns.delete(pid);
-              this.roster.delete(pid);
-              this.broadcastLobbyState();
-              break;
-            }
-          }
-        });
-      }
-
-      broadcastToGuests(payload) {
-        for (const conn of this.guestConns.values()) {
-          if (conn && conn.open) {
-            conn.send(payload);
-          }
-        }
-      }
-
-      broadcastLobbyState() {
-        const list = Array.from(this.roster.values());
-        this.renderLobbyRoster();
-        this.broadcastToGuests({
-          type: 'LOBBY_STATE',
-          roomCode: this.roomCode,
-          questionsCount: this.multiQuestions,
-          timeLimit: this.multiTime,
-          roster: list
-        });
-      }
-
-      setHostRole(role) {
-        if (!this.isHost) return;
-        this.hostRole = role;
-        const me = this.roster.get(this.playerId);
-        if (me) me.role = role;
-
-        const btnP = document.getElementById('btn-role-player');
-        const btnS = document.getElementById('btn-role-spectator');
-        if (role === 'player') {
-          btnP.className = 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition bg-emerald-500 text-slate-950 border-emerald-300';
-          btnS.className = 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition bg-slate-900/70 text-slate-200 border-white/15';
-        } else {
-          btnS.className = 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition bg-indigo-500 text-white border-indigo-300';
-          btnP.className = 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition bg-slate-900/70 text-slate-200 border-white/15';
-        }
-        this.broadcastLobbyState();
-      }
-
-      joinMultiplayerRoom(attempt = 1) {
-        if (!this.validateProfile()) return;
-        const rawCode = document.getElementById('input-room-code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (rawCode.length !== 5) {
-          this.toast('Please enter a valid 5-character Room Code!', 'warn');
-          return;
-        }
-
-        this.destroyPeer();
-        this.mode = 'multi';
-        this.isHost = false;
-        this.roomCode = rawCode;
-
-        const joinBtn = document.getElementById('btn-join-room');
-        joinBtn.disabled = true;
-        joinBtn.textContent = `Connecting (${attempt}/3)...`;
-
-        this.peer = new Peer(undefined, this.getPeerConfig());
-
-        this.peer.on('open', () => {
-          const targetId = `krillion-room-${this.roomCode}`;
-          const conn = this.peer.connect(targetId, { reliable: true });
-          this.hostConn = conn;
-
-          const timeout = setTimeout(() => {
-            if (!conn.open) {
-              conn.close();
-              if (attempt < 3) {
-                this.joinMultiplayerRoom(attempt + 1);
-              } else {
-                joinBtn.disabled = false;
-                joinBtn.textContent = 'Join Room';
-                this.toast(`Could not find room "${this.roomCode}". Verify the host is in the lobby!`, 'error');
-              }
-            }
-          }, 4200);
-
-          conn.on('open', () => {
-            clearTimeout(timeout);
-            joinBtn.disabled = false;
-            joinBtn.textContent = 'Join Room';
-
-            document.getElementById('lobby-room-code').textContent = this.roomCode;
-            document.getElementById('host-role-box').classList.add('hidden');
-            document.getElementById('btn-host-start').classList.add('hidden');
-            document.getElementById('guest-waiting-msg').classList.remove('hidden');
-            this.setRelayStatus('online', `Connected to Room ${this.roomCode}!`);
-            this.showView('view-lobby');
-
-            conn.send({
-              type: 'JOIN',
-              player: {
-                id: this.playerId,
-                name: this.playerName,
-                avatar: this.avatar
-              }
-            });
-          });
-
-          conn.on('data', msg => this.handleHostMessage(msg));
-          conn.on('close', () => {
-            this.toast('Disconnected from host room.', 'warn');
-            this.returnToMenu();
-          });
-        });
-
-        this.peer.on('error', () => {
-          if (attempt < 3) {
-            setTimeout(() => this.joinMultiplayerRoom(attempt + 1), 900 * attempt);
-          } else {
-            joinBtn.disabled = false;
-            joinBtn.textContent = 'Join Room';
-            this.toast(`Unable to reach room "${this.roomCode}".`, 'error');
-          }
-        });
-      }
-
-      handleHostMessage(msg) {
-        if (!msg || !msg.type) return;
-
-        if (msg.type === 'LOBBY_STATE') {
-          this.multiQuestions = msg.questionsCount;
-          this.multiTime = msg.timeLimit;
-          document.getElementById('lobby-q-count').textContent = msg.questionsCount;
-          document.getElementById('lobby-t-count').textContent = `${msg.timeLimit}s`;
-          this.roster.clear();
-          msg.roster.forEach(p => this.roster.set(p.id, p));
-          this.renderLobbyRoster();
-        } else if (msg.type === 'START_GAME') {
-          this.questions = msg.questions;
-          this.totalTime = msg.timeLimit;
-          this.currentIndex = 0;
-          this.score = 0;
-          this.updateOceanVisuals(0);
-          this.showView('view-game');
-          this.loadQuestion();
-        } else if (msg.type === 'ROUND_RESULTS') {
-          this.roster.clear();
-          msg.roster.forEach(p => this.roster.set(p.id, p));
-          const me = this.roster.get(this.playerId);
-          if (me) {
-            this.score = me.score;
-            this.showRoundResult(me.lastResult ? me.lastResult.tier : RARITY_TIERS.miss, me.depth);
-          }
-        } else if (msg.type === 'NEXT_QUESTION') {
-          this.currentIndex = msg.index;
-          this.loadQuestion();
-        } else if (msg.type === 'GAME_OVER') {
-          this.roster.clear();
-          msg.roster.forEach(p => this.roster.set(p.id, p));
-          this.showPodium();
-        }
-      }
-
-      renderLobbyRoster() {
-        const container = document.getElementById('lobby-roster');
-        const list = Array.from(this.roster.values());
-        document.getElementById('lobby-player-count').textContent = list.length;
-
-        container.innerHTML = '';
-        list.forEach(p => {
-          const card = document.createElement('div');
-          card.className = 'bg-slate-950/60 rounded-2xl p-3 border border-white/15 flex items-center gap-3';
-          card.innerHTML = `
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center text-2xl">
-              ${p.avatar.emoji}
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="font-bold text-sm text-white truncate">
-                ${this.escapeHtml(p.name)} ${p.id === this.playerId ? '(You)' : ''}
-              </div>
-              <div class="text-[11px] font-semibold ${p.role === 'spectator' ? 'text-indigo-300' : 'text-emerald-300'}">
-                ${p.isHost ? '👑 Host • ' : ''}${p.role === 'spectator' ? '🔭 Spectator' : '🤿 Diver'}
-              </div>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-      }
-
-      hostStartGame() {
-        if (!this.isHost) return;
-        const activePlayers = Array.from(this.roster.values()).filter(p => p.role === 'player');
-        if (activePlayers.length === 0) {
-          this.toast('At least 1 active Diver is needed to start!', 'warn');
-          return;
-        }
-
-        this.questions = this.pickShuffledQuestions(this.multiQuestions);
-        this.totalTime = this.multiTime;
-        this.currentIndex = 0;
-        this.score = 0;
-
-        this.roster.forEach(p => {
-          p.score = 0;
-          p.depth = 0;
-          p.answered = false;
-          p.lastResult = null;
-        });
-
-        this.broadcastToGuests({
-          type: 'START_GAME',
-          questions: this.questions,
-          timeLimit: this.totalTime
-        });
-
-        this.updateOceanVisuals(0);
-        this.showView('view-game');
-        this.loadQuestion();
-      }
-
-      /* ======================================================================
-         CORE QUESTION & DIVE ROUND MECHANICS
-         ====================================================================== */
-      loadQuestion() {
-        clearInterval(this.timerInterval);
-        this.hasSubmitted = false;
-        this.timeLeft = this.totalTime;
-
-        const q = this.questions[this.currentIndex];
-        document.getElementById('game-q-badge').textContent = `Question ${this.currentIndex + 1} / ${this.questions.length}`;
-        document.getElementById('game-category-badge').textContent = q.category;
-        document.getElementById('game-question-text').textContent = q.prompt;
-        document.getElementById('game-score-display').textContent = `${this.score} pts`;
-
-        document.getElementById('round-result-card').classList.add('hidden');
-        document.getElementById('submitted-banner').classList.add('hidden');
-
-        const isSpectator = this.mode === 'multi' && this.isHost && this.hostRole === 'spectator';
-        const form = document.getElementById('answer-form');
-        const specBanner = document.getElementById('spectator-banner');
-
-        if (isSpectator) {
-          form.classList.add('hidden');
-          specBanner.classList.remove('hidden');
-        } else {
-          form.classList.remove('hidden');
-          specBanner.classList.add('hidden');
-          const inp = document.getElementById('input-answer');
-          inp.value = '';
-          inp.disabled = false;
-          document.getElementById('btn-submit-answer').disabled = false;
-          setTimeout(() => inp.focus(), 60);
-        }
-
-        if (this.mode === 'multi' && this.isHost) {
-          this.roster.forEach(p => {
-            p.answered = p.role === 'spectator';
-            p.lastResult = null;
-          });
-        }
-
-        this.updateTimerUI();
-        this.timerInterval = setInterval(() => {
-          this.timeLeft--;
-          this.updateTimerUI();
-
-          if (this.timeLeft <= 5 && this.timeLeft > 0) {
-            this.audio.playTick(true);
-          }
-
-          if (this.timeLeft <= 0) {
-            clearInterval(this.timerInterval);
-            this.handleTimeExpired();
-          }
-        }, 1000);
-      }
-
-      updateTimerUI() {
-        document.getElementById('game-timer-text').textContent = Math.max(0, this.timeLeft);
-        const pct = Math.max(0, (this.timeLeft / this.totalTime) * 100);
-        document.getElementById('game-timer-bar').style.width = `${pct}%`;
-      }
-
-      submitAnswer(event) {
-        if (event) event.preventDefault();
-        if (this.hasSubmitted) return;
-
-        const inp = document.getElementById('input-answer');
-        const rawAnswer = inp.value.trim();
-        if (!rawAnswer) {
-          this.toast('Type an answer before diving!', 'warn');
-          return;
-        }
-
-        this.hasSubmitted = true;
-        inp.disabled = true;
-        document.getElementById('btn-submit-answer').disabled = true;
-        this.audio.playBubble(580, 0.14);
-
-        const q = this.questions[this.currentIndex];
-
-        if (this.mode === 'single') {
-          clearInterval(this.timerInterval);
-          const tier = this.evaluateAnswer(rawAnswer, q);
-          this.score += tier.points;
-          const newDepth = this.depth + tier.depthGain;
-          this.showRoundResult(tier, newDepth);
-        } else {
-          document.getElementById('submitted-banner').classList.remove('hidden');
-          if (this.isHost) {
-            const me = this.roster.get(this.playerId);
-            const tier = this.evaluateAnswer(rawAnswer, q);
-            me.answered = true;
-            me.score += tier.points;
-            me.depth += tier.depthGain;
-            me.lastResult = { answer: rawAnswer, tier };
-            this.checkAllAnsweredHost();
-          } else if (this.hostConn && this.hostConn.open) {
-            this.hostConn.send({
-              type: 'SUBMIT_ANSWER',
-              playerId: this.playerId,
-              answer: rawAnswer
-            });
-          }
-        }
-      }
-
-      handleTimeExpired() {
-        const q = this.questions[this.currentIndex];
-        if (this.mode === 'single') {
-          if (!this.hasSubmitted) {
-            this.hasSubmitted = true;
-            this.showRoundResult(RARITY_TIERS.miss, this.depth);
-          }
-        } else if (this.isHost) {
-          // Finalize any unanswered players as miss
-          this.roster.forEach(p => {
-            if (!p.answered && p.role === 'player') {
-              p.answered = true;
-              p.lastResult = { answer: '(No answer)', tier: RARITY_TIERS.miss };
-            }
-          });
-          this.finalizeMultiplayerRound();
-        }
-      }
-
-      checkAllAnsweredHost() {
-        const allDone = Array.from(this.roster.values()).every(p => p.answered || p.role === 'spectator');
-        if (allDone) {
-          clearInterval(this.timerInterval);
-          this.finalizeMultiplayerRound();
-        }
-      }
-
-      finalizeMultiplayerRound() {
-        clearInterval(this.timerInterval);
-        const list = Array.from(this.roster.values());
-        this.broadcastToGuests({
-          type: 'ROUND_RESULTS',
-          roster: list
-        });
-        const me = this.roster.get(this.playerId);
-        if (me) {
-          this.score = me.score;
-          this.showRoundResult(
-            me.role === 'spectator' ? RARITY_TIERS.rare : (me.lastResult ? me.lastResult.tier : RARITY_TIERS.miss),
-            me.depth
-          );
-        }
-      }
-
-      showRoundResult(tier, newDepth) {
-        clearInterval(this.timerInterval);
-        const q = this.questions[this.currentIndex];
-
-        // Trigger Dive Animation & Ocean Depth Descent
-        this.updateOceanVisuals(newDepth);
-        if (tier.points > 0) {
-          this.particles.triggerDiveSurge(tier.points * 0.55);
-        }
-        this.audio.playDive(tier.key);
-
-        document.getElementById('game-score-display').textContent = `${this.score} pts`;
-        document.getElementById('submitted-banner').classList.add('hidden');
-
-        const resultCard = document.getElementById('round-result-card');
-        resultCard.classList.remove('hidden');
-
-        const diverIcon = document.getElementById('result-diver-icon');
-        diverIcon.textContent = this.avatar.emoji;
-        diverIcon.classList.remove('dive-plunge-anim');
-        void diverIcon.offsetWidth; // reflow
-        diverIcon.classList.add('dive-plunge-anim');
-
-        const badge = document.getElementById('result-tier-badge');
-        badge.className = `inline-block px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-widest text-white border shadow-lg ${tier.badgeClass}`;
-        badge.textContent = `${tier.label} • +${tier.points} PT${tier.points === 1 ? '' : 'S'}`;
-
-        document.getElementById('result-headline').textContent = tier.headline;
-        document.getElementById('result-fact-text').textContent = q.fact;
-
-        // Render 5-Tier Sample Breakdown
-        const examplesBox = document.getElementById('result-tier-examples');
-        const tierOrder = [
-          { key: 'common', label: 'Common (+1)', color: 'border-slate-400/40 text-slate-200' },
-          { key: 'uncommon', label: 'Uncommon (+2)', color: 'border-emerald-400/40 text-emerald-200' },
-          { key: 'rare', label: 'Rare (+3)', color: 'border-sky-400/40 text-sky-200' },
-          { key: 'deepcut', label: 'Deep Cut (+4)', color: 'border-purple-400/40 text-purple-200' },
-          { key: 'krillion', label: 'One in Krillion (+5)', color: 'border-amber-400/60 text-amber-200' }
-        ];
-        examplesBox.innerHTML = tierOrder
-          .map(
-            t => `
-            <div class="p-2.5 rounded-xl bg-slate-900/80 border ${t.color}">
-              <div class="font-extrabold text-[10px] uppercase tracking-wider mb-0.5">${t.label}</div>
-              <div class="font-semibold text-white">${this.escapeHtml(q.samples[t.key])}</div>
-            </div>
-          `
-          )
-          .join('');
-
-        // Multiplayer Crew Standings for this round
-        const multiBox = document.getElementById('round-multi-standings');
-        const nextBtn = document.getElementById('btn-next-question');
-
-        if (this.mode === 'multi') {
-          multiBox.classList.remove('hidden');
-          const multiList = document.getElementById('round-multi-list');
-          const players = Array.from(this.roster.values())
-            .filter(p => p.role === 'player')
-            .sort((a, b) => b.score - a.score || b.depth - a.depth);
-
-          multiList.innerHTML = players
-            .map(p => {
-              const tLabel = p.lastResult && p.lastResult.tier ? p.lastResult.tier.label : 'Drift';
-              return `
-                <div class="px-3 py-2 rounded-xl bg-slate-900/80 border border-white/10 flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-2 truncate">
-                    <span class="text-base">${p.avatar.emoji}</span>
-                    <span class="font-bold text-white truncate">${this.escapeHtml(p.name)}</span>
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-cyan-200">${tLabel}</span>
-                  </div>
-                  <div class="font-extrabold text-amber-300 shrink-0">${p.score} pts • ${p.depth}m</div>
-                </div>
-              `;
-            })
-            .join('');
-
-          if (this.isHost) {
-            nextBtn.classList.remove('hidden');
-            nextBtn.textContent =
-              this.currentIndex + 1 >= this.questions.length ? '🏆 View Final Podium' : 'Next Question →';
-          } else {
-            nextBtn.classList.add('hidden');
-          }
-        } else {
-          multiBox.classList.add('hidden');
-          nextBtn.classList.remove('hidden');
-          nextBtn.textContent =
-            this.currentIndex + 1 >= this.questions.length ? '🏆 View Final Score' : 'Next Question →';
-        }
-      }
-
-      nextQuestion() {
-        const nextIdx = this.currentIndex + 1;
-        if (nextIdx >= this.questions.length) {
-          if (this.mode === 'multi' && this.isHost) {
-            this.broadcastToGuests({
-              type: 'GAME_OVER',
-              roster: Array.from(this.roster.values())
-            });
-          }
-          this.showPodium();
-          return;
-        }
-
-        this.currentIndex = nextIdx;
-        if (this.mode === 'multi' && this.isHost) {
-          this.broadcastToGuests({
-            type: 'NEXT_QUESTION',
-            index: this.currentIndex
-          });
-        }
-        this.loadQuestion();
-      }
-
-      /* ======================================================================
-         FINAL PODIUM (TOP 1, 2, 3 + REST OF PLAYERS)
-         ====================================================================== */
-      showPodium() {
-        clearInterval(this.timerInterval);
-        this.audio.playDive('krillion');
-        this.showView('view-podium');
-
-        let rankings = [];
-        if (this.mode === 'single') {
-          rankings = [
-            {
-              id: this.playerId,
-              name: this.playerName,
-              avatar: this.avatar,
-              score: this.score,
-              depth: this.depth
-            }
-          ];
-          document.getElementById('podium-subtitle').textContent = `You plunged ${this.depth.toLocaleString()}m into the ocean!`;
-        } else {
-          rankings = Array.from(this.roster.values())
-            .filter(p => p.role === 'player')
-            .sort((a, b) => b.score - a.score || b.depth - a.depth);
-          document.getElementById('podium-subtitle').textContent = 'Final Crew Standings & Maximum Dive Depths';
-        }
-
-        const top3 = rankings.slice(0, 3);
-        const rest = rankings.slice(3);
-
-        // Order visually for desktop podium: #2 (Silver), #1 (Gold), #3 (Bronze)
-        const podiumOrder = [];
-        if (top3[1]) podiumOrder.push({ player: top3[1], rank: 2, height: 'sm:h-44', medal: '🥈', border: 'border-slate-300/60 bg-slate-800/75' });
-        if (top3[0]) podiumOrder.push({ player: top3[0], rank: 1, height: 'sm:h-56', medal: '🥇', border: 'border-amber-300 bg-gradient-to-b from-amber-500/35 to-slate-900/85 shadow-2xl shadow-amber-500/20' });
-        if (top3[2]) podiumOrder.push({ player: top3[2], rank: 3, height: 'sm:h-36', medal: '🥉', border: 'border-orange-400/50 bg-orange-950/50' });
-
-        const podiumContainer = document.getElementById('podium-top3');
-        podiumContainer.innerHTML = podiumOrder
-          .map(
-            item => `
-            <div class="rounded-3xl p-4 border-2 ${item.border} ${item.height} flex flex-col items-center justify-center transition transform hover:scale-105">
-              <div class="text-3xl mb-1">${item.medal}</div>
-              <div class="text-4xl mb-1">${item.player.avatar.emoji}</div>
-              <div class="font-display font-bold text-base sm:text-lg text-white truncate max-w-full">
-                #${item.rank} ${this.escapeHtml(item.player.name)}
-              </div>
-              <div class="font-extrabold text-amber-300 text-sm">${item.player.score} pts</div>
-              <div class="text-[11px] text-cyan-200/85">${item.player.depth.toLocaleString()}m deep</div>
-            </div>
-          `
-          )
-          .join('');
-
-        const restContainer = document.getElementById('podium-rest-container');
-        const restList = document.getElementById('podium-rest-list');
-        if (rest.length > 0) {
-          restContainer.classList.remove('hidden');
-          restList.innerHTML = rest
-            .map(
-              (p, idx) => `
-              <div class="px-4 py-3 rounded-2xl bg-slate-950/60 border border-white/10 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <span class="font-display font-bold text-cyan-300">#${idx + 4}</span>
-                  <span class="text-xl">${p.avatar.emoji}</span>
-                  <span class="font-bold text-white">${this.escapeHtml(p.name)}</span>
-                </div>
-                <div class="text-sm font-extrabold text-amber-300">${p.score} pts • ${p.depth.toLocaleString()}m</div>
-              </div>
-            `
-            )
-            .join('');
-        } else {
-          restContainer.classList.add('hidden');
-        }
-      }
-
-      /* ======================================================================
-         SHARE, SOURCE CODE COPY & CLEANUP UTILITIES
-         ====================================================================== */
-      copyRoomCode() {
-        const temp = document.createElement('textarea');
-        temp.value = this.roomCode;
-        document.body.appendChild(temp);
-        temp.select();
-        document.execCommand('copy');
-        document.body.removeChild(temp);
-        this.toast(`Room code "${this.roomCode}" copied!`, 'success');
-      }
-
-      copyInviteLink() {
-        const url = new URL(window.location.href);
-        url.searchParams.set('room', this.roomCode);
-        const shareUrl = url.toString();
-
-        const temp = document.createElement('textarea');
-        temp.value = shareUrl;
-        document.body.appendChild(temp);
-        temp.select();
-        document.execCommand('copy');
-        document.body.removeChild(temp);
-        this.toast('Invite link copied! Friends will auto-fill the room code.', 'success');
-      }
-
-      getCleanStandaloneHtml() {
-        const clone = document.documentElement.cloneNode(true);
-        // Reset dynamic UI state in cloned DOM so copied HTML is pristine
-        const modal = clone.querySelector('#source-modal');
-        if (modal) {
-          modal.classList.add('hidden');
-          modal.classList.remove('flex');
-        }
-        const toasts = clone.querySelector('#toast-container');
-        if (toasts) toasts.innerHTML = '';
-        return '<!DOCTYPE html>\n' + clone.outerHTML;
-      }
-
-      copyFullSourceCode() {
-        try {
-          const fullHtml = this.getCleanStandaloneHtml();
-          const temp = document.createElement('textarea');
-          temp.value = fullHtml;
-          temp.style.position = 'fixed';
-          temp.style.opacity = '0';
-          document.body.appendChild(temp);
-          temp.focus();
-          temp.select();
-          const ok = document.execCommand('copy');
-          document.body.removeChild(temp);
-
-          if (ok) {
-            this.toast('Full index.html code copied! Ready to paste into GitHub.', 'success');
-          } else {
-            this.openSourceModal();
-          }
-        } catch (err) {
-          this.openSourceModal();
-        }
-      }
-
-      openSourceModal() {
-        const modal = document.getElementById('source-modal');
-        const textarea = document.getElementById('source-textarea');
-        textarea.value = this.getCleanStandaloneHtml();
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-
-      closeSourceModal() {
-        const modal = document.getElementById('source-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-
-      copyFromModal() {
-        const textarea = document.getElementById('source-textarea');
-        textarea.focus();
-        textarea.select();
-        document.execCommand('copy');
-        this.toast('Standalone index.html copied to clipboard!', 'success');
-      }
-
-      destroyPeer() {
-        if (this.peer) {
-          try {
-            this.peer.destroy();
-          } catch (e) {}
-          this.peer = null;
-        }
-        this.hostConn = null;
-        this.guestConns.clear();
-      }
-
-      leaveMultiplayer() {
-        this.destroyPeer();
-        this.returnToMenu();
-      }
-
-      returnToMenu() {
-        clearInterval(this.timerInterval);
-        this.destroyPeer();
-        this.updateOceanVisuals(0);
-        this.showView('view-menu');
-      }
-
-      escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
+        };
+        broadcastLobbyState();
+      } else if (data.type === 'SUBMIT_ANSWER') {
+        hostProcessSubmission(data);
       }
     }
 
-    // Initialize Application on Window Load
-    let app;
-    window.onload = function () {
-      app = new KrillionApp();
-      app.particles.updateAndDraw();
-    };
+    function broadcastToGuests(payload) {
+      state.connections.forEach(c => {
+        if (c.open) c.send(payload);
+      });
+    }
+
+    function broadcastLobbyState() {
+      renderLobbyPlayers();
+      broadcastToGuests({
+        type: 'LOBBY_UPDATE',
+        players: state.players,
+        questionCount: state.questionCount,
+        timeLimit: state.timeLimit
+      });
+    }
+
+    function renderLobbyPlayers() {
+      const listEl = document.getElementById('lobby-player-list');
+      listEl.innerHTML = '';
+      const arr = Object.values(state.players);
+      document.getElementById('lobby-player-count').textContent = arr.length;
+
+      arr.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'player-chip';
+        div.innerHTML = `
+          <span style="font-size:1.6rem;">${p.avatar}</span>
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;">${p.name}</div>
+            <div style="font-size:0.75rem;color:#7dd3fc;">${p.role === 'spectator' ? '🔭 Spectator' : '🤿 Diver'}</div>
+          </div>
+        `;
+        listEl.appendChild(div);
+      });
+    }
+
+    document.getElementById('lobby-leave-btn').addEventListener('click', cleanupAndGoHome);
+
+    // Host Starts Multiplayer Game
+    document.getElementById('lobby-start-btn').addEventListener('click', () => {
+      const activeDivers = Object.values(state.players).filter(p => p.role === 'player');
+      if (activeDivers.length === 0) {
+        showToast('At least 1 Diver is required to start!');
+        return;
+      }
+      state.questions = pickRandomQuestions(state.questionCount);
+      state.currentIndex = 0;
+      state.score = 0;
+      state.totalDepth = 0;
+      hostStartNextQuestion();
+    });
+
+    function hostStartNextQuestion() {
+      Object.values(state.players).forEach(p => {
+        p.answered = false;
+        p.lastResult = null;
+      });
+      const q = state.questions[state.currentIndex];
+      broadcastToGuests({
+        type: 'START_QUESTION',
+        index: state.currentIndex,
+        total: state.questions.length,
+        timeLimit: state.timeLimit,
+        question: q
+      });
+      startQuestionRound();
+    }
+
+    function hostProcessSubmission(sub) {
+      const p = state.players[sub.playerId];
+      if (!p || p.answered) return;
+      p.answered = true;
+      p.score += sub.points;
+      p.depth += TIER_META[sub.tier].depthGain;
+      p.lastResult = {
+        answer: sub.answer,
+        tier: sub.tier,
+        points: sub.points
+      };
+
+      if (sub.playerId === state.peer.id) {
+        state.score = p.score;
+        state.totalDepth = p.depth;
+        document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
+      }
+
+      // Check if all active divers have answered
+      const activeDivers = Object.values(state.players).filter(pl => pl.role === 'player');
+      if (activeDivers.every(pl => pl.answered)) {
+        clearInterval(state.timerInterval);
+        hostFinalizeRound();
+      }
+    }
+
+    function hostFinalizeRound() {
+      Object.values(state.players).forEach(p => {
+        if (p.role === 'player' && !p.answered) {
+          p.answered = true;
+          p.lastResult = { answer: '(No Answer)', tier: 0, points: 0 };
+        }
+      });
+
+      broadcastToGuests({
+        type: 'ROUND_REVEAL',
+        players: state.players
+      });
+
+      showMultiplayerRoundReveal(state.players);
+    }
+
+    function handleGuestReceivedData(data) {
+      if (data.type === 'LOBBY_UPDATE') {
+        state.players = data.players;
+        state.questionCount = data.questionCount;
+        state.timeLimit = data.timeLimit;
+        document.getElementById('lobby-settings-summary').textContent = `${state.questionCount} Qs • ${state.timeLimit}s`;
+        renderLobbyPlayers();
+      } else if (data.type === 'START_QUESTION') {
+        state.questions[data.index] = data.question;
+        state.currentIndex = data.index;
+        state.timeLimit = data.timeLimit;
+        if (!state.questions.length || state.questions.length !== data.total) {
+          state.questions = new Array(data.total).fill(data.question);
+        }
+        startQuestionRound();
+      } else if (data.type === 'ROUND_REVEAL') {
+        clearInterval(state.timerInterval);
+        state.players = data.players;
+        const me = state.players[state.peer.id];
+        if (me) {
+          state.score = me.score;
+          state.totalDepth = me.depth;
+          document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
+        }
+        showMultiplayerRoundReveal(state.players);
+      } else if (data.type === 'GAME_OVER') {
+        showFinalPodium(data.rankings);
+      }
+    }
+
+    function showMultiplayerRoundReveal(playersMap) {
+      document.getElementById('waiting-others-banner').style.display = 'none';
+      const me = playersMap[state.peer.id];
+      const myRes = me && me.lastResult ? me.lastResult : { tier: 0, points: 0, answer: 'Spectating' };
+      revealRoundResult({ tier: myRes.tier, points: myRes.points }, myRes.answer);
+
+      // Render all players' round results
+      const feed = document.getElementById('mp-round-feed');
+      feed.style.display = 'block';
+      feed.innerHTML = '<div style="font-size:0.78rem;font-weight:800;color:#7dd3fc;margin-bottom:6px;">CREW DIVE RESULTS:</div>';
+
+      Object.values(playersMap)
+        .filter(p => p.role === 'player')
+        .sort((a, b) => b.score - a.score)
+        .forEach(p => {
+          const r = p.lastResult || { answer: '-', tier: 0, points: 0 };
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;justify-content:space-between;font-size:0.86rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.07);';
+          row.innerHTML = `
+            <span>${p.avatar} <strong>${p.name}</strong>: "${r.answer}"</span>
+            <span style="color:${TIER_META[r.tier].color};font-weight:700;">+${r.points} pts (${p.score})</span>
+          `;
+          feed.appendChild(row);
+        });
+    }
+
+    function getSortedMultiplayerPlayers() {
+      return Object.values(state.players)
+        .filter(p => p.role === 'player')
+        .sort((a, b) => b.score - a.score || b.depth - a.depth);
+    }
+
+    // ==========================================
+    // 10. FINAL PODIUM & LEADERBOARD
+    // ==========================================
+    function showFinalPodium(rankedPlayers) {
+      clearInterval(state.timerInterval);
+      showScreen('screen-results');
+      playDiveSound(5);
+
+      const topMe = rankedPlayers.find(p => p.name === state.name) || rankedPlayers[0];
+      document.getElementById('final-depth-summary').textContent =
+        topMe ? `${topMe.avatar} ${topMe.name} reached ${topMe.depth || state.totalDepth}m with ${topMe.score} points!` : '';
+
+      const podiumGrid = document.getElementById('podium-grid');
+      const restList = document.getElementById('rest-leaderboard');
+      podiumGrid.innerHTML = '';
+      restList.innerHTML = '';
+
+      // Visual order: #2 (left), #1 (center), #3 (right)
+      const displayOrder = [1, 0, 2];
+      const medals = ['🥇 #1', '🥈 #2', '🥉 #3'];
+
+      displayOrder.forEach(rankIdx => {
+        const p = rankedPlayers[rankIdx];
+        const col = document.createElement('div');
+        col.className = `podium-col rank-${rankIdx + 1}`;
+        if (p) {
+          col.innerHTML = `
+            <div style="font-size:0.85rem;font-weight:800;margin-bottom:6px;">${medals[rankIdx]}</div>
+            <div style="font-size:2.3rem;margin-bottom:4px;">${p.avatar}</div>
+            <div style="font-weight:800;font-size:1rem;word-break:break-word;">${p.name}</div>
+            <div style="color:#7dd3fc;font-weight:800;font-size:1.1rem;margin-top:4px;">${p.score} pts</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${p.depth || 0}m deep</div>
+          `;
+        } else {
+          col.style.opacity = '0.35';
+          col.innerHTML = `<div style="font-size:0.8rem;">${medals[rankIdx]}</div><div style="font-size:1.6rem;margin:8px 0;">🌊</div><div style="font-size:0.8rem;">Open Spot</div>`;
+        }
+        podiumGrid.appendChild(col);
+      });
+
+      // Remaining players (#4+)
+      rankedPlayers.slice(3).forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'player-chip';
+        row.style.justifyContent = 'space-between';
+        row.innerHTML = `
+          <span><strong>#${idx + 4}</strong> ${p.avatar} ${p.name}</span>
+          <span style="font-weight:800;color:#7dd3fc;">${p.score} pts (${p.depth || 0}m)</span>
+        `;
+        restList.appendChild(row);
+      });
+    }
   </script>
 </body>
 </html>
