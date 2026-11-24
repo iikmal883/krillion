@@ -1,0 +1,3119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Krillion — Deep Sea Trivia</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PeerJS for Serverless WebRTC Multiplayer on GitHub Pages -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <!-- Google Fonts: Fredoka & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --ocean-top: #0ea5e9;
+      --ocean-mid: #0369a1;
+      --ocean-bot: #0c4a6e;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #020617;
+      color: #f8fafc;
+      user-select: none;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    /* Dynamic Ocean Background Layer */
+    #ocean-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      transition: background 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 35%, #0369a1 75%, #082f49 100%);
+    }
+
+    /* Sun Rays on Surface */
+    #sun-rays {
+      position: fixed;
+      top: -10%;
+      left: 0;
+      width: 100%;
+      height: 75%;
+      z-index: -1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        105deg,
+        rgba(255, 255, 255, 0.14) 0px,
+        rgba(255, 255, 255, 0.02) 45px,
+        transparent 90px,
+        rgba(255, 255, 255, 0.11) 140px
+      );
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+      transition: opacity 1.5s ease, transform 1.5s ease;
+      animation: raySway 9s ease-in-out infinite alternate;
+    }
+
+    @keyframes raySway {
+      0% { transform: skewX(-4deg) scaleX(1.05); }
+      100% { transform: skewX(4deg) scaleX(1.05); }
+    }
+
+    /* Animated Surface Waves */
+    #surface-waves {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 90px;
+      z-index: -1;
+      pointer-events: none;
+      transition: transform 1.5s ease, opacity 1.2s ease;
+    }
+
+    .wave-path-1 {
+      animation: waveMove 7s linear infinite;
+    }
+    .wave-path-2 {
+      animation: waveMoveReverse 11s linear infinite;
+    }
+
+    @keyframes waveMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes waveMoveReverse {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0); }
+    }
+
+    /* Particle Canvas */
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Glassmorphic Ocean Card */
+    .ocean-glass {
+      background: rgba(8, 25, 48, 0.62);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(125, 211, 252, 0.25);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    /* Tactile Arcade/Ocean Buttons */
+    .btn-ocean {
+      position: relative;
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 5px 0 rgba(2, 132, 199, 0.65), 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    .btn-ocean:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+    .btn-ocean:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 rgba(2, 132, 199, 0.65), 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .btn-ocean:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Floating Bobbing Animation */
+    .bobbing {
+      animation: bob 3.2s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+      50% { transform: translateY(-8px) rotate(1.5deg); }
+    }
+
+    /* Submarine Dive Animation */
+    .dive-shake {
+      animation: diveShake 0.45s ease-in-out;
+    }
+    @keyframes diveShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px) rotate(-2deg); }
+      40% { transform: translateX(6px) rotate(2deg); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    /* Rarity Tier Badges & Glows */
+    .tier-1 { background: linear-gradient(135deg, #38bdf8, #0284c7); border-color: #bae6fd; box-shadow: 0 0 20px rgba(56, 189, 248, 0.45); }
+    .tier-2 { background: linear-gradient(135deg, #2dd4bf, #0d9488); border-color: #99f6e4; box-shadow: 0 0 22px rgba(45, 212, 191, 0.5); }
+    .tier-3 { background: linear-gradient(135deg, #818cf8, #4f46e5); border-color: #c7d2fe; box-shadow: 0 0 26px rgba(129, 140, 248, 0.55); }
+    .tier-4 { background: linear-gradient(135deg, #c084fc, #7e22ce); border-color: #e9d5ff; box-shadow: 0 0 30px rgba(192, 132, 252, 0.65); }
+    .tier-5 {
+      background: linear-gradient(135deg, #f43f5e, #f59e0b, #10b981, #3b82f6);
+      background-size: 300% 300%;
+      animation: krillionShimmer 3s ease infinite;
+      border-color: #fde047;
+      box-shadow: 0 0 38px rgba(250, 204, 21, 0.75);
+    }
+
+    @keyframes krillionShimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.4);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Dynamic Ocean Layers -->
+  <div id="ocean-backdrop"></div>
+  <div id="sun-rays"></div>
+
+  <!-- Top Surface Waves SVG -->
+  <div id="surface-waves">
+    <svg class="w-[200%] h-full" viewBox="0 0 1440 100" preserveAspectRatio="none">
+      <path class="wave-path-1" fill="rgba(224, 242, 254, 0.25)" d="M0,35 C240,75 480,0 720,35 C960,75 1200,0 1440,35 L1440,0 L0,0 Z"></path>
+      <path class="wave-path-2" fill="rgba(255, 255, 255, 0.18)" d="M0,50 C320,10 540,80 720,50 C1040,10 1260,80 1440,50 L1440,0 L0,0 Z"></path>
+    </svg>
+  </div>
+
+  <!-- Interactive Bubbles, Krill & Bioluminescent Creatures Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Toast Notification Banner (No alert() used!) -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-11/12 max-w-md"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="w-full max-w-5xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between z-20">
+    <button onclick="app.confirmReturnHome()" class="flex items-center gap-2.5 group focus:outline-none">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg border border-cyan-200/40 group-hover:scale-105 transition">
+        <span class="text-xl">🦐</span>
+      </div>
+      <div class="text-left">
+        <span class="font-display text-2xl font-bold tracking-wide text-white drop-shadow">KRILLION</span>
+        <span class="hidden sm:inline-block ml-2 text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-400/20 text-cyan-200 border border-cyan-300/30">Deep Trivia</span>
+      </div>
+    </button>
+
+    <div class="flex items-center gap-2">
+      <!-- Depth Zone Pill -->
+      <div id="header-zone-pill" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full ocean-glass text-xs font-semibold text-cyan-100">
+        <span id="zone-dot" class="w-2.5 h-2.5 rounded-full bg-sky-300 animate-pulse"></span>
+        <span id="zone-label">Surface • 0m</span>
+      </div>
+
+      <!-- Sound Toggle -->
+      <button id="btn-sound" onclick="app.toggleSound()" title="Toggle Ocean Audio" class="p-2.5 rounded-xl ocean-glass text-cyan-100 hover:text-white hover:bg-cyan-500/20 transition">
+        <svg id="icon-sound-on" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+        </svg>
+        <svg id="icon-sound-off" class="w-5 h-5 hidden text-rose-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+        </svg>
+      </button>
+
+      <!-- GitHub Hosting Guide Button -->
+      <button onclick="app.toggleModal('github-modal', true)" class="px-3 py-2 rounded-xl ocean-glass text-xs font-semibold text-cyan-100 hover:text-white hover:bg-cyan-500/20 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        <span class="hidden sm:inline">GitHub Host</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Stage -->
+  <main class="flex-1 w-full max-w-5xl mx-auto px-4 py-4 flex flex-col justify-center z-10">
+
+    <!-- ==================== VIEW 1: MAIN MENU ==================== -->
+    <section id="view-menu" class="w-full max-w-xl mx-auto">
+      <div class="ocean-glass rounded-3xl p-6 sm:p-8 text-center">
+        <!-- Hero Emblem -->
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-600 shadow-xl border-2 border-cyan-200/50 mb-4 bobbing">
+          <span class="text-4xl">🦐</span>
+        </div>
+        <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-tight mb-2 drop-shadow">
+          Dive Into <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-200 to-amber-200">Krillion</span>
+        </h1>
+        <p class="text-cyan-100/90 text-sm sm:text-base mb-6 max-w-md mx-auto">
+          Outsmart the ocean! Give obscure real-world answers to dive deeper from <strong class="text-sky-300">Common (1pt)</strong> down to <strong class="text-amber-300">One in Krillion (5pts)</strong>.
+        </p>
+
+        <!-- Player Name Input -->
+        <div class="text-left mb-5">
+          <label for="player-name-input" class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2">
+            Diver Name
+          </label>
+          <input
+            id="player-name-input"
+            type="text"
+            maxlength="18"
+            placeholder="Enter your name..."
+            class="w-full px-4 py-3.5 rounded-2xl bg-slate-950/60 border border-cyan-400/30 text-white placeholder-cyan-300/40 font-semibold focus:outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/30 transition"
+          />
+        </div>
+
+        <!-- Avatar Selection Grid -->
+        <div class="text-left mb-7">
+          <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2">
+            Choose Your Sea Creature Avatar
+          </label>
+          <div id="avatar-grid" class="grid grid-cols-4 gap-2.5">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Mode Selection Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <button onclick="app.selectMode('single')" class="btn-ocean w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-display text-lg font-bold flex items-center justify-center gap-2.5 border border-cyan-300/40">
+            <span>🤿</span>
+            <span>Singleplayer</span>
+          </button>
+          <button onclick="app.selectMode('multi')" class="btn-ocean w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-display text-lg font-bold flex items-center justify-center gap-2.5 border border-teal-300/40">
+            <span>🌐</span>
+            <span>Multiplayer</span>
+          </button>
+        </div>
+
+        <!-- Rarity Legend Strip -->
+        <div class="mt-6 pt-5 border-t border-cyan-400/20">
+          <p class="text-[11px] uppercase tracking-wider font-bold text-cyan-300/80 mb-2.5">Ocean Depth Rarity Tiers</p>
+          <div class="flex flex-wrap justify-center gap-1.5 text-xs font-semibold">
+            <span class="px-2.5 py-1 rounded-full bg-sky-500/30 border border-sky-300/40 text-sky-100">1pt Common</span>
+            <span class="px-2.5 py-1 rounded-full bg-teal-500/30 border border-teal-300/40 text-teal-100">2pts Uncommon</span>
+            <span class="px-2.5 py-1 rounded-full bg-indigo-500/30 border border-indigo-300/40 text-indigo-100">3pts Rare</span>
+            <span class="px-2.5 py-1 rounded-full bg-purple-500/30 border border-purple-300/40 text-purple-100">4pts Deep Cut</span>
+            <span class="px-2.5 py-1 rounded-full bg-amber-500/30 border border-amber-300/50 text-amber-200">5pts One in Krillion</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: SINGLEPLAYER SETUP ==================== -->
+    <section id="view-single-setup" class="hidden w-full max-w-lg mx-auto">
+      <div class="ocean-glass rounded-3xl p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-6">
+          <button onclick="app.showView('menu')" class="text-cyan-200 hover:text-white text-sm font-semibold flex items-center gap-1">
+            ← Back
+          </button>
+          <span class="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-300/30 text-xs font-bold text-cyan-200">
+            Solo Expedition
+          </span>
+        </div>
+
+        <h2 class="font-display text-3xl font-bold text-white mb-1">Configure Your Dive</h2>
+        <p class="text-cyan-100/80 text-sm mb-6">Pick how many prompts to tackle and your oxygen timer per round.</p>
+
+        <!-- Question Count -->
+        <div class="mb-6">
+          <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
+            Number of Questions
+          </label>
+          <div class="grid grid-cols-4 gap-2.5" id="sp-qcount-group">
+            <button type="button" data-val="5" onclick="app.setOption('spQuestions', 5, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">5 Qs</button>
+            <button type="button" data-val="10" onclick="app.setOption('spQuestions', 10, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border-2 border-cyan-300 bg-cyan-500/30 text-white shadow-md transition">10 Qs</button>
+            <button type="button" data-val="15" onclick="app.setOption('spQuestions', 15, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">15 Qs</button>
+            <button type="button" data-val="20" onclick="app.setOption('spQuestions', 20, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">20 Qs</button>
+          </div>
+        </div>
+
+        <!-- Timer per Question -->
+        <div class="mb-8">
+          <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
+            Time Per Question
+          </label>
+          <div class="grid grid-cols-3 gap-3" id="sp-time-group">
+            <button type="button" data-val="15" onclick="app.setOption('spTime', 15, this)" class="opt-btn py-3.5 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">⚡ 15 Sec</button>
+            <button type="button" data-val="30" onclick="app.setOption('spTime', 30, this)" class="opt-btn py-3.5 rounded-xl font-bold text-sm border-2 border-cyan-300 bg-cyan-500/30 text-white shadow-md transition">⏱️ 30 Sec</button>
+            <button type="button" data-val="45" onclick="app.setOption('spTime', 45, this)" class="opt-btn py-3.5 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">🫧 45 Sec</button>
+          </div>
+        </div>
+
+        <button onclick="app.startSingleplayer()" class="btn-ocean w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-display text-xl font-bold tracking-wide border border-cyan-200/50">
+          🚀 Play Now
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: MULTIPLAYER GATEWAY ==================== -->
+    <section id="view-multi-choice" class="hidden w-full max-w-lg mx-auto">
+      <div class="ocean-glass rounded-3xl p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-6">
+          <button onclick="app.showView('menu')" class="text-cyan-200 hover:text-white text-sm font-semibold">
+            ← Back
+          </button>
+          <span class="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-300/30 text-xs font-bold text-emerald-200">
+            P2P Live Crew
+          </span>
+        </div>
+
+        <h2 class="font-display text-3xl font-bold text-white mb-2">Multiplayer Crew</h2>
+        <p class="text-cyan-100/80 text-sm mb-6">Host a live diving room or enter a friend's room code to compete in real time.</p>
+
+        <!-- Create vs Join Cards -->
+        <div class="space-y-4">
+          <button onclick="app.showView('multi-create')" class="w-full p-5 rounded-2xl bg-gradient-to-r from-teal-500/30 to-cyan-600/30 hover:from-teal-500/45 hover:to-cyan-600/45 border border-teal-300/40 text-left flex items-center justify-between transition group">
+            <div>
+              <div class="font-display text-xl font-bold text-white group-hover:text-teal-200 transition">🌊 Create a Room</div>
+              <div class="text-xs text-cyan-100/80 mt-0.5">Set rules, generate a room code, and play or spectate</div>
+            </div>
+            <span class="text-2xl group-hover:translate-x-1 transition">→</span>
+          </button>
+
+          <div class="p-5 rounded-2xl bg-slate-950/50 border border-cyan-400/25">
+            <div class="font-display text-xl font-bold text-white mb-1">⚓ Join a Room</div>
+            <p class="text-xs text-cyan-100/75 mb-3">Paste or type the 5-character code from your host</p>
+            <div class="flex gap-2">
+              <input
+                id="join-code-input"
+                type="text"
+                maxlength="6"
+                placeholder="e.g. K7X9P"
+                class="flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-cyan-400/30 text-white font-mono text-lg uppercase tracking-widest placeholder-cyan-400/30 focus:outline-none focus:border-cyan-300"
+              />
+              <button id="btn-join-room" onclick="app.joinMultiplayerRoom()" class="btn-ocean px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 font-display font-bold text-white border border-sky-300/40">
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: CREATE MULTIPLAYER ROOM ==================== -->
+    <section id="view-multi-create" class="hidden w-full max-w-lg mx-auto">
+      <div class="ocean-glass rounded-3xl p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-6">
+          <button onclick="app.showView('multi-choice')" class="text-cyan-200 hover:text-white text-sm font-semibold">
+            ← Back
+          </button>
+          <span class="px-3 py-1 rounded-full bg-teal-500/20 border border-teal-300/30 text-xs font-bold text-teal-200">
+            Host Setup
+          </span>
+        </div>
+
+        <h2 class="font-display text-3xl font-bold text-white mb-1">Create Dive Room</h2>
+        <p class="text-cyan-100/80 text-sm mb-6">Configure match settings for everyone in your lobby.</p>
+
+        <!-- Questions Count -->
+        <div class="mb-6">
+          <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
+            Questions Per Run
+          </label>
+          <div class="grid grid-cols-4 gap-2.5" id="mp-qcount-group">
+            <button type="button" data-val="5" onclick="app.setOption('mpQuestions', 5, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">5 Qs</button>
+            <button type="button" data-val="10" onclick="app.setOption('mpQuestions', 10, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border-2 border-teal-300 bg-teal-500/30 text-white shadow-md transition">10 Qs</button>
+            <button type="button" data-val="15" onclick="app.setOption('mpQuestions', 15, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">15 Qs</button>
+            <button type="button" data-val="20" onclick="app.setOption('mpQuestions', 20, this)" class="opt-btn py-3 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">20 Qs</button>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="mb-8">
+          <label class="block text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
+            Time Per Question
+          </label>
+          <div class="grid grid-cols-3 gap-3" id="mp-time-group">
+            <button type="button" data-val="15" onclick="app.setOption('mpTime', 15, this)" class="opt-btn py-3.5 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">⚡ 15 Sec</button>
+            <button type="button" data-val="30" onclick="app.setOption('mpTime', 30, this)" class="opt-btn py-3.5 rounded-xl font-bold text-sm border-2 border-teal-300 bg-teal-500/30 text-white shadow-md transition">⏱️ 30 Sec</button>
+            <button type="button" data-val="45" onclick="app.setOption('mpTime', 45, this)" class="opt-btn py-3.5 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition">🫧 45 Sec</button>
+          </div>
+        </div>
+
+        <button id="btn-create-room" onclick="app.createMultiplayerRoom()" class="btn-ocean w-full py-4 rounded-2xl bg-gradient-to-r from-teal-400 to-emerald-600 text-white font-display text-xl font-bold border border-teal-200/50">
+          Generate Room Code
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 5: MULTIPLAYER LOBBY ==================== -->
+    <section id="view-lobby" class="hidden w-full max-w-2xl mx-auto">
+      <div class="ocean-glass rounded-3xl p-6 sm:p-8">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-teal-300">Submarine Staging Dock</span>
+            <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Crew Lobby</h2>
+          </div>
+
+          <!-- Room Code Share Box -->
+          <div class="flex items-center gap-2 bg-slate-950/75 border border-cyan-400/40 px-4 py-2.5 rounded-2xl">
+            <div>
+              <div class="text-[10px] uppercase tracking-wider text-cyan-300 font-bold">Room Code</div>
+              <div id="lobby-room-code" class="font-mono text-2xl font-extrabold tracking-widest text-amber-300">-----</div>
+            </div>
+            <button onclick="app.copyRoomCode()" class="ml-2 px-3 py-2 rounded-xl bg-cyan-500/25 hover:bg-cyan-500/40 text-cyan-100 text-xs font-bold border border-cyan-300/30 transition">
+              📋 Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Match Summary Strip -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 rounded-2xl bg-cyan-950/50 border border-cyan-400/20 mb-5 text-xs sm:text-sm">
+          <div class="text-cyan-100">
+            <strong id="lobby-settings-text" class="text-white">10 Questions • 30s Timer</strong>
+          </div>
+          <!-- Host Role Toggle (Player vs Spectator) -->
+          <div id="host-role-controls" class="hidden items-center gap-2">
+            <span class="text-cyan-200 font-semibold">Your Role:</span>
+            <div class="inline-flex rounded-xl bg-slate-900/90 p-1 border border-cyan-400/30">
+              <button id="role-btn-player" onclick="app.setHostRole('player')" class="px-3 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-white transition">
+                🤿 Player
+              </button>
+              <button id="role-btn-spectator" onclick="app.setHostRole('spectator')" class="px-3 py-1 rounded-lg text-xs font-bold text-cyan-200 hover:text-white transition">
+                🔭 Spectator
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connected Players List -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2.5">
+            <span>Connected Divers (<span id="lobby-player-count">1</span>)</span>
+            <span id="lobby-status-text" class="text-emerald-300 animate-pulse">● Ready for crew</span>
+          </div>
+          <div id="lobby-players-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Lobby Footer Actions -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button onclick="app.leaveMultiplayer()" class="px-5 py-3.5 rounded-2xl bg-slate-900/70 hover:bg-rose-950/60 text-rose-200 border border-rose-400/30 font-bold text-sm transition">
+            Leave Room
+          </button>
+          <button id="btn-host-start" onclick="app.hostStartGame()" class="hidden btn-ocean flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-600 text-white font-display text-xl font-bold border border-emerald-200/50">
+            🌊 Start Expedition
+          </button>
+          <div id="guest-waiting-banner" class="hidden flex-1 py-3.5 px-5 rounded-2xl bg-cyan-950/60 border border-cyan-400/25 text-center text-sm font-semibold text-cyan-200">
+            Waiting for the Host to launch the submarine...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 6: ACTIVE GAMEPLAY ==================== -->
+    <section id="view-game" class="hidden w-full max-w-4xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+        <!-- Left / Top Depth Gauge & Submarine Visualizer -->
+        <div class="lg:col-span-4 ocean-glass rounded-3xl p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Current Depth</div>
+              <div id="hud-depth-value" class="font-display text-2xl sm:text-3xl font-bold text-white">0m</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Krillion Pts</div>
+              <div id="hud-score-value" class="font-display text-2xl sm:text-3xl font-bold text-amber-300">0</div>
+            </div>
+          </div>
+
+          <!-- Interactive Bathymetry Dive Track -->
+          <div class="relative my-2 h-44 sm:h-64 rounded-2xl bg-slate-950/50 border border-cyan-400/20 p-3 flex flex-col justify-between overflow-hidden">
+            <!-- Depth Zone Markers -->
+            <div class="flex justify-between items-center text-[10px] font-bold text-sky-300/80 border-b border-sky-400/15 pb-1">
+              <span>0m • Sunlight</span>
+              <span>1pt</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-bold text-teal-300/80 border-b border-teal-400/15 pb-1">
+              <span>-200m • Twilight</span>
+              <span>2pts</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-bold text-indigo-300/80 border-b border-indigo-400/15 pb-1">
+              <span>-1,000m • Midnight</span>
+              <span>3pts</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-bold text-purple-300/80 border-b border-purple-400/15 pb-1">
+              <span>-4,000m • Abyssal</span>
+              <span>4pts</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-bold text-amber-300/90">
+              <span>-10,994m • Trench</span>
+              <span>5pts 🦐</span>
+            </div>
+
+            <!-- Animated Diver / Submarine Marker -->
+            <div
+              id="submarine-marker"
+              style="top: 6%;"
+              class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-out flex flex-col items-center pointer-events-none z-10"
+            >
+              <div class="px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-extrabold text-xs shadow-lg border-2 border-white flex items-center gap-1.5 whitespace-nowrap">
+                <span id="sub-avatar" class="text-base">🦐</span>
+                <span id="sub-name">Diver</span>
+              </div>
+              <div class="w-1 h-4 bg-amber-300/60 rounded-full mt-0.5"></div>
+            </div>
+          </div>
+
+          <!-- Live Multiplayer Crew Strip (Shown in MP mode) -->
+          <div id="mp-live-crew-box" class="hidden mt-2 pt-2 border-t border-cyan-400/20">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1.5">Crew Status</div>
+            <div id="mp-live-crew-list" class="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+              <!-- Live player chips -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right / Main Question & Answer Arena -->
+        <div class="lg:col-span-8 ocean-glass rounded-3xl p-5 sm:p-7 flex flex-col justify-between">
+          <!-- Round Progress & Countdown Bar -->
+          <div>
+            <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-cyan-200 mb-2">
+              <span id="hud-question-counter">Question 1 of 10</span>
+              <span id="hud-timer-text" class="text-amber-300 font-mono text-sm">30s</span>
+            </div>
+            <div class="w-full h-3 rounded-full bg-slate-950/70 overflow-hidden p-0.5 border border-cyan-400/25 mb-6">
+              <div id="hud-timer-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 transition-all duration-200" style="width: 100%;"></div>
+            </div>
+
+            <!-- Category Badge & Prompt -->
+            <div class="mb-6">
+              <span id="question-category" class="inline-block px-3 py-1 rounded-full bg-sky-500/25 border border-sky-300/30 text-sky-200 text-xs font-bold uppercase tracking-wider mb-3">
+                Geography & Nature
+              </span>
+              <h2 id="question-prompt" class="font-display text-2xl sm:text-3xl font-bold text-white leading-snug">
+                Loading prompt...
+              </h2>
+            </div>
+          </div>
+
+          <!-- Phase A: Answer Input Form -->
+          <div id="phase-input" class="my-auto">
+            <form onsubmit="app.submitAnswer(event)" class="space-y-3">
+              <div class="relative">
+                <input
+                  id="answer-input"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="Type a valid, obscure answer..."
+                  class="w-full px-5 py-4 rounded-2xl bg-slate-950/75 border-2 border-cyan-400/40 text-white text-lg font-semibold placeholder-cyan-300/40 focus:outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-400/20 transition"
+                />
+              </div>
+              <div class="flex gap-2.5">
+                <button type="submit" id="btn-submit-answer" class="btn-ocean flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-display text-lg font-bold border border-cyan-200/50">
+                  Dive With Answer 🤿
+                </button>
+                <button type="button" onclick="app.passQuestion()" class="px-4 py-4 rounded-2xl bg-slate-900/70 hover:bg-slate-800 text-cyan-200 text-sm font-bold border border-cyan-400/25 transition">
+                  Skip
+                </button>
+              </div>
+            </form>
+            <p class="text-xs text-cyan-200/70 mt-3 text-center">
+              Tip: Obvious answers give 1 pt. Think of real-world deep cuts for up to 5 pts!
+            </p>
+          </div>
+
+          <!-- Spectator Notice (If host chose Spectator mode) -->
+          <div id="phase-spectator" class="hidden my-auto p-6 rounded-2xl bg-slate-950/60 border border-teal-400/30 text-center">
+            <div class="text-3xl mb-2">🔭</div>
+            <h3 class="font-display text-xl font-bold text-teal-200">Spectator Periscope Active</h3>
+            <p class="text-sm text-cyan-100/80 mt-1">You are watching the crew dive in real time. Results will appear once everyone submits or time expires.</p>
+          </div>
+
+          <!-- Waiting for Crew Banner (After submitting in MP) -->
+          <div id="phase-waiting-crew" class="hidden my-auto p-6 rounded-2xl bg-cyan-950/60 border border-cyan-300/30 text-center">
+            <div class="text-3xl mb-2 bobbing">🫧</div>
+            <h3 class="font-display text-xl font-bold text-white">Answer Locked In!</h3>
+            <p class="text-sm text-cyan-200 mt-1">Holding depth while other divers surface their answers...</p>
+          </div>
+
+          <!-- Phase B: Round Dive Result & Tier Reveal -->
+          <div id="phase-result" class="hidden space-y-4">
+            <div id="result-banner" class="p-5 rounded-2xl border-2 text-center transition-all">
+              <div id="result-tier-badge" class="inline-block px-3.5 py-1 rounded-full bg-black/30 text-xs font-extrabold uppercase tracking-widest text-white mb-1.5">
+                ONE IN KRILLION • +5 PTS
+              </div>
+              <h3 id="result-headline" class="font-display text-2xl sm:text-3xl font-bold text-white">
+                "Tuvalu" — Mariana Trench Dive!
+              </h3>
+              <p id="result-subtext" class="text-sm text-white/90 mt-1">
+                You dove -10,994m deeper into the ocean!
+              </p>
+            </div>
+
+            <!-- Sample Answers Across All 5 Rarity Tiers -->
+            <div class="bg-slate-950/60 rounded-2xl p-4 border border-cyan-400/20">
+              <div class="text-xs font-bold uppercase tracking-wider text-cyan-300 mb-2.5">
+                Real-World Rarity Breakdown
+              </div>
+              <div id="tier-examples-list" class="space-y-1.5 text-xs sm:text-sm">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Multiplayer Round Mini-Standings (MP only) -->
+            <div id="mp-round-standings" class="hidden bg-slate-950/50 rounded-2xl p-3.5 border border-teal-400/25">
+              <div class="text-xs font-bold uppercase tracking-wider text-teal-300 mb-2">Crew Round Results</div>
+              <div id="mp-round-list" class="space-y-1.5 text-xs"></div>
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button id="btn-next-question" onclick="app.nextQuestion()" class="btn-ocean w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-600 text-white font-display text-lg font-bold border border-emerald-200/50">
+                Next Question →
+              </button>
+              <div id="guest-next-wait" class="hidden text-xs font-semibold text-cyan-200 py-2">
+                Host is advancing to the next depth...
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 7: END-OF-GAME PODIUM & RANKINGS ==================== -->
+    <section id="view-podium" class="hidden w-full max-w-2xl mx-auto">
+      <div class="ocean-glass rounded-3xl p-6 sm:p-8 text-center">
+        <span class="inline-block px-3.5 py-1 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
+          Expedition Complete
+        </span>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mb-6">
+          Deep Sea Champions
+        </h2>
+
+        <!-- Top 3 Visual Podium -->
+        <div id="podium-stage" class="grid grid-cols-3 gap-2 sm:gap-4 items-end max-w-lg mx-auto mb-7 pt-4">
+          <!-- 2nd Place -->
+          <div id="podium-2" class="flex flex-col items-center">
+            <!-- Populated via JS -->
+          </div>
+          <!-- 1st Place -->
+          <div id="podium-1" class="flex flex-col items-center">
+            <!-- Populated via JS -->
+          </div>
+          <!-- 3rd Place -->
+          <div id="podium-3" class="flex flex-col items-center">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Remaining Players Leaderboard (Rank 4+) -->
+        <div id="podium-rest-container" class="hidden text-left mb-6">
+          <div class="text-xs font-bold uppercase tracking-wider text-cyan-300 mb-2">Crew Standings</div>
+          <div id="podium-rest-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button id="btn-play-again" onclick="app.playAgain()" class="btn-ocean px-7 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-display text-lg font-bold border border-cyan-200/50">
+            🔄 Dive Again
+          </button>
+          <button onclick="app.returnToMenu()" class="px-7 py-3.5 rounded-2xl bg-slate-900/75 hover:bg-slate-800 text-cyan-100 font-display text-lg font-bold border border-cyan-400/30 transition">
+            🏠 Main Menu
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL: GITHUB PAGES DEPLOYMENT GUIDE ==================== -->
+  <div id="github-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ocean-glass rounded-3xl max-w-lg w-full p-6 sm:p-7 relative">
+      <button onclick="app.toggleModal('github-modal', false)" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-900/80 text-cyan-200 hover:text-white flex items-center justify-center font-bold">
+        ✕
+      </button>
+      <div class="flex items-center gap-2.5 mb-3">
+        <span class="text-2xl">🐙</span>
+        <h3 class="font-display text-2xl font-bold text-white">Host Krillion on GitHub Pages</h3>
+      </div>
+      <p class="text-sm text-cyan-100/85 mb-4">
+        Krillion is built as a <strong>zero-backend single HTML file</strong> using WebRTC peer-to-peer room codes, meaning multiplayer works directly on GitHub Pages for free!
+      </p>
+      <ol class="space-y-2.5 text-xs sm:text-sm text-cyan-100 bg-slate-950/60 p-4 rounded-2xl border border-cyan-400/20 mb-5 list-decimal list-inside">
+        <li>Create a new public repository on <strong class="text-white">GitHub</strong> (e.g., <code class="text-amber-300">krillion-game</code>).</li>
+        <li>Upload this single file renamed as <code class="text-amber-300">index.html</code>.</li>
+        <li>Open <strong class="text-white">Settings → Pages</strong> in your repository.</li>
+        <li>Under <em>Build and deployment</em>, select <strong class="text-white">Deploy from a branch</strong> → <code class="text-teal-300">main</code> / <code class="text-teal-300">/(root)</code> and click <strong class="text-white">Save</strong>.</li>
+        <li>Share your <code class="text-cyan-300">username.github.io/krillion-game</code> link with friends!</li>
+      </ol>
+      <button onclick="app.toggleModal('github-modal', false)" class="btn-ocean w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-display font-bold">
+        Got It!
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * KRILLION — COMPLETE GAME ENGINE, CURATED REAL-WORLD TRIVIA, AUDIO & P2P
+     * ============================================================================
+     */
+
+    // 1. SEA CREATURE AVATARS
+    const AVATARS = [
+      { id: 'krill', emoji: '🦐', name: 'Krill' },
+      { id: 'octopus', emoji: '🐙', name: 'Octopus' },
+      { id: 'manta', emoji: '🦈', name: 'Shark' },
+      { id: 'whale', emoji: '🐋', name: 'Whale' },
+      { id: 'turtle', emoji: '🐢', name: 'Turtle' },
+      { id: 'puffer', emoji: '🐡', name: 'Puffer' },
+      { id: 'jelly', emoji: '🪼', name: 'Jellyfish' },
+      { id: 'crab', emoji: '🦀', name: 'Crab' }
+    ];
+
+    // 2. RARITY TIER METADATA (Points, Depth Gain, Colors, Zone Names)
+    const TIER_CONFIG = {
+      0: { label: 'Missed / Surface Drift', pts: 0, depthAdd: 0, css: 'bg-slate-800/80 border-slate-500/50', zone: 'Sunlight Surface' },
+      1: { label: 'Common', pts: 1, depthAdd: 120, css: 'tier-1', zone: 'Sunlight Zone (Epipelagic)' },
+      2: { label: 'Uncommon', pts: 2, depthAdd: 450, css: 'tier-2', zone: 'Twilight Zone (Mesopelagic)' },
+      3: { label: 'Rare', pts: 3, depthAdd: 1200, css: 'tier-3', zone: 'Midnight Zone (Bathypelagic)' },
+      4: { label: 'Deep Cut', pts: 4, depthAdd: 2800, css: 'tier-4', zone: 'Abyssal Zone (Abyssopelagic)' },
+      5: { label: 'ONE IN KRILLION', pts: 5, depthAdd: 5500, css: 'tier-5', zone: 'Hadal Trench (Mariana Floor)' }
+    };
+
+    // 3. CURATED REAL-WORLD GENERAL KNOWLEDGE DATABASE (28 Rich Prompts)
+    // Each answer object supports canonical name + aliases for forgiving real-time matching.
+    const QUESTION_BANK = [
+      {
+        category: "World Geography",
+        prompt: "Name a sovereign country that is completely landlocked.",
+        tiers: {
+          1: [
+            { name: "Switzerland", aliases: ["swiss"] },
+            { name: "Austria", aliases: [] },
+            { name: "Nepal", aliases: [] },
+            { name: "Mongolia", aliases: [] },
+            { name: "Hungary", aliases: [] },
+            { name: "Czech Republic", aliases: ["czechia"] }
+          ],
+          2: [
+            { name: "Bolivia", aliases: [] },
+            { name: "Paraguay", aliases: [] },
+            { name: "Ethiopia", aliases: [] },
+            { name: "Afghanistan", aliases: [] },
+            { name: "Kazakhstan", aliases: [] },
+            { name: "Slovakia", aliases: [] },
+            { name: "Serbia", aliases: [] },
+            { name: "Laos", aliases: [] }
+          ],
+          3: [
+            { name: "Luxembourg", aliases: [] },
+            { name: "Uganda", aliases: [] },
+            { name: "Rwanda", aliases: [] },
+            { name: "Zambia", aliases: [] },
+            { name: "Zimbabwe", aliases: [] },
+            { name: "Botswana", aliases: [] },
+            { name: "Armenia", aliases: [] },
+            { name: "Uzbekistan", aliases: [] },
+            { name: "Bhutan", aliases: [] }
+          ],
+          4: [
+            { name: "Liechtenstein", aliases: [] },
+            { name: "Andorra", aliases: [] },
+            { name: "San Marino", aliases: [] },
+            { name: "Vatican City", aliases: ["vatican", "holy see"] },
+            { name: "Moldova", aliases: [] },
+            { name: "North Macedonia", aliases: ["macedonia"] },
+            { name: "Kyrgyzstan", aliases: [] },
+            { name: "Tajikistan", aliases: [] },
+            { name: "Turkmenistan", aliases: [] },
+            { name: "Malawi", aliases: [] },
+            { name: "Chad", aliases: [] },
+            { name: "Niger", aliases: [] },
+            { name: "Mali", aliases: [] }
+          ],
+          5: [
+            { name: "Lesotho", aliases: [] },
+            { name: "Eswatini", aliases: ["swaziland"] },
+            { name: "Burkina Faso", aliases: [] },
+            { name: "Burundi", aliases: [] },
+            { name: "Central African Republic", aliases: ["car"] },
+            { name: "South Sudan", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "Chemistry & Elements",
+        prompt: "Name a chemical element on the Periodic Table with an atomic number under 30.",
+        tiers: {
+          1: [
+            { name: "Hydrogen", aliases: ["h"] },
+            { name: "Helium", aliases: ["he"] },
+            { name: "Carbon", aliases: ["c"] },
+            { name: "Nitrogen", aliases: ["n"] },
+            { name: "Oxygen", aliases: ["o"] },
+            { name: "Iron", aliases: ["fe"] },
+            { name: "Copper", aliases: ["cu"] },
+            { name: "Sodium", aliases: ["na"] },
+            { name: "Calcium", aliases: ["ca"] }
+          ],
+          2: [
+            { name: "Lithium", aliases: ["li"] },
+            { name: "Neon", aliases: ["ne"] },
+            { name: "Magnesium", aliases: ["mg"] },
+            { name: "Aluminum", aliases: ["aluminium", "al"] },
+            { name: "Silicon", aliases: ["si"] },
+            { name: "Phosphorus", aliases: ["p"] },
+            { name: "Sulfur", aliases: ["sulphur", "s"] },
+            { name: "Chlorine", aliases: ["cl"] },
+            { name: "Potassium", aliases: ["k"] },
+            { name: "Nickel", aliases: ["ni"] },
+            { name: "Zinc", aliases: ["zn"] }
+          ],
+          3: [
+            { name: "Boron", aliases: ["b"] },
+            { name: "Fluorine", aliases: ["f"] },
+            { name: "Argon", aliases: ["ar"] },
+            { name: "Titanium", aliases: ["ti"] },
+            { name: "Chromium", aliases: ["cr"] },
+            { name: "Manganese", aliases: ["mn"] },
+            { name: "Cobalt", aliases: ["co"] }
+          ],
+          4: [
+            { name: "Beryllium", aliases: ["be"] },
+            { name: "Vanadium", aliases: ["v"] }
+          ],
+          5: [
+            { name: "Scandium", aliases: ["sc"] }
+          ]
+        }
+      },
+      {
+        category: "Solar System",
+        prompt: "Name a confirmed moon of Jupiter or Saturn.",
+        tiers: {
+          1: [
+            { name: "Europa", aliases: [] },
+            { name: "Titan", aliases: [] },
+            { name: "Io", aliases: [] },
+            { name: "Ganymede", aliases: [] },
+            { name: "Callisto", aliases: [] }
+          ],
+          2: [
+            { name: "Enceladus", aliases: [] },
+            { name: "Rhea", aliases: [] },
+            { name: "Mimas", aliases: [] },
+            { name: "Iapetus", aliases: [] }
+          ],
+          3: [
+            { name: "Dione", aliases: [] },
+            { name: "Tethys", aliases: [] },
+            { name: "Hyperion", aliases: [] },
+            { name: "Amalthea", aliases: [] },
+            { name: "Phoebe", aliases: [] }
+          ],
+          4: [
+            { name: "Himalia", aliases: [] },
+            { name: "Janus", aliases: [] },
+            { name: "Epimetheus", aliases: [] },
+            { name: "Pandora", aliases: [] },
+            { name: "Prometheus", aliases: [] },
+            { name: "Thebe", aliases: [] }
+          ],
+          5: [
+            { name: "Metis", aliases: [] },
+            { name: "Adrastea", aliases: [] },
+            { name: "Elara", aliases: [] },
+            { name: "Pasiphae", aliases: [] },
+            { name: "Sinope", aliases: [] },
+            { name: "Carme", aliases: [] },
+            { name: "Pan", aliases: [] },
+            { name: "Atlas", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "Marine Biology",
+        prompt: "Name a real species or type of shark.",
+        tiers: {
+          1: [
+            { name: "Great White Shark", aliases: ["great white", "white shark"] },
+            { name: "Hammerhead Shark", aliases: ["hammerhead"] },
+            { name: "Tiger Shark", aliases: ["tiger"] },
+            { name: "Whale Shark", aliases: ["whale"] },
+            { name: "Bull Shark", aliases: ["bull"] }
+          ],
+          2: [
+            { name: "Mako Shark", aliases: ["mako", "shortfin mako"] },
+            { name: "Nurse Shark", aliases: ["nurse"] },
+            { name: "Lemon Shark", aliases: ["lemon"] },
+            { name: "Blue Shark", aliases: ["blue"] },
+            { name: "Blacktip Reef Shark", aliases: ["blacktip", "reef shark"] }
+          ],
+          3: [
+            { name: "Goblin Shark", aliases: ["goblin"] },
+            { name: "Basking Shark", aliases: ["basking"] },
+            { name: "Thresher Shark", aliases: ["thresher"] },
+            { name: "Greenland Shark", aliases: ["greenland"] },
+            { name: "Leopard Shark", aliases: ["leopard"] },
+            { name: "Zebra Shark", aliases: ["zebra"] }
+          ],
+          4: [
+            { name: "Megamouth Shark", aliases: ["megamouth"] },
+            { name: "Frilled Shark", aliases: ["frilled"] },
+            { name: "Cookiecutter Shark", aliases: ["cookiecutter", "cookie cutter"] },
+            { name: "Wobbegong", aliases: ["wobbegong shark"] },
+            { name: "Port Jackson Shark", aliases: ["port jackson"] },
+            { name: "Porbeagle", aliases: ["porbeagle shark"] }
+          ],
+          5: [
+            { name: "Epaulette Shark", aliases: ["epaulette"] },
+            { name: "Lanternshark", aliases: ["dwarf lanternshark", "lantern shark"] },
+            { name: "Horn Shark", aliases: ["horn"] },
+            { name: "Bonnethead", aliases: ["bonnethead shark"] },
+            { name: "Bramble Shark", aliases: ["bramble"] }
+          ]
+        }
+      },
+      {
+        category: "US Geography",
+        prompt: "Name a U.S. state that borders Canada.",
+        tiers: {
+          1: [
+            { name: "New York", aliases: ["ny"] },
+            { name: "Washington", aliases: ["wa"] },
+            { name: "Michigan", aliases: ["mi"] },
+            { name: "Alaska", aliases: ["ak"] },
+            { name: "Minnesota", aliases: ["mn"] }
+          ],
+          2: [
+            { name: "Maine", aliases: ["me"] },
+            { name: "Montana", aliases: ["mt"] },
+            { name: "North Dakota", aliases: ["nd"] },
+            { name: "Vermont", aliases: ["vt"] }
+          ],
+          3: [
+            { name: "Idaho", aliases: ["id"] },
+            { name: "New Hampshire", aliases: ["nh"] }
+          ],
+          4: [
+            { name: "Ohio", aliases: ["oh"] }
+          ],
+          5: [
+            { name: "Pennsylvania", aliases: ["pa"] }
+          ]
+        }
+      },
+      {
+        category: "World Languages",
+        prompt: "Name an official language of the United Nations (UN) or Switzerland.",
+        tiers: {
+          1: [
+            { name: "English", aliases: [] },
+            { name: "French", aliases: [] },
+            { name: "Spanish", aliases: [] },
+            { name: "German", aliases: [] }
+          ],
+          2: [
+            { name: "Chinese", aliases: ["mandarin", "mandarin chinese"] },
+            { name: "Russian", aliases: [] },
+            { name: "Italian", aliases: [] }
+          ],
+          3: [
+            { name: "Arabic", aliases: [] }
+          ],
+          4: [
+            { name: "Romansh", aliases: ["romansch", "rumantsch"] }
+          ],
+          5: [
+            { name: "Romansh", aliases: ["romansch", "rumantsch"] }
+          ]
+        }
+      },
+      {
+        category: "Human Anatomy",
+        prompt: "Name a bone in the human body.",
+        tiers: {
+          1: [
+            { name: "Femur", aliases: ["thigh bone"] },
+            { name: "Skull", aliases: ["cranium"] },
+            { name: "Rib", aliases: ["ribs"] },
+            { name: "Spine", aliases: ["vertebra", "vertebrae", "backbone"] },
+            { name: "Pelvis", aliases: ["hip bone"] },
+            { name: "Humerus", aliases: [] }
+          ],
+          2: [
+            { name: "Tibia", aliases: ["shinbone", "shin bone"] },
+            { name: "Fibula", aliases: [] },
+            { name: "Radius", aliases: [] },
+            { name: "Ulna", aliases: [] },
+            { name: "Clavicle", aliases: ["collarbone", "collar bone"] },
+            { name: "Patella", aliases: ["kneecap", "knee cap"] },
+            { name: "Sternum", aliases: ["breastbone"] },
+            { name: "Mandible", aliases: ["jawbone", "jaw"] }
+          ],
+          3: [
+            { name: "Scapula", aliases: ["shoulder blade"] },
+            { name: "Sacrum", aliases: [] },
+            { name: "Coccyx", aliases: ["tailbone", "tail bone"] },
+            { name: "Metacarpal", aliases: ["metacarpals"] },
+            { name: "Metatarsal", aliases: ["metatarsals"] },
+            { name: "Phalanges", aliases: ["phalanx"] }
+          ],
+          4: [
+            { name: "Maxilla", aliases: [] },
+            { name: "Zygomatic", aliases: ["cheekbone"] },
+            { name: "Hyoid", aliases: ["hyoid bone"] },
+            { name: "Calcaneus", aliases: ["heel bone"] },
+            { name: "Talus", aliases: [] },
+            { name: "Ilium", aliases: [] },
+            { name: "Ischium", aliases: [] }
+          ],
+          5: [
+            { name: "Stapes", aliases: ["stirrup"] },
+            { name: "Incus", aliases: ["anvil"] },
+            { name: "Malleus", aliases: ["hammer"] },
+            { name: "Vomer", aliases: [] },
+            { name: "Ethmoid", aliases: [] },
+            { name: "Sphenoid", aliases: [] },
+            { name: "Pisiform", aliases: [] },
+            { name: "Navicular", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "World Capitals",
+        prompt: "Name a national capital city located in South America.",
+        tiers: {
+          1: [
+            { name: "Buenos Aires", aliases: [] },
+            { name: "Brasilia", aliases: ["brasília"] },
+            { name: "Lima", aliases: [] },
+            { name: "Santiago", aliases: [] },
+            { name: "Bogota", aliases: ["bogotá"] }
+          ],
+          2: [
+            { name: "Caracas", aliases: [] },
+            { name: "Quito", aliases: [] },
+            { name: "Montevideo", aliases: [] }
+          ],
+          3: [
+            { name: "La Paz", aliases: [] },
+            { name: "Asuncion", aliases: ["asunción"] }
+          ],
+          4: [
+            { name: "Sucre", aliases: [] },
+            { name: "Georgetown", aliases: [] }
+          ],
+          5: [
+            { name: "Paramaribo", aliases: [] },
+            { name: "Cayenne", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "Sports & Olympics",
+        prompt: "Name a sport that is part of the Summer Olympic Games.",
+        tiers: {
+          1: [
+            { name: "Swimming", aliases: [] },
+            { name: "Athletics", aliases: ["track and field", "running"] },
+            { name: "Gymnastics", aliases: ["artistic gymnastics"] },
+            { name: "Basketball", aliases: [] },
+            { name: "Football", aliases: ["soccer"] },
+            { name: "Tennis", aliases: [] },
+            { name: "Volleyball", aliases: [] }
+          ],
+          2: [
+            { name: "Boxing", aliases: [] },
+            { name: "Cycling", aliases: [] },
+            { name: "Rowing", aliases: [] },
+            { name: "Fencing", aliases: [] },
+            { name: "Archery", aliases: [] },
+            { name: "Diving", aliases: [] },
+            { name: "Badminton", aliases: [] },
+            { name: "Table Tennis", aliases: ["ping pong"] },
+            { name: "Golf", aliases: [] }
+          ],
+          3: [
+            { name: "Judo", aliases: [] },
+            { name: "Taekwondo", aliases: [] },
+            { name: "Wrestling", aliases: [] },
+            { name: "Weightlifting", aliases: [] },
+            { name: "Water Polo", aliases: [] },
+            { name: "Triathlon", aliases: [] },
+            { name: "Surfing", aliases: [] },
+            { name: "Skateboarding", aliases: [] }
+          ],
+          4: [
+            { name: "Handball", aliases: [] },
+            { name: "Field Hockey", aliases: ["hockey"] },
+            { name: "Equestrian", aliases: [] },
+            { name: "Sailing", aliases: [] },
+            { name: "Canoeing", aliases: ["kayaking", "canoe"] },
+            { name: "Sport Climbing", aliases: ["climbing"] },
+            { name: "Rugby Sevens", aliases: ["rugby"] }
+          ],
+          5: [
+            { name: "Modern Pentathlon", aliases: ["pentathlon"] },
+            { name: "Artistic Swimming", aliases: ["synchronized swimming"] },
+            { name: "Trampoline", aliases: [] },
+            { name: "Breaking", aliases: ["breakdancing"] },
+            { name: "BMX Freestyle", aliases: ["bmx"] }
+          ]
+        }
+      },
+      {
+        category: "Islands & Seas",
+        prompt: "Name one of the 10 largest islands in the world by area.",
+        tiers: {
+          1: [
+            { name: "Greenland", aliases: [] },
+            { name: "Great Britain", aliases: ["britain", "uk"] },
+            { name: "Madagascar", aliases: [] }
+          ],
+          2: [
+            { name: "New Guinea", aliases: ["papua new guinea"] },
+            { name: "Borneo", aliases: [] },
+            { name: "Sumatra", aliases: [] },
+            { name: "Honshu", aliases: [] }
+          ],
+          3: [
+            { name: "Baffin Island", aliases: ["baffin"] },
+            { name: "Java", aliases: [] }
+          ],
+          4: [
+            { name: "Victoria Island", aliases: ["victoria"] },
+            { name: "Sulawesi", aliases: ["celebes"] }
+          ],
+          5: [
+            { name: "Ellesmere Island", aliases: ["ellesmere"] }
+          ]
+        }
+      },
+      {
+        category: "Music & Instruments",
+        prompt: "Name a standard instrument in a modern symphony orchestra.",
+        tiers: {
+          1: [
+            { name: "Violin", aliases: [] },
+            { name: "Cello", aliases: ["violoncello"] },
+            { name: "Flute", aliases: [] },
+            { name: "Trumpet", aliases: [] },
+            { name: "Clarinet", aliases: [] },
+            { name: "Harp", aliases: [] }
+          ],
+          2: [
+            { name: "Viola", aliases: [] },
+            { name: "Double Bass", aliases: ["contrabass", "upright bass", "bass"] },
+            { name: "Oboe", aliases: [] },
+            { name: "Trombone", aliases: [] },
+            { name: "French Horn", aliases: ["horn"] },
+            { name: "Tuba", aliases: [] },
+            { name: "Timpani", aliases: ["kettle drums", "kettledrums"] }
+          ],
+          3: [
+            { name: "Bassoon", aliases: [] },
+            { name: "Piccolo", aliases: [] },
+            { name: "Xylophone", aliases: [] },
+            { name: "Cymbals", aliases: ["cymbal"] },
+            { name: "Snare Drum", aliases: ["snare"] },
+            { name: "Bass Drum", aliases: [] }
+          ],
+          4: [
+            { name: "English Horn", aliases: ["cor anglais"] },
+            { name: "Contrabassoon", aliases: ["double bassoon"] },
+            { name: "Bass Clarinet", aliases: [] },
+            { name: "Glockenspiel", aliases: [] },
+            { name: "Celesta", aliases: [] },
+            { name: "Tubular Bells", aliases: ["chimes"] }
+          ],
+          5: [
+            { name: "Ondes Martenot", aliases: [] },
+            { name: "Bass Trombone", aliases: [] },
+            { name: "Tam-tam", aliases: ["gong"] },
+            { name: "Marimba", aliases: [] },
+            { name: "Vibraphone", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "World Currencies",
+        prompt: "Name a circulating national currency that is NOT called a Dollar, Peso, or Franc.",
+        tiers: {
+          1: [
+            { name: "Euro", aliases: ["eur"] },
+            { name: "Pound Sterling", aliases: ["pound", "british pound", "gbp"] },
+            { name: "Japanese Yen", aliases: ["yen", "jpy"] },
+            { name: "Indian Rupee", aliases: ["rupee", "inr"] },
+            { name: "Chinese Yuan", aliases: ["yuan", "renminbi", "rmb", "cny"] }
+          ],
+          2: [
+            { name: "South Korean Won", aliases: ["won", "krw"] },
+            { name: "Russian Ruble", aliases: ["ruble", "rouble", "rub"] },
+            { name: "Brazilian Real", aliases: ["real", "brl"] },
+            { name: "Swedish Krona", aliases: ["krona", "sek"] },
+            { name: "Turkish Lira", aliases: ["lira", "try"] },
+            { name: "Thai Baht", aliases: ["baht", "thb"] }
+          ],
+          3: [
+            { name: "Malaysian Ringgit", aliases: ["ringgit", "myr"] },
+            { name: "Indonesian Rupiah", aliases: ["rupiah", "idr"] },
+            { name: "South African Rand", aliases: ["rand", "zar"] },
+            { name: "Polish Zloty", aliases: ["zloty", "złoty", "pln"] },
+            { name: "Saudi Riyal", aliases: ["riyal", "sar"] },
+            { name: "UAE Dirham", aliases: ["dirham", "aed"] },
+            { name: "Israeli Shekel", aliases: ["shekel", "ils"] }
+          ],
+          4: [
+            { name: "Vietnamese Dong", aliases: ["dong", "vnd"] },
+            { name: "Hungarian Forint", aliases: ["forint", "huf"] },
+            { name: "Czech Koruna", aliases: ["koruna", "czk"] },
+            { name: "Ukrainian Hryvnia", aliases: ["hryvnia", "uah"] },
+            { name: "Nigerian Naira", aliases: ["naira", "ngn"] },
+            { name: "Kenyan Shilling", aliases: ["shilling", "kes"] }
+          ],
+          5: [
+            { name: "Botswana Pula", aliases: ["pula", "bwp"] },
+            { name: "Guatemalan Quetzal", aliases: ["quetzal", "gtq"] },
+            { name: "Georgian Lari", aliases: ["lari", "gel"] },
+            { name: "Mongolian Togrog", aliases: ["togrog", "tugrik", "mnt"] },
+            { name: "Bhutanese Ngultrum", aliases: ["ngultrum", "btn"] },
+            { name: "Maldivian Rufiyaa", aliases: ["rufiyaa", "mvr"] }
+          ]
+        }
+      },
+      {
+        category: "Botany & Food",
+        prompt: "Name a culinary fruit that is botanically classified as a berry (true berry).",
+        tiers: {
+          1: [
+            { name: "Blueberry", aliases: ["blueberries"] },
+            { name: "Grape", aliases: ["grapes"] },
+            { name: "Tomato", aliases: ["tomatoes"] },
+            { name: "Banana", aliases: ["bananas"] }
+          ],
+          2: [
+            { name: "Cranberry", aliases: ["cranberries"] },
+            { name: "Kiwi", aliases: ["kiwifruit"] },
+            { name: "Watermelon", aliases: ["watermelons"] },
+            { name: "Cucumber", aliases: ["cucumbers"] }
+          ],
+          3: [
+            { name: "Avocado", aliases: ["avocados"] },
+            { name: "Eggplant", aliases: ["aubergine", "eggplants"] },
+            { name: "Pumpkin", aliases: ["pumpkins"] },
+            { name: "Bell Pepper", aliases: ["pepper", "chili pepper", "capsicum"] }
+          ],
+          4: [
+            { name: "Guava", aliases: ["guavas"] },
+            { name: "Papaya", aliases: ["papayas"] },
+            { name: "Pomegranate", aliases: ["pomegranates"] },
+            { name: "Currant", aliases: ["blackcurrant", "redcurrant", "currants"] },
+            { name: "Gooseberry", aliases: ["gooseberries"] }
+          ],
+          5: [
+            { name: "Persimmon", aliases: ["persimmons"] },
+            { name: "Passion Fruit", aliases: ["passionfruit"] },
+            { name: "Elderberry", aliases: ["elderberries"] },
+            { name: "Huckleberry", aliases: ["huckleberries"] },
+            { name: "Lingonberry", aliases: ["lingonberries"] }
+          ]
+        }
+      },
+      {
+        category: "Physics & Science",
+        prompt: "Name an SI base unit or derived SI unit named after a scientist.",
+        tiers: {
+          1: [
+            { name: "Meter", aliases: ["metre", "m"] },
+            { name: "Kilogram", aliases: ["kg", "gram"] },
+            { name: "Second", aliases: ["s"] },
+            { name: "Newton", aliases: ["n"] },
+            { name: "Watt", aliases: ["w"] },
+            { name: "Volt", aliases: ["v"] }
+          ],
+          2: [
+            { name: "Joule", aliases: ["j"] },
+            { name: "Hertz", aliases: ["hz"] },
+            { name: "Ampere", aliases: ["amp", "amps", "a"] },
+            { name: "Kelvin", aliases: ["k"] },
+            { name: "Ohm", aliases: [] }
+          ],
+          3: [
+            { name: "Pascal", aliases: ["pa"] },
+            { name: "Tesla", aliases: ["t"] },
+            { name: "Coulomb", aliases: ["c"] },
+            { name: "Mole", aliases: ["mol"] },
+            { name: "Candela", aliases: ["cd"] }
+          ],
+          4: [
+            { name: "Farad", aliases: ["f"] },
+            { name: "Henry", aliases: ["h"] },
+            { name: "Weber", aliases: ["wb"] },
+            { name: "Becquerel", aliases: ["bq"] }
+          ],
+          5: [
+            { name: "Siemens", aliases: ["s"] },
+            { name: "Sievert", aliases: ["sv"] },
+            { name: "Gray", aliases: ["gy"] }
+          ]
+        }
+      },
+      {
+        category: "World Rivers",
+        prompt: "Name one of the 15 longest rivers in the world.",
+        tiers: {
+          1: [
+            { name: "Nile", aliases: ["nile river"] },
+            { name: "Amazon", aliases: ["amazon river"] },
+            { name: "Mississippi", aliases: ["mississippi river", "mississippi-missouri"] },
+            { name: "Yangtze", aliases: ["yangtze river", "chang jiang"] }
+          ],
+          2: [
+            { name: "Yellow River", aliases: ["huang he"] },
+            { name: "Congo", aliases: ["congo river"] },
+            { name: "Mekong", aliases: ["mekong river"] },
+            { name: "Volga", aliases: ["volga river"] }
+          ],
+          3: [
+            { name: "Niger", aliases: ["niger river"] },
+            { name: "Ob", aliases: ["ob river", "ob-irtysh"] },
+            { name: "Yenisei", aliases: ["yenisey"] },
+            { name: "Lena", aliases: ["lena river"] }
+          ],
+          4: [
+            { name: "Amur", aliases: ["amur river", "heilong jiang"] },
+            { name: "Parana", aliases: ["paraná", "rio de la plata"] }
+          ],
+          5: [
+            { name: "Mackenzie", aliases: ["mackenzie river"] }
+          ]
+        }
+      },
+      {
+        category: "Literature",
+        prompt: "Name a play written by William Shakespeare.",
+        tiers: {
+          1: [
+            { name: "Romeo and Juliet", aliases: ["romeo & juliet"] },
+            { name: "Hamlet", aliases: [] },
+            { name: "Macbeth", aliases: [] },
+            { name: "Othello", aliases: [] },
+            { name: "A Midsummer Night's Dream", aliases: ["midsummer nights dream", "midsummer night's dream"] }
+          ],
+          2: [
+            { name: "King Lear", aliases: [] },
+            { name: "Julius Caesar", aliases: [] },
+            { name: "The Tempest", aliases: ["tempest"] },
+            { name: "Much Ado About Nothing", aliases: [] },
+            { name: "The Merchant of Venice", aliases: ["merchant of venice"] }
+          ],
+          3: [
+            { name: "Twelfth Night", aliases: [] },
+            { name: "The Taming of the Shrew", aliases: ["taming of the shrew"] },
+            { name: "As You Like It", aliases: [] },
+            { name: "Richard III", aliases: ["richard 3"] },
+            { name: "Henry V", aliases: ["henry 5"] }
+          ],
+          4: [
+            { name: "The Winter's Tale", aliases: ["winters tale"] },
+            { name: "Antony and Cleopatra", aliases: [] },
+            { name: "The Comedy of Errors", aliases: ["comedy of errors"] },
+            { name: "Measure for Measure", aliases: [] },
+            { name: "Coriolanus", aliases: [] }
+          ],
+          5: [
+            { name: "Titus Andronicus", aliases: [] },
+            { name: "Cymbeline", aliases: [] },
+            { name: "Troilus and Cressida", aliases: [] },
+            { name: "Timon of Athens", aliases: [] },
+            { name: "Pericles", aliases: ["pericles prince of tyre"] },
+            { name: "Love's Labour's Lost", aliases: ["loves labours lost"] }
+          ]
+        }
+      },
+      {
+        category: "Animal Kingdom",
+        prompt: "Name a mammal capable of true flight or gliding, or an egg-laying mammal (monotreme).",
+        tiers: {
+          1: [
+            { name: "Bat", aliases: ["bats", "fruit bat", "vampire bat"] },
+            { name: "Platypus", aliases: ["duck-billed platypus"] },
+            { name: "Flying Squirrel", aliases: ["sugar glider"] }
+          ],
+          2: [
+            { name: "Echidna", aliases: ["spiny anteater"] },
+            { name: "Flying Fox", aliases: [] }
+          ],
+          3: [
+            { name: "Colugo", aliases: ["flying lemur", "sunda flying lemur"] },
+            { name: "Microbat", aliases: ["little brown bat"] }
+          ],
+          4: [
+            { name: "Kitti's Hog-nosed Bat", aliases: ["bumblebee bat", "hog-nosed bat"] },
+            { name: "Greater Glider", aliases: [] }
+          ],
+          5: [
+            { name: "Anomalure", aliases: ["scaly-tailed squirrel"] },
+            { name: "Feathertail Glider", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "Art & Museums",
+        prompt: "Name a famous painting housed in the Louvre Museum in Paris.",
+        tiers: {
+          1: [
+            { name: "Mona Lisa", aliases: ["la gioconda"] },
+            { name: "Liberty Leading the People", aliases: [] }
+          ],
+          2: [
+            { name: "The Raft of the Medusa", aliases: ["raft of the medusa"] },
+            { name: "The Wedding at Cana", aliases: ["wedding at cana"] }
+          ],
+          3: [
+            { name: "The Coronation of Napoleon", aliases: ["coronation of napoleon"] },
+            { name: "The Lacemaker", aliases: ["lacemaker"] },
+            { name: "Oath of the Horatii", aliases: [] }
+          ],
+          4: [
+            { name: "Virgin of the Rocks", aliases: ["madonna of the rocks"] },
+            { name: "The Astronomer", aliases: ["astronomer"] },
+            { name: "Death of the Virgin", aliases: [] }
+          ],
+          5: [
+            { name: "The Cheat with the Ace of Diamonds", aliases: [] },
+            { name: "Gabrielle d'Estrees and One of Her Sisters", aliases: [] },
+            { name: "The Turkish Bath", aliases: ["turkish bath"] }
+          ]
+        }
+      },
+      {
+        category: "Ancient History",
+        prompt: "Name one of the Seven Wonders of the Ancient World.",
+        tiers: {
+          1: [
+            { name: "Great Pyramid of Giza", aliases: ["pyramids of giza", "pyramid of giza", "great pyramid", "pyramids"] },
+            { name: "Hanging Gardens of Babylon", aliases: ["hanging gardens"] }
+          ],
+          2: [
+            { name: "Colossus of Rhodes", aliases: ["colossus"] },
+            { name: "Lighthouse of Alexandria", aliases: ["pharos of alexandria", "lighthouse"] }
+          ],
+          3: [
+            { name: "Statue of Zeus at Olympia", aliases: ["statue of zeus"] },
+            { name: "Temple of Artemis at Ephesus", aliases: ["temple of artemis"] }
+          ],
+          4: [
+            { name: "Mausoleum at Halicarnassus", aliases: ["mausoleum of halicarnassus", "mausoleum"] }
+          ],
+          5: [
+            { name: "Mausoleum at Halicarnassus", aliases: ["mausoleum of halicarnassus", "mausoleum"] }
+          ]
+        }
+      },
+      {
+        category: "Oceanography",
+        prompt: "Name one of Earth's major oceans or marginal seas.",
+        tiers: {
+          1: [
+            { name: "Pacific Ocean", aliases: ["pacific"] },
+            { name: "Atlantic Ocean", aliases: ["atlantic"] },
+            { name: "Indian Ocean", aliases: ["indian"] },
+            { name: "Arctic Ocean", aliases: ["arctic"] },
+            { name: "Mediterranean Sea", aliases: ["mediterranean"] },
+            { name: "Caribbean Sea", aliases: ["caribbean"] },
+            { name: "Red Sea", aliases: ["red"] }
+          ],
+          2: [
+            { name: "Southern Ocean", aliases: ["antarctic ocean", "southern"] },
+            { name: "South China Sea", aliases: ["south china"] },
+            { name: "Black Sea", aliases: ["black"] },
+            { name: "North Sea", aliases: ["north"] },
+            { name: "Baltic Sea", aliases: ["baltic"] },
+            { name: "Bering Sea", aliases: ["bering"] }
+          ],
+          3: [
+            { name: "Coral Sea", aliases: ["coral"] },
+            { name: "Arabian Sea", aliases: ["arabian"] },
+            { name: "Sea of Japan", aliases: ["east sea"] },
+            { name: "Aegean Sea", aliases: ["aegean"] },
+            { name: "Adriatic Sea", aliases: ["adriatic"] },
+            { name: "Tasman Sea", aliases: ["tasman"] }
+          ],
+          4: [
+            { name: "Sargasso Sea", aliases: ["sargasso"] },
+            { name: "Weddell Sea", aliases: ["weddell"] },
+            { name: "Ross Sea", aliases: ["ross"] },
+            { name: "Andaman Sea", aliases: ["andaman"] },
+            { name: "Yellow Sea", aliases: ["yellow"] },
+            { name: "Barents Sea", aliases: ["barents"] }
+          ],
+          5: [
+            { name: "Arafura Sea", aliases: ["arafura"] },
+            { name: "Banda Sea", aliases: ["banda"] },
+            { name: "Chukchi Sea", aliases: ["chukchi"] },
+            { name: "Laptev Sea", aliases: ["laptev"] },
+            { name: "Kara Sea", aliases: ["kara"] },
+            { name: "Scotia Sea", aliases: ["scotia"] }
+          ]
+        }
+      },
+      {
+        category: "Technology & Computing",
+        prompt: "Name a widely used programming language created before the year 2005.",
+        tiers: {
+          1: [
+            { name: "Python", aliases: [] },
+            { name: "Java", aliases: [] },
+            { name: "JavaScript", aliases: ["js"] },
+            { name: "C", aliases: [] },
+            { name: "C++", aliases: ["cpp"] }
+          ],
+          2: [
+            { name: "C#", aliases: ["csharp", "c sharp"] },
+            { name: "PHP", aliases: [] },
+            { name: "Ruby", aliases: [] },
+            { name: "SQL", aliases: [] },
+            { name: "Visual Basic", aliases: ["vb"] }
+          ],
+          3: [
+            { name: "Perl", aliases: [] },
+            { name: "Pascal", aliases: [] },
+            { name: "Fortran", aliases: [] },
+            { name: "COBOL", aliases: [] },
+            { name: "Lua", aliases: [] },
+            { name: "R", aliases: [] }
+          ],
+          4: [
+            { name: "Lisp", aliases: ["common lisp"] },
+            { name: "Haskell", aliases: [] },
+            { name: "Erlang", aliases: [] },
+            { name: "Scala", aliases: [] },
+            { name: "Objective-C", aliases: ["objective c"] },
+            { name: "Delphi", aliases: [] }
+          ],
+          5: [
+            { name: "Ada", aliases: [] },
+            { name: "Prolog", aliases: [] },
+            { name: "Smalltalk", aliases: [] },
+            { name: "Scheme", aliases: [] },
+            { name: "OCaml", aliases: [] },
+            { name: "Forth", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "World Mountains",
+        prompt: "Name one of the 14 'Eight-thousander' mountains above 8,000 meters.",
+        tiers: {
+          1: [
+            { name: "Mount Everest", aliases: ["everest", "sagarmatha", "chomolungma"] },
+            { name: "K2", aliases: ["mount godwin-austen"] }
+          ],
+          2: [
+            { name: "Kangchenjunga", aliases: ["kanchenjunga"] },
+            { name: "Lhotse", aliases: [] },
+            { name: "Annapurna", aliases: ["annapurna i"] }
+          ],
+          3: [
+            { name: "Makalu", aliases: [] },
+            { name: "Cho Oyu", aliases: [] },
+            { name: "Dhaulagiri", aliases: ["dhaulagiri i"] },
+            { name: "Manaslu", aliases: [] },
+            { name: "Nanga Parbat", aliases: [] }
+          ],
+          4: [
+            { name: "Broad Peak", aliases: [] },
+            { name: "Shishapangma", aliases: [] }
+          ],
+          5: [
+            { name: "Gasherbrum I", aliases: ["gasherbrum 1", "hidden peak"] },
+            { name: "Gasherbrum II", aliases: ["gasherbrum 2"] }
+          ]
+        }
+      },
+      {
+        category: "Food & Gastronomy",
+        prompt: "Name a traditional Italian pasta shape.",
+        tiers: {
+          1: [
+            { name: "Spaghetti", aliases: [] },
+            { name: "Penne", aliases: [] },
+            { name: "Macaroni", aliases: ["maccheroni"] },
+            { name: "Fettuccine", aliases: [] },
+            { name: "Lasagna", aliases: ["lasagne"] },
+            { name: "Ravioli", aliases: [] }
+          ],
+          2: [
+            { name: "Rigatoni", aliases: [] },
+            { name: "Fusilli", aliases: [] },
+            { name: "Linguine", aliases: [] },
+            { name: "Farfalle", aliases: ["bow tie", "bowtie"] },
+            { name: "Tortellini", aliases: [] },
+            { name: "Tagliatelle", aliases: [] }
+          ],
+          3: [
+            { name: "Orzo", aliases: [] },
+            { name: "Gnocchi", aliases: [] },
+            { name: "Cannelloni", aliases: [] },
+            { name: "Pappardelle", aliases: [] },
+            { name: "Bucatini", aliases: [] },
+            { name: "Angel Hair", aliases: ["capellini"] }
+          ],
+          4: [
+            { name: "Orecchiette", aliases: [] },
+            { name: "Cavatappi", aliases: [] },
+            { name: "Conchiglie", aliases: ["shells"] },
+            { name: "Paccheri", aliases: [] },
+            { name: "Ziti", aliases: [] }
+          ],
+          5: [
+            { name: "Trofie", aliases: [] },
+            { name: "Gemelli", aliases: [] },
+            { name: "Campanelle", aliases: [] },
+            { name: "Radiatori", aliases: [] },
+            { name: "Mafaldine", aliases: [] },
+            { name: "Strozzapreti", aliases: [] }
+          ]
+        }
+      },
+      {
+        category: "Space Exploration",
+        prompt: "Name one of the 12 astronauts who walked on the Moon during the Apollo program.",
+        tiers: {
+          1: [
+            { name: "Neil Armstrong", aliases: ["armstrong"] },
+            { name: "Buzz Aldrin", aliases: ["edwin aldrin", "aldrin"] }
+          ],
+          2: [
+            { name: "Alan Shepard", aliases: ["shepard"] },
+            { name: "John Young", aliases: ["young"] }
+          ],
+          3: [
+            { name: "Pete Conrad", aliases: ["charles conrad", "conrad"] },
+            { name: "Gene Cernan", aliases: ["eugene cernan", "cernan"] },
+            { name: "Jim Irwin", aliases: ["james irwin", "irwin"] }
+          ],
+          4: [
+            { name: "Alan Bean", aliases: ["bean"] },
+            { name: "David Scott", aliases: ["scott"] },
+            { name: "Charlie Duke", aliases: ["charles duke", "duke"] }
+          ],
+          5: [
+            { name: "Edgar Mitchell", aliases: ["mitchell"] },
+            { name: "Harrison Schmitt", aliases: ["jack schmitt", "schmitt"] }
+          ]
+        }
+      },
+      {
+        category: "Gems & Minerals",
+        prompt: "Name one of the 10 reference minerals on the Mohs Hardness Scale (1 to 10).",
+        tiers: {
+          1: [
+            { name: "Diamond", aliases: [] },
+            { name: "Quartz", aliases: [] },
+            { name: "Talc", aliases: [] }
+          ],
+          2: [
+            { name: "Topaz", aliases: [] },
+            { name: "Gypsum", aliases: [] },
+            { name: "Calcite", aliases: [] }
+          ],
+          3: [
+            { name: "Feldspar", aliases: ["orthoclase", "orthoclase feldspar"] },
+            { name: "Fluorite", aliases: [] }
+          ],
+          4: [
+            { name: "Corundum", aliases: ["ruby", "sapphire"] }
+          ],
+          5: [
+            { name: "Apatite", aliases: [] }
+          ]
+        }
+      }
+    ];
+
+    // 4. WEB AUDIO API UNDERWATER SYNTHESIZER (Zero external sound URLs)
+    class OceanAudio {
+      constructor() {
+        this.enabled = true;
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playBubble(pitchOffset = 0) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        const startFreq = 260 + pitchOffset + Math.random() * 140;
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(startFreq * 2.1, now + 0.14);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.16);
+      }
+
+      playDiveChord(tier) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        // Deeper, richer synth chord for higher tiers
+        const tierNotes = {
+          0: [160, 145],
+          1: [330, 440],
+          2: [293.66, 369.99, 440],
+          3: [261.63, 329.63, 392.00, 493.88],
+          4: [220, 277.18, 329.63, 415.30, 554.37],
+          5: [196, 246.94, 293.66, 369.99, 440, 587.33]
+        };
+
+        const notes = tierNotes[tier] || tierNotes[1];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = tier === 5 ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+          if (tier === 0) {
+            osc.frequency.linearRampToValueAtTime(freq * 0.75, now + 0.35);
+          }
+
+          gain.gain.setValueAtTime(0.001, now + idx * 0.05);
+          gain.gain.linearRampToValueAtTime(0.07, now + idx * 0.05 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0008, now + idx * 0.05 + 0.65);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.05);
+          osc.stop(now + idx * 0.05 + 0.7);
+        });
+      }
+    }
+
+    // 5. UNDERWATER PARTICLE & SEA CREATURE CANVAS ENGINE
+    class OceanParticleCanvas {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.creatures = [];
+        this.depth = 0; // 0 to 11000
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.seedEntities();
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      seedEntities() {
+        this.particles = [];
+        for (let i = 0; i < 65; i++) {
+          this.particles.push({
+            x: Math.random() * this.canvas.width,
+            y: Math.random() * this.canvas.height,
+            r: 1.5 + Math.random() * 4.5,
+            speedY: 0.35 + Math.random() * 1.1,
+            wobble: Math.random() * Math.PI * 2,
+            isBio: Math.random() > 0.55
+          });
+        }
+
+        const seaIcons = ['🦐', '🐟', '🪼', '🦑', '🐠', '🐡'];
+        this.creatures = [];
+        for (let i = 0; i < 7; i++) {
+          this.creatures.push({
+            emoji: seaIcons[i % seaIcons.length],
+            x: Math.random() * this.canvas.width,
+            y: 120 + Math.random() * (this.canvas.height - 180),
+            speedX: (Math.random() > 0.5 ? 1 : -1) * (0.25 + Math.random() * 0.45),
+            phase: Math.random() * Math.PI * 2,
+            size: 18 + Math.random() * 12
+          });
+        }
+      }
+
+      burstDiveBubbles(count = 28) {
+        for (let i = 0; i < count; i++) {
+          this.particles.push({
+            x: this.canvas.width * (0.2 + Math.random() * 0.6),
+            y: this.canvas.height * (0.5 + Math.random() * 0.45),
+            r: 2.5 + Math.random() * 6,
+            speedY: 2.2 + Math.random() * 3.5,
+            wobble: Math.random() * Math.PI * 2,
+            isBio: this.depth > 1500,
+            temp: true
+          });
+        }
+        if (this.particles.length > 140) {
+          this.particles.splice(0, this.particles.length - 140);
+        }
+      }
+
+      setDepth(newDepth) {
+        this.depth = newDepth;
+      }
+
+      render() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const isDeep = this.depth > 1200;
+
+        // Draw rising bubbles & bioluminescent plankton
+        for (let i = 0; i < this.particles.length; i++) {
+          const p = this.particles[i];
+          p.y -= p.speedY;
+          p.wobble += 0.03;
+          const drawX = p.x + Math.sin(p.wobble) * 12;
+
+          if (p.y < -20) {
+            if (p.temp) {
+              this.particles.splice(i, 1);
+              i--;
+              continue;
+            }
+            p.y = h + 15;
+            p.x = Math.random() * w;
+          }
+
+          ctx.beginPath();
+          ctx.arc(drawX, p.y, p.r, 0, Math.PI * 2);
+
+          if (isDeep && p.isBio) {
+            // Bioluminescent cyan/amber glow in deep ocean
+            ctx.fillStyle = i % 3 === 0 ? 'rgba(251, 191, 36, 0.55)' : 'rgba(45, 212, 191, 0.6)';
+            ctx.shadowColor = i % 3 === 0 ? '#fbbf24' : '#2dd4bf';
+            ctx.shadowBlur = 10;
+          } else {
+            ctx.fillStyle = 'rgba(224, 242, 254, 0.25)';
+            ctx.shadowBlur = 0;
+          }
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+
+        // Draw subtle swimming sea silhouettes/creatures
+        ctx.font = '22px sans-serif';
+        ctx.globalAlpha = isDeep ? 0.35 : 0.22;
+        for (const c of this.creatures) {
+          c.x += c.speedX;
+          c.phase += 0.02;
+          const bobY = c.y + Math.sin(c.phase) * 8;
+
+          if (c.x > w + 50) c.x = -40;
+          if (c.x < -50) c.x = w + 40;
+
+          ctx.save();
+          ctx.translate(c.x, bobY);
+          if (c.speedX > 0) ctx.scale(-1, 1);
+          ctx.font = `${Math.round(c.size)}px sans-serif`;
+          ctx.fillText(c.emoji, 0, 0);
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+
+        requestAnimationFrame(() => this.render());
+      }
+    }
+
+    // 6. MAIN APPLICATION CONTROLLER
+    class KrillionApp {
+      constructor() {
+        this.audio = new OceanAudio();
+        this.canvasEngine = null;
+
+        // Player Profile
+        this.player = {
+          id: 'local-' + Math.random().toString(36).substring(2, 8),
+          name: '',
+          avatar: '🦐'
+        };
+
+        // Game Options
+        this.options = {
+          spQuestions: 10,
+          spTime: 30,
+          mpQuestions: 10,
+          mpTime: 30
+        };
+
+        // Active Match State
+        this.mode = 'single'; // 'single' | 'multi'
+        this.questions = [];
+        this.currentIndex = 0;
+        this.timeLimit = 30;
+        this.timeLeft = 30;
+        this.timerInterval = null;
+        this.roundSubmitted = false;
+
+        // Score & Depth Tracking
+        this.score = 0;
+        this.depth = 0; // meters
+
+        // Multiplayer PeerJS State
+        this.peer = null;
+        this.isHost = false;
+        this.roomCode = '';
+        this.hostRole = 'player'; // 'player' | 'spectator'
+        this.connections = {}; // peerId -> DataConnection (Host tracks all guests)
+        this.hostConn = null;  // Guest tracks connection to Host
+        this.players = {};     // id -> { id, name, avatar, score, depth, role, answered, lastResult }
+      }
+
+      init() {
+        this.renderAvatarGrid();
+        this.canvasEngine = new OceanParticleCanvas('particle-canvas');
+        this.canvasEngine.render();
+        this.updateOceanDepthVisuals(0);
+
+        // Allow pressing Enter on name input to focus mode
+        document.getElementById('player-name-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.selectMode('single');
+          }
+        });
+      }
+
+      // --- UI Helpers ---
+      toast(msg, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        const colors = {
+          info: 'bg-sky-900/95 border-sky-400 text-sky-100',
+          success: 'bg-emerald-900/95 border-emerald-400 text-emerald-100',
+          warn: 'bg-amber-900/95 border-amber-400 text-amber-100',
+          error: 'bg-rose-900/95 border-rose-400 text-rose-100'
+        };
+        el.className = `px-4 py-3 rounded-2xl border shadow-xl text-sm font-semibold text-center backdrop-blur-md transition-all duration-300 ${colors[type] || colors.info}`;
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-10px)';
+          setTimeout(() => el.remove(), 300);
+        }, 3000);
+      }
+
+      toggleModal(id, show) {
+        const el = document.getElementById(id);
+        if (show) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      }
+
+      toggleSound() {
+        this.audio.enabled = !this.audio.enabled;
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !this.audio.enabled);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', this.audio.enabled);
+        if (this.audio.enabled) this.audio.playBubble(120);
+      }
+
+      showView(viewName) {
+        const views = ['menu', 'single-setup', 'multi-choice', 'multi-create', 'lobby', 'game', 'podium'];
+        views.forEach(v => {
+          document.getElementById(`view-${v}`).classList.add('hidden');
+        });
+        document.getElementById(`view-${viewName}`).classList.remove('hidden');
+        this.audio.playBubble();
+      }
+
+      renderAvatarGrid() {
+        const grid = document.getElementById('avatar-grid');
+        grid.innerHTML = AVATARS.map(av => {
+          const selected = av.emoji === this.player.avatar;
+          return `
+            <button
+              type="button"
+              onclick="app.chooseAvatar('${av.emoji}')"
+              class="p-2.5 rounded-2xl border transition flex flex-col items-center justify-center gap-1 ${
+                selected
+                  ? 'bg-cyan-500/35 border-2 border-cyan-300 shadow-lg scale-105'
+                  : 'bg-slate-950/50 border-cyan-400/20 hover:bg-cyan-500/15'
+              }"
+            >
+              <span class="text-2xl sm:text-3xl">${av.emoji}</span>
+              <span class="text-[11px] font-bold text-cyan-100">${av.name}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      chooseAvatar(emoji) {
+        this.player.avatar = emoji;
+        this.audio.playBubble(80);
+        this.renderAvatarGrid();
+      }
+
+      setOption(key, val, btnEl) {
+        this.options[key] = val;
+        this.audio.playBubble(40);
+        const parent = btnEl.parentElement;
+        parent.querySelectorAll('.opt-btn').forEach(b => {
+          b.className = 'opt-btn py-3 sm:py-3.5 rounded-xl font-bold text-sm border border-cyan-400/30 bg-slate-900/50 text-cyan-100 hover:bg-cyan-500/20 transition';
+        });
+        btnEl.className = 'opt-btn py-3 sm:py-3.5 rounded-xl font-bold text-sm border-2 border-cyan-300 bg-cyan-500/30 text-white shadow-md transition';
+      }
+
+      validateProfile() {
+        const rawName = document.getElementById('player-name-input').value.trim();
+        if (!rawName) {
+          this.toast('Please enter your Diver Name first!', 'warn');
+          document.getElementById('player-name-input').focus();
+          return false;
+        }
+        this.player.name = rawName;
+        return true;
+      }
+
+      selectMode(mode) {
+        if (!this.validateProfile()) return;
+        this.mode = mode;
+        if (mode === 'single') {
+          this.showView('single-setup');
+        } else {
+          this.showView('multi-choice');
+        }
+      }
+
+      // --- Dynamic Ocean Depth & Color Gradients ---
+      updateOceanDepthVisuals(depthMeters) {
+        const backdrop = document.getElementById('ocean-backdrop');
+        const sunRays = document.getElementById('sun-rays');
+        const waves = document.getElementById('surface-waves');
+        const zoneLabel = document.getElementById('zone-label');
+        const zoneDot = document.getElementById('zone-dot');
+
+        if (this.canvasEngine) {
+          this.canvasEngine.setDepth(depthMeters);
+        }
+
+        // Update Header Pill
+        const formattedDepth = depthMeters === 0 ? '0m' : `-${depthMeters.toLocaleString()}m`;
+        let zoneName = 'Surface';
+        let dotColor = 'bg-sky-300';
+
+        if (depthMeters === 0) {
+          backdrop.style.background = 'linear-gradient(180deg, #38bdf8 0%, #0284c7 35%, #0369a1 75%, #082f49 100%)';
+          sunRays.style.opacity = '1';
+          waves.style.opacity = '1';
+          waves.style.transform = 'translateY(0px)';
+        } else if (depthMeters <= 250) {
+          zoneName = 'Sunlight Zone';
+          dotColor = 'bg-sky-400';
+          backdrop.style.background = 'linear-gradient(180deg, #0284c7 0%, #0369a1 45%, #0c4a6e 100%)';
+          sunRays.style.opacity = '0.65';
+          waves.style.opacity = '0.35';
+          waves.style.transform = 'translateY(-40px)';
+        } else if (depthMeters <= 1000) {
+          zoneName = 'Twilight Zone';
+          dotColor = 'bg-teal-400';
+          backdrop.style.background = 'linear-gradient(180deg, #0369a1 0%, #0f766e 40%, #1e1b4b 100%)';
+          sunRays.style.opacity = '0.25';
+          waves.style.opacity = '0';
+          waves.style.transform = 'translateY(-90px)';
+        } else if (depthMeters <= 3500) {
+          zoneName = 'Midnight Zone';
+          dotColor = 'bg-indigo-400';
+          backdrop.style.background = 'linear-gradient(180deg, #0c4a6e 0%, #1e1b4b 50%, #090d16 100%)';
+          sunRays.style.opacity = '0.05';
+          waves.style.opacity = '0';
+        } else if (depthMeters <= 7500) {
+          zoneName = 'Abyssal Zone';
+          dotColor = 'bg-purple-400';
+          backdrop.style.background = 'linear-gradient(180deg, #1e1b4b 0%, #2e1065 45%, #030712 100%)';
+          sunRays.style.opacity = '0';
+          waves.style.opacity = '0';
+        } else {
+          zoneName = 'Hadal Trench';
+          dotColor = 'bg-amber-400';
+          backdrop.style.background = 'linear-gradient(180deg, #090d16 0%, #1e1b4b 50%, #020617 100%)';
+          sunRays.style.opacity = '0';
+          waves.style.opacity = '0';
+        }
+
+        zoneLabel.textContent = `${zoneName} • ${formattedDepth}`;
+        zoneDot.className = `w-2.5 h-2.5 rounded-full ${dotColor} animate-pulse`;
+
+        // Update Submarine Marker on Gauge (0m -> 6%, 11000m -> 92%)
+        const clamped = Math.min(depthMeters, 11000);
+        const pct = 6 + (clamped / 11000) * 86;
+        const marker = document.getElementById('submarine-marker');
+        if (marker) {
+          marker.style.top = `${pct}%`;
+        }
+      }
+
+      // --- Question Selection & Fuzzy Answer Evaluation ---
+      pickRandomQuestions(count) {
+        const pool = [...QUESTION_BANK];
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return pool.slice(0, Math.min(count, pool.length));
+      }
+
+      normalizeText(str) {
+        return str
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9+#\s]/g, '')
+          .replace(/\b(the|a|an|of|river|ocean|sea|mount|mt|island)\b/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      levenshtein(a, b) {
+        const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            const cost = b[i - 1] === a[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j - 1] + cost
+            );
+          }
+        }
+        return matrix[b.length][a.length];
+      }
+
+      evaluateAnswer(questionObj, rawInput) {
+        const cleanInput = this.normalizeText(rawInput);
+        if (!cleanInput) {
+          return { tier: 0, matchedName: null, raw: rawInput };
+        }
+
+        // Check from highest rarity (5) down to Common (1) so players get max credit
+        for (let tier = 5; tier >= 1; tier--) {
+          const entries = questionObj.tiers[tier] || [];
+          for (const entry of entries) {
+            const candidates = [entry.name, ...(entry.aliases || [])];
+            for (const cand of candidates) {
+              const cleanCand = this.normalizeText(cand);
+              if (!cleanCand) continue;
+
+              // Exact normalized match
+              if (cleanInput === cleanCand) {
+                return { tier, matchedName: entry.name, raw: rawInput };
+              }
+
+              // Forgiving typo tolerance for words >= 5 chars
+              if (cleanCand.length >= 5 && Math.abs(cleanInput.length - cleanCand.length) <= 2) {
+                const dist = this.levenshtein(cleanInput, cleanCand);
+                const maxAllowed = cleanCand.length >= 8 ? 2 : 1;
+                if (dist <= maxAllowed) {
+                  return { tier, matchedName: entry.name, raw: rawInput };
+                }
+              }
+            }
+          }
+        }
+
+        return { tier: 0, matchedName: null, raw: rawInput };
+      }
+
+      // ========================================================================
+      // SINGLEPLAYER FLOW
+      // ========================================================================
+      startSingleplayer() {
+        this.mode = 'single';
+        this.questions = this.pickRandomQuestions(this.options.spQuestions);
+        this.timeLimit = this.options.spTime;
+        this.currentIndex = 0;
+        this.score = 0;
+        this.depth = 0;
+
+        this.players = {
+          [this.player.id]: {
+            id: this.player.id,
+            name: this.player.name,
+            avatar: this.player.avatar,
+            score: 0,
+            depth: 0,
+            role: 'player'
+          }
+        };
+
+        this.updateOceanDepthVisuals(0);
+        this.setupGameHUD();
+        this.showView('game');
+        this.loadQuestion(0);
+      }
+
+      setupGameHUD() {
+        document.getElementById('sub-avatar').textContent = this.player.avatar;
+        document.getElementById('sub-name').textContent = this.player.name;
+        document.getElementById('hud-score-value').textContent = '0';
+        document.getElementById('hud-depth-value').textContent = '0m';
+
+        const mpCrewBox = document.getElementById('mp-live-crew-box');
+        if (this.mode === 'multi') {
+          mpCrewBox.classList.remove('hidden');
+          this.renderLiveCrewChips();
+        } else {
+          mpCrewBox.classList.add('hidden');
+        }
+      }
+
+      loadQuestion(idx) {
+        clearInterval(this.timerInterval);
+        this.currentIndex = idx;
+        this.roundSubmitted = false;
+        this.timeLeft = this.timeLimit;
+
+        const q = this.questions[idx];
+        document.getElementById('hud-question-counter').textContent = `Question ${idx + 1} of ${this.questions.length}`;
+        document.getElementById('question-category').textContent = q.category;
+        document.getElementById('question-prompt').textContent = q.prompt;
+
+        // Reset phases
+        document.getElementById('phase-result').classList.add('hidden');
+        document.getElementById('phase-waiting-crew').classList.add('hidden');
+
+        if (this.mode === 'multi' && this.isHost && this.hostRole === 'spectator') {
+          document.getElementById('phase-input').classList.add('hidden');
+          document.getElementById('phase-spectator').classList.remove('hidden');
+        } else {
+          document.getElementById('phase-spectator').classList.add('hidden');
+          document.getElementById('phase-input').classList.remove('hidden');
+          const input = document.getElementById('answer-input');
+          input.value = '';
+          setTimeout(() => input.focus(), 60);
+        }
+
+        // Start Countdown Timer
+        this.updateTimerUI();
+        this.timerInterval = setInterval(() => {
+          this.timeLeft = Math.max(0, +(this.timeLeft - 0.1).toFixed(1));
+          this.updateTimerUI();
+
+          if (this.timeLeft <= 0) {
+            clearInterval(this.timerInterval);
+            this.handleTimeExpired();
+          }
+        }, 100);
+      }
+
+      updateTimerUI() {
+        const pct = (this.timeLeft / this.timeLimit) * 100;
+        const bar = document.getElementById('hud-timer-bar');
+        const txt = document.getElementById('hud-timer-text');
+
+        txt.textContent = `${Math.ceil(this.timeLeft)}s`;
+        bar.style.width = `${pct}%`;
+
+        if (pct > 50) {
+          bar.className = 'h-full rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 transition-all duration-100';
+        } else if (pct > 25) {
+          bar.className = 'h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-100';
+        } else {
+          bar.className = 'h-full rounded-full bg-gradient-to-r from-rose-500 to-red-600 transition-all duration-100';
+        }
+      }
+
+      submitAnswer(e) {
+        if (e) e.preventDefault();
+        if (this.roundSubmitted) return;
+
+        const raw = document.getElementById('answer-input').value.trim();
+        if (!raw) {
+          this.toast('Type an answer or click Skip!', 'warn');
+          return;
+        }
+
+        this.processPlayerSubmission(raw);
+      }
+
+      passQuestion() {
+        if (this.roundSubmitted) return;
+        this.processPlayerSubmission('');
+      }
+
+      handleTimeExpired() {
+        if (this.mode === 'single') {
+          if (!this.roundSubmitted) {
+            const currentVal = document.getElementById('answer-input').value.trim();
+            this.processPlayerSubmission(currentVal);
+          }
+        } else if (this.mode === 'multi') {
+          if (!this.roundSubmitted && !(this.isHost && this.hostRole === 'spectator')) {
+            const currentVal = document.getElementById('answer-input').value.trim();
+            this.processPlayerSubmission(currentVal);
+          }
+          if (this.isHost) {
+            this.hostFinalizeRound();
+          }
+        }
+      }
+
+      processPlayerSubmission(rawAnswer) {
+        this.roundSubmitted = true;
+        const q = this.questions[this.currentIndex];
+        const evalRes = this.evaluateAnswer(q, rawAnswer);
+        const tierInfo = TIER_CONFIG[evalRes.tier];
+
+        this.score += tierInfo.pts;
+        // Add bonus randomness (+/- 8%) to depth for organic ocean dive feel
+        const jitter = evalRes.tier > 0 ? Math.round(tierInfo.depthAdd * (0.94 + Math.random() * 0.12)) : 0;
+        this.depth = Math.min(10994, this.depth + jitter);
+
+        const roundSummary = {
+          tier: evalRes.tier,
+          matchedName: evalRes.matchedName,
+          raw: rawAnswer,
+          ptsEarned: tierInfo.pts,
+          depthEarned: jitter,
+          totalScore: this.score,
+          totalDepth: this.depth
+        };
+
+        if (this.mode === 'single') {
+          clearInterval(this.timerInterval);
+          this.players[this.player.id].score = this.score;
+          this.players[this.player.id].depth = this.depth;
+          this.revealRoundResult(roundSummary);
+        } else {
+          // Multiplayer submission sync
+          document.getElementById('phase-input').classList.add('hidden');
+          document.getElementById('phase-waiting-crew').classList.remove('hidden');
+          this.audio.playBubble(100);
+
+          if (this.isHost) {
+            this.recordMpPlayerAnswer(this.player.id, roundSummary);
+          } else {
+            this.sendToHost({
+              type: 'PLAYER_SUBMIT',
+              playerId: this.player.id,
+              result: roundSummary
+            });
+          }
+        }
+      }
+
+      revealRoundResult(summary) {
+        clearInterval(this.timerInterval);
+
+        // Animate Ocean Depth & Sound
+        this.updateOceanDepthVisuals(this.depth);
+        this.audio.playDiveChord(summary.tier);
+        if (summary.tier > 0 && this.canvasEngine) {
+          this.canvasEngine.burstDiveBubbles(15 + summary.tier * 10);
+          const gameSection = document.getElementById('view-game');
+          gameSection.classList.remove('dive-shake');
+          void gameSection.offsetWidth;
+          gameSection.classList.add('dive-shake');
+        }
+
+        // Update HUD Counters
+        document.getElementById('hud-score-value').textContent = this.score;
+        document.getElementById('hud-depth-value').textContent = this.depth === 0 ? '0m' : `-${this.depth.toLocaleString()}m`;
+
+        // Hide Input/Waiting, Show Result Card
+        document.getElementById('phase-input').classList.add('hidden');
+        document.getElementById('phase-spectator').classList.add('hidden');
+        document.getElementById('phase-waiting-crew').classList.add('hidden');
+        document.getElementById('phase-result').classList.remove('hidden');
+
+        const tierInfo = TIER_CONFIG[summary.tier];
+        const banner = document.getElementById('result-banner');
+        const badge = document.getElementById('result-tier-badge');
+        const headline = document.getElementById('result-headline');
+        const subtext = document.getElementById('result-subtext');
+
+        banner.className = `p-5 rounded-2xl border-2 text-center transition-all ${tierInfo.css}`;
+
+        if (this.mode === 'multi' && this.isHost && this.hostRole === 'spectator') {
+          badge.textContent = 'SPECTATOR VIEW';
+          headline.textContent = 'Crew Dive Complete!';
+          subtext.textContent = 'Check out how deep everyone dove on this prompt.';
+        } else if (summary.tier > 0) {
+          badge.textContent = `${tierInfo.label} • +${summary.ptsEarned} ${summary.ptsEarned === 1 ? 'PT' : 'PTS'}`;
+          headline.textContent = `"${summary.matchedName}"`;
+          subtext.textContent = `You dove -${summary.depthEarned.toLocaleString()}m into the ${tierInfo.zone}!`;
+        } else {
+          badge.textContent = 'SURFACE DRIFT • 0 PTS';
+          headline.textContent = summary.raw ? `"${summary.raw}" wasn't on the chart` : 'No answer submitted';
+          subtext.textContent = 'Your submarine held steady at its current depth.';
+        }
+
+        // Populate Real-World Rarity Breakdown Examples
+        const q = this.questions[this.currentIndex];
+        const listEl = document.getElementById('tier-examples-list');
+        const tierBadges = [
+          { t: 1, name: 'Common (1pt)', color: 'text-sky-300' },
+          { t: 2, name: 'Uncommon (2pts)', color: 'text-teal-300' },
+          { t: 3, name: 'Rare (3pts)', color: 'text-indigo-300' },
+          { t: 4, name: 'Deep Cut (4pts)', color: 'text-purple-300' },
+          { t: 5, name: 'One in Krillion (5pts)', color: 'text-amber-300' }
+        ];
+
+        listEl.innerHTML = tierBadges.map(tb => {
+          const items = (q.tiers[tb.t] || []).slice(0, 4).map(x => x.name).join(', ');
+          return `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-1 border-b border-white/5 last:border-0">
+              <span class="font-bold ${tb.color} shrink-0">${tb.name}:</span>
+              <span class="text-cyan-100/90 sm:text-right">${items || '—'}</span>
+            </div>
+          `;
+        }).join('');
+
+        // Handle Next Button vs Guest Waiting
+        const nextBtn = document.getElementById('btn-next-question');
+        const guestWait = document.getElementById('guest-next-wait');
+        const isLast = this.currentIndex >= this.questions.length - 1;
+
+        if (this.mode === 'single' || this.isHost) {
+          nextBtn.classList.remove('hidden');
+          guestWait.classList.add('hidden');
+          nextBtn.textContent = isLast ? '🏆 View Final Podium' : 'Next Question →';
+        } else {
+          nextBtn.classList.add('hidden');
+          guestWait.classList.remove('hidden');
+        }
+      }
+
+      nextQuestion() {
+        if (this.mode === 'single') {
+          if (this.currentIndex + 1 < this.questions.length) {
+            this.loadQuestion(this.currentIndex + 1);
+          } else {
+            this.showFinalPodium();
+          }
+        } else if (this.mode === 'multi' && this.isHost) {
+          if (this.currentIndex + 1 < this.questions.length) {
+            const nextIdx = this.currentIndex + 1;
+            Object.values(this.players).forEach(p => { p.answered = false; });
+            this.broadcast({ type: 'NEXT_QUESTION', index: nextIdx });
+            this.renderLiveCrewChips();
+            this.loadQuestion(nextIdx);
+          } else {
+            this.broadcast({ type: 'GAME_OVER', players: this.players });
+            this.showFinalPodium();
+          }
+        }
+      }
+
+      // ========================================================================
+      // MULTIPLAYER P2P ENGINE (PeerJS WebRTC — Works on GitHub Pages!)
+      // ========================================================================
+      generateShortCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 5; i++) {
+          code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return code;
+      }
+
+      createMultiplayerRoom() {
+        if (!this.validateProfile()) return;
+        const btn = document.getElementById('btn-create-room');
+        btn.disabled = true;
+        btn.textContent = 'Opening Sonar Channel...';
+
+        this.isHost = true;
+        this.hostRole = 'player';
+        this.roomCode = this.generateShortCode();
+        const peerId = `krillion-room-${this.roomCode}`;
+
+        if (this.peer) this.peer.destroy();
+        this.peer = new Peer(peerId);
+
+        this.peer.on('open', () => {
+          btn.disabled = false;
+          btn.textContent = 'Generate Room Code';
+
+          this.connections = {};
+          this.players = {
+            [this.player.id]: {
+              id: this.player.id,
+              name: this.player.name,
+              avatar: this.player.avatar,
+              score: 0,
+              depth: 0,
+              role: 'player',
+              isHost: true,
+              answered: false
+            }
+          };
+
+          this.openLobbyUI();
+          this.toast(`Room ${this.roomCode} created! Share code with friends.`, 'success');
+        });
+
+        this.peer.on('connection', (conn) => {
+          conn.on('open', () => {
+            this.connections[conn.peer] = conn;
+          });
+
+          conn.on('data', (data) => {
+            this.handleHostIncomingData(conn, data);
+          });
+
+          conn.on('close', () => {
+            const leftPlayer = Object.values(this.players).find(p => p.peerId === conn.peer);
+            if (leftPlayer) {
+              delete this.players[leftPlayer.id];
+              this.broadcast({ type: 'LOBBY_STATE', players: this.players, settings: this.getMpSettings() });
+              this.renderLobbyPlayers();
+              this.renderLiveCrewChips();
+            }
+            delete this.connections[conn.peer];
+          });
+        });
+
+        this.peer.on('error', (err) => {
+          btn.disabled = false;
+          btn.textContent = 'Generate Room Code';
+          if (err.type === 'unavailable-id') {
+            // Retry with new code
+            this.createMultiplayerRoom();
+          } else {
+            this.toast('Connection hiccup: ' + err.message, 'error');
+          }
+        });
+      }
+
+      joinMultiplayerRoom() {
+        if (!this.validateProfile()) return;
+        const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
+        if (codeInput.length < 4) {
+          this.toast('Enter a valid 5-character Room Code!', 'warn');
+          return;
+        }
+
+        const btn = document.getElementById('btn-join-room');
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        this.isHost = false;
+        this.roomCode = codeInput;
+        const hostPeerId = `krillion-room-${this.roomCode}`;
+
+        if (this.peer) this.peer.destroy();
+        this.peer = new Peer();
+
+        this.peer.on('open', () => {
+          const conn = this.peer.connect(hostPeerId, { reliable: true });
+          this.hostConn = conn;
+
+          const timeout = setTimeout(() => {
+            if (!conn.open) {
+              btn.disabled = false;
+              btn.textContent = 'Join';
+              this.toast('Could not find room. Check the code and try again!', 'error');
+            }
+          }, 7000);
+
+          conn.on('open', () => {
+            clearTimeout(timeout);
+            btn.disabled = false;
+            btn.textContent = 'Join';
+
+            this.sendToHost({
+              type: 'HELLO_JOIN',
+              player: {
+                id: this.player.id,
+                peerId: this.peer.id,
+                name: this.player.name,
+                avatar: this.player.avatar,
+                score: 0,
+                depth: 0,
+                role: 'player',
+                isHost: false,
+                answered: false
+              }
+            });
+          });
+
+          conn.on('data', (data) => {
+            this.handleGuestIncomingData(data);
+          });
+
+          conn.on('close', () => {
+            this.toast('Disconnected from host room.', 'warn');
+            this.returnToMenu();
+          });
+        });
+
+        this.peer.on('error', () => {
+          btn.disabled = false;
+          btn.textContent = 'Join';
+          this.toast('Unable to reach room code ' + this.roomCode, 'error');
+        });
+      }
+
+      getMpSettings() {
+        return {
+          questionsCount: this.options.mpQuestions,
+          timeLimit: this.options.mpTime
+        };
+      }
+
+      broadcast(payload) {
+        Object.values(this.connections).forEach(conn => {
+          if (conn.open) conn.send(payload);
+        });
+      }
+
+      sendToHost(payload) {
+        if (this.hostConn && this.hostConn.open) {
+          this.hostConn.send(payload);
+        }
+      }
+
+      handleHostIncomingData(conn, data) {
+        if (data.type === 'HELLO_JOIN') {
+          const p = data.player;
+          p.peerId = conn.peer;
+          this.players[p.id] = p;
+          this.audio.playBubble(150);
+          this.toast(`${p.avatar} ${p.name} joined the crew!`, 'success');
+
+          this.broadcast({
+            type: 'LOBBY_STATE',
+            players: this.players,
+            settings: this.getMpSettings()
+          });
+          this.renderLobbyPlayers();
+        } else if (data.type === 'PLAYER_SUBMIT') {
+          this.recordMpPlayerAnswer(data.playerId, data.result);
+        }
+      }
+
+      handleGuestIncomingData(data) {
+        if (data.type === 'LOBBY_STATE') {
+          this.players = data.players;
+          this.options.mpQuestions = data.settings.questionsCount;
+          this.options.mpTime = data.settings.timeLimit;
+          if (document.getElementById('view-lobby').classList.contains('hidden')) {
+            this.openLobbyUI();
+          } else {
+            this.renderLobbyPlayers();
+          }
+        } else if (data.type === 'START_GAME') {
+          this.mode = 'multi';
+          this.questions = data.questions;
+          this.timeLimit = data.timeLimit;
+          this.players = data.players;
+          this.score = 0;
+          this.depth = 0;
+          this.updateOceanDepthVisuals(0);
+          this.setupGameHUD();
+          this.showView('game');
+          this.loadQuestion(0);
+        } else if (data.type === 'CREW_PROGRESS') {
+          this.players = data.players;
+          this.renderLiveCrewChips();
+        } else if (data.type === 'ROUND_REVEAL') {
+          this.players = data.players;
+          this.renderLiveCrewChips();
+          const myRes = data.roundResults[this.player.id] || {
+            tier: 0,
+            matchedName: null,
+            raw: '',
+            ptsEarned: 0,
+            depthEarned: 0
+          };
+          this.revealRoundResult(myRes);
+          this.renderMpRoundStandings(data.roundResults);
+        } else if (data.type === 'NEXT_QUESTION') {
+          this.loadQuestion(data.index);
+        } else if (data.type === 'GAME_OVER') {
+          this.players = data.players;
+          this.showFinalPodium();
+        }
+      }
+
+      openLobbyUI() {
+        document.getElementById('lobby-room-code').textContent = this.roomCode;
+        document.getElementById('lobby-settings-text').textContent = `${this.options.mpQuestions} Questions • ${this.options.mpTime}s Timer`;
+
+        const hostRoleControls = document.getElementById('host-role-controls');
+        const hostStartBtn = document.getElementById('btn-host-start');
+        const guestWaitBanner = document.getElementById('guest-waiting-banner');
+
+        if (this.isHost) {
+          hostRoleControls.classList.remove('hidden');
+          hostRoleControls.classList.add('flex');
+          hostStartBtn.classList.remove('hidden');
+          guestWaitBanner.classList.add('hidden');
+          this.setHostRole(this.hostRole);
+        } else {
+          hostRoleControls.classList.add('hidden');
+          hostRoleControls.classList.remove('flex');
+          hostStartBtn.classList.add('hidden');
+          guestWaitBanner.classList.remove('hidden');
+        }
+
+        this.renderLobbyPlayers();
+        this.showView('lobby');
+      }
+
+      setHostRole(role) {
+        this.hostRole = role;
+        if (this.players[this.player.id]) {
+          this.players[this.player.id].role = role;
+        }
+
+        const btnP = document.getElementById('role-btn-player');
+        const btnS = document.getElementById('role-btn-spectator');
+        if (role === 'player') {
+          btnP.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-white transition';
+          btnS.className = 'px-3 py-1 rounded-lg text-xs font-bold text-cyan-200 hover:text-white transition';
+        } else {
+          btnS.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-teal-500 text-white transition';
+          btnP.className = 'px-3 py-1 rounded-lg text-xs font-bold text-cyan-200 hover:text-white transition';
+        }
+
+        this.broadcast({ type: 'LOBBY_STATE', players: this.players, settings: this.getMpSettings() });
+        this.renderLobbyPlayers();
+      }
+
+      renderLobbyPlayers() {
+        const list = Object.values(this.players);
+        document.getElementById('lobby-player-count').textContent = list.length;
+        document.getElementById('lobby-settings-text').textContent = `${this.options.mpQuestions} Questions • ${this.options.mpTime}s Timer`;
+
+        const grid = document.getElementById('lobby-players-grid');
+        grid.innerHTML = list.map(p => {
+          const isSpec = p.role === 'spectator';
+          return `
+            <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-950/65 border border-cyan-400/25">
+              <div class="flex items-center gap-2.5">
+                <span class="text-2xl">${p.avatar}</span>
+                <div>
+                  <div class="font-bold text-sm text-white flex items-center gap-1.5">
+                    <span>${this.escapeHtml(p.name)}</span>
+                    ${p.isHost ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-300/30">HOST</span>' : ''}
+                  </div>
+                  <div class="text-[11px] ${isSpec ? 'text-teal-300' : 'text-cyan-300'} font-semibold">
+                    ${isSpec ? '🔭 Spectator' : '🤿 Ready to Dive'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      copyRoomCode() {
+        const temp = document.createElement('textarea');
+        temp.value = this.roomCode;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        this.toast(`Copied Room Code: ${this.roomCode}`, 'success');
+      }
+
+      hostStartGame() {
+        const activePlayers = Object.values(this.players).filter(p => p.role !== 'spectator');
+        if (activePlayers.length === 0) {
+          this.toast('At least 1 active Player is needed (switch from Spectator or invite a friend)!', 'warn');
+          return;
+        }
+
+        this.mode = 'multi';
+        this.questions = this.pickRandomQuestions(this.options.mpQuestions);
+        this.timeLimit = this.options.mpTime;
+        this.score = 0;
+        this.depth = 0;
+        this.roundResultsCache = {};
+
+        Object.values(this.players).forEach(p => {
+          p.score = 0;
+          p.depth = 0;
+          p.answered = false;
+        });
+
+        this.broadcast({
+          type: 'START_GAME',
+          questions: this.questions,
+          timeLimit: this.timeLimit,
+          players: this.players
+        });
+
+        this.updateOceanDepthVisuals(0);
+        this.setupGameHUD();
+        this.showView('game');
+        this.loadQuestion(0);
+      }
+
+      recordMpPlayerAnswer(playerId, result) {
+        if (!this.roundResultsCache) this.roundResultsCache = {};
+        this.roundResultsCache[playerId] = result;
+
+        if (this.players[playerId]) {
+          this.players[playerId].answered = true;
+          this.players[playerId].score = result.totalScore;
+          this.players[playerId].depth = result.totalDepth;
+        }
+
+        this.broadcast({ type: 'CREW_PROGRESS', players: this.players });
+        this.renderLiveCrewChips();
+
+        // Check if all active players have submitted
+        const activePlayers = Object.values(this.players).filter(p => p.role !== 'spectator');
+        const allDone = activePlayers.every(p => p.answered);
+        if (allDone) {
+          this.hostFinalizeRound();
+        }
+      }
+
+      hostFinalizeRound() {
+        clearInterval(this.timerInterval);
+        if (!this.roundResultsCache) this.roundResultsCache = {};
+
+        // Fill in 0-pt results for any player who didn't submit before timeout
+        Object.values(this.players).forEach(p => {
+          if (p.role !== 'spectator' && !this.roundResultsCache[p.id]) {
+            this.roundResultsCache[p.id] = {
+              tier: 0,
+              matchedName: null,
+              raw: '',
+              ptsEarned: 0,
+              depthEarned: 0,
+              totalScore: p.score,
+              totalDepth: p.depth
+            };
+          }
+        });
+
+        const roundSnapshot = { ...this.roundResultsCache };
+        this.roundResultsCache = {};
+
+        this.broadcast({
+          type: 'ROUND_REVEAL',
+          players: this.players,
+          roundResults: roundSnapshot
+        });
+
+        const myRes = roundSnapshot[this.player.id] || {
+          tier: 0,
+          matchedName: null,
+          raw: '',
+          ptsEarned: 0,
+          depthEarned: 0
+        };
+        this.revealRoundResult(myRes);
+        this.renderMpRoundStandings(roundSnapshot);
+      }
+
+      renderLiveCrewChips() {
+        const container = document.getElementById('mp-live-crew-list');
+        const list = Object.values(this.players).filter(p => p.role !== 'spectator');
+        container.innerHTML = list.map(p => `
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold border ${
+            p.answered
+              ? 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200'
+              : 'bg-slate-900/70 border-cyan-400/20 text-cyan-200'
+          }">
+            <span>${p.avatar}</span>
+            <span>${this.escapeHtml(p.name)}</span>
+            <span>${p.answered ? '✓' : '…'}</span>
+          </span>
+        `).join('');
+      }
+
+      renderMpRoundStandings(roundResults) {
+        const box = document.getElementById('mp-round-standings');
+        const listEl = document.getElementById('mp-round-list');
+        box.classList.remove('hidden');
+
+        const active = Object.values(this.players)
+          .filter(p => p.role !== 'spectator')
+          .sort((a, b) => b.score - a.score || b.depth - a.depth);
+
+        listEl.innerHTML = active.map(p => {
+          const r = roundResults[p.id] || { tier: 0, ptsEarned: 0, matchedName: null };
+          const tierName = TIER_CONFIG[r.tier].label;
+          return `
+            <div class="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-900/70">
+              <div class="flex items-center gap-2">
+                <span>${p.avatar}</span>
+                <span class="font-bold text-white">${this.escapeHtml(p.name)}</span>
+                <span class="text-[11px] text-cyan-300">(${r.matchedName ? `${r.matchedName} • ${tierName}` : 'No match'})</span>
+              </div>
+              <div class="font-bold text-amber-300">+${r.ptsEarned} • ${p.score} pts</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // ========================================================================
+      // FINAL PODIUM & RANKINGS
+      // ========================================================================
+      showFinalPodium() {
+        clearInterval(this.timerInterval);
+        this.audio.playDiveChord(5);
+        if (this.canvasEngine) this.canvasEngine.burstDiveBubbles(45);
+
+        const ranked = Object.values(this.players)
+          .filter(p => p.role !== 'spectator')
+          .sort((a, b) => b.score - a.score || b.depth - a.depth);
+
+        const renderPodiumSlot = (player, rank) => {
+          if (!player) return '';
+          const heights = { 1: 'h-36 sm:h-44', 2: 'h-28 sm:h-32', 3: 'h-24 sm:h-28' };
+          const colors = {
+            1: 'from-amber-400 via-yellow-500 to-amber-600 border-amber-200 text-slate-950',
+            2: 'from-slate-300 via-slate-400 to-slate-500 border-white text-slate-950',
+            3: 'from-amber-600 via-orange-700 to-amber-800 border-amber-300 text-white'
+          };
+          const crowns = { 1: '👑', 2: '🥈', 3: '🥉' };
+
+          return `
+            <div class="text-2xl sm:text-3xl mb-1">${crowns[rank]}</div>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-900/80 border-2 border-cyan-300/50 flex items-center justify-center text-2xl sm:text-3xl shadow-lg mb-1.5 bobbing">
+              ${player.avatar}
+            </div>
+            <div class="font-bold text-xs sm:text-sm text-white truncate max-w-[95px] sm:max-w-[120px] mb-1">
+              ${this.escapeHtml(player.name)}
+            </div>
+            <div class="w-full ${heights[rank]} rounded-t-2xl bg-gradient-to-b ${colors[rank]} border-t-2 border-x-2 p-2 flex flex-col items-center justify-center shadow-xl">
+              <div class="font-display text-xl sm:text-2xl font-extrabold">#${rank}</div>
+              <div class="font-extrabold text-xs sm:text-sm">${player.score} pts</div>
+              <div class="text-[10px] opacity-85 font-semibold">-${player.depth.toLocaleString()}m</div>
+            </div>
+          `;
+        };
+
+        document.getElementById('podium-1').innerHTML = renderPodiumSlot(ranked[0], 1);
+        document.getElementById('podium-2').innerHTML = renderPodiumSlot(ranked[1], 2);
+        document.getElementById('podium-3').innerHTML = renderPodiumSlot(ranked[2], 3);
+
+        // Render Rank 4+ Leaderboard
+        const rest = ranked.slice(3);
+        const restContainer = document.getElementById('podium-rest-container');
+        const restList = document.getElementById('podium-rest-list');
+
+        if (rest.length > 0) {
+          restContainer.classList.remove('hidden');
+          restList.innerHTML = rest.map((p, i) => `
+            <div class="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-950/65 border border-cyan-400/20">
+              <div class="flex items-center gap-3">
+                <span class="font-display font-bold text-cyan-300 w-6">#${i + 4}</span>
+                <span class="text-xl">${p.avatar}</span>
+                <span class="font-bold text-white text-sm">${this.escapeHtml(p.name)}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-bold text-amber-300 text-sm">${p.score} pts</span>
+                <span class="text-xs text-cyan-300 ml-2">-${p.depth.toLocaleString()}m</span>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          restContainer.classList.add('hidden');
+        }
+
+        // Play Again button visibility
+        const playAgainBtn = document.getElementById('btn-play-again');
+        if (this.mode === 'multi' && !this.isHost) {
+          playAgainBtn.classList.add('hidden');
+        } else {
+          playAgainBtn.classList.remove('hidden');
+        }
+
+        this.showView('podium');
+      }
+
+      playAgain() {
+        this.updateOceanDepthVisuals(0);
+        if (this.mode === 'single') {
+          this.startSingleplayer();
+        } else if (this.mode === 'multi' && this.isHost) {
+          this.broadcast({ type: 'LOBBY_STATE', players: this.players, settings: this.getMpSettings() });
+          this.openLobbyUI();
+        }
+      }
+
+      leaveMultiplayer() {
+        if (this.peer) {
+          this.peer.destroy();
+          this.peer = null;
+        }
+        this.connections = {};
+        this.hostConn = null;
+        this.returnToMenu();
+      }
+
+      confirmReturnHome() {
+        clearInterval(this.timerInterval);
+        this.returnToMenu();
+      }
+
+      returnToMenu() {
+        clearInterval(this.timerInterval);
+        if (this.peer) {
+          this.peer.destroy();
+          this.peer = null;
+        }
+        this.updateOceanDepthVisuals(0);
+        this.showView('menu');
+      }
+
+      escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+    }
+
+    // Initialize Application on Load
+    const app = new KrillionApp();
+    window.addEventListener('DOMContentLoaded', () => {
+      app.init();
+    });
+  </script>
+</body>
+</html>
