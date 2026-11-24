@@ -13,12 +13,11 @@
       --bg-top: #0ea5e9;
       --bg-mid: #0369a1;
       --bg-bot: #0c4a6e;
-      --glass: rgba(7, 25, 48, 0.68);
-      --glass-border: rgba(125, 211, 252, 0.25);
+      --glass: rgba(7, 25, 48, 0.74);
+      --glass-border: rgba(125, 211, 252, 0.28);
       --text-main: #f0f9ff;
       --text-muted: #bae6fd;
       --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.45);
       --tier-1: #94a3b8;
       --tier-2: #34d399;
       --tier-3: #38bdf8;
@@ -48,7 +47,6 @@
       letter-spacing: 0.02em;
     }
 
-    /* Ocean Background & Surface Scene */
     #ocean-canvas {
       position: fixed;
       inset: 0;
@@ -113,52 +111,57 @@
       100% { transform: translateX(-50%); }
     }
 
-    /* Animated Diver Avatar Stage */
+    /* High-Visibility Diver Stage (Always Above Cards During Dive) */
     #diver-stage {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 4;
+      z-index: 25;
       overflow: hidden;
     }
 
     #diver-actor {
       position: absolute;
       left: 50%;
-      top: 44px;
-      transform: translate(-50%, 0);
+      top: 16px;
+      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      transition: top 1.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s ease;
-      will-change: top, transform;
+      transition: top 1.45s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: top;
     }
 
-    .diver-bob {
+    .diver-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       animation: surfaceFloat 2.4s ease-in-out infinite;
+    }
+
+    .diver-inner.diving {
+      animation: divePlunge 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     @keyframes surfaceFloat {
       0%, 100% { transform: translateY(0px) rotate(-3deg); }
-      50% { transform: translateY(-9px) rotate(3deg); }
+      50% { transform: translateY(-7px) rotate(3deg); }
     }
 
-    .diver-diving {
-      animation: diveWiggle 0.42s ease-in-out infinite !important;
-    }
-
-    @keyframes diveWiggle {
-      0%, 100% { transform: rotate(168deg) scale(1.12); }
-      50% { transform: rotate(192deg) scale(1.16); }
+    @keyframes divePlunge {
+      0% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.24) rotate(165deg); }
+      70% { transform: scale(1.2) rotate(195deg); }
+      100% { transform: scale(1.06) rotate(0deg); }
     }
 
     .diver-bubble-ring {
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.42), rgba(56, 189, 248, 0.16));
-      border: 2px solid rgba(255, 255, 255, 0.65);
-      box-shadow: 0 8px 28px rgba(14, 165, 233, 0.45), inset 0 0 14px rgba(255, 255, 255, 0.4);
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.52), rgba(56, 189, 248, 0.24));
+      border: 2.5px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 10px 30px rgba(14, 165, 233, 0.6), inset 0 0 16px rgba(255, 255, 255, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -167,44 +170,62 @@
     }
 
     .diver-tag {
-      margin-top: 6px;
-      background: rgba(7, 25, 48, 0.82);
-      border: 1px solid rgba(125, 211, 252, 0.4);
+      margin-top: 5px;
+      background: rgba(4, 16, 34, 0.9);
+      border: 1px solid rgba(125, 211, 252, 0.55);
       color: #f0f9ff;
       font-size: 0.76rem;
-      font-weight: 700;
-      padding: 3px 10px;
+      font-weight: 800;
+      padding: 3px 11px;
       border-radius: 999px;
       white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     }
 
-    /* Depth Gauge Sidebar */
+    /* Right-Side Total Depth & Multiplayer Crew Depth Gauge */
     #depth-gauge {
       position: fixed;
-      right: 18px;
+      right: 16px;
       top: 50%;
       transform: translateY(-50%);
-      z-index: 6;
+      z-index: 20;
       background: var(--glass);
       border: 1px solid var(--glass-border);
-      backdrop-filter: blur(12px);
-      border-radius: 18px;
-      padding: 12px 10px;
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 12px 12px;
       display: none;
       flex-direction: column;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+      min-width: 76px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+    }
+
+    .gauge-title {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #7dd3fc;
+    }
+
+    .gauge-track-wrap {
+      position: relative;
+      width: 44px;
+      height: 230px;
+      display: flex;
+      justify-content: center;
     }
 
     .gauge-track {
-      width: 10px;
-      height: 190px;
-      background: rgba(255, 255, 255, 0.12);
+      width: 12px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.14);
       border-radius: 999px;
       position: relative;
       overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.18);
     }
 
     .gauge-fill {
@@ -212,16 +233,120 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 6%;
-      background: linear-gradient(180deg, #38bdf8, #c084fc, #fbbf24);
+      height: 4%;
+      background: linear-gradient(180deg, #38bdf8, #818cf8, #fbbf24);
       border-radius: 999px;
-      transition: height 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: height 1.2s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    /* Top Bar */
+    #gauge-markers {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .gauge-marker {
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: top 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      white-space: nowrap;
+    }
+
+    .gauge-marker-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(7, 25, 48, 0.92);
+      border: 2px solid #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    }
+
+    .gauge-marker.me .gauge-marker-dot {
+      border-color: #fbbf24;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.7);
+      transform: scale(1.12);
+    }
+
+    .gauge-total-box {
+      text-align: center;
+      background: rgba(6, 20, 38, 0.75);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      border-radius: 10px;
+      padding: 4px 8px;
+      width: 100%;
+    }
+
+    .gauge-total-val {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #fbbf24;
+      display: block;
+    }
+
+    .gauge-total-sub {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Tier Result Pop Overlay */
+    #tier-pop-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #tier-pop-overlay.active {
+      opacity: 1;
+    }
+
+    .tier-pop-card {
+      background: rgba(4, 16, 36, 0.92);
+      border: 2.5px solid #38bdf8;
+      backdrop-filter: blur(14px);
+      border-radius: 26px;
+      padding: 22px 34px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+      transform: scale(0.75);
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #tier-pop-overlay.active .tier-pop-card {
+      transform: scale(1);
+    }
+
+    .tier-pop-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.6rem, 4vw, 2.3rem);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .tier-pop-sub {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e0f2fe;
+      margin-top: 4px;
+    }
+
     .top-bar {
       position: relative;
-      z-index: 10;
+      z-index: 15;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -272,13 +397,17 @@
       transform: translateY(-1px);
     }
 
-    /* Main Container */
     .app-shell {
       position: relative;
-      z-index: 8;
+      z-index: 10;
       max-width: 780px;
-      margin: 88px auto 40px;
+      margin: 86px auto 48px;
       padding: 0 18px;
+      transition: margin-top 0.55s ease;
+    }
+
+    .app-shell.minimized-mode {
+      margin-top: 230px;
     }
 
     .glass-card {
@@ -289,6 +418,30 @@
       padding: 28px;
       box-shadow: 0 22px 50px rgba(2, 12, 27, 0.42);
       animation: cardPop 0.35s ease;
+      transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .glass-card.minimized-qna {
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(4, 15, 32, 0.68);
+      border-color: rgba(125, 211, 252, 0.2);
+    }
+
+    .glass-card.minimized-qna .qna-collapsible {
+      display: none;
+    }
+
+    .mini-summary-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .glass-card.minimized-qna .mini-summary-bar {
+      display: flex;
     }
 
     @keyframes cardPop {
@@ -324,7 +477,6 @@
       margin-top: 6px;
     }
 
-    /* Rarity Legend Pills */
     .rarity-strip {
       display: flex;
       flex-wrap: wrap;
@@ -345,7 +497,6 @@
       gap: 5px;
     }
 
-    /* Form Controls */
     .field-label {
       display: block;
       font-size: 0.85rem;
@@ -375,7 +526,6 @@
       box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
     }
 
-    /* Avatar Picker */
     .avatar-grid {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
@@ -383,12 +533,14 @@
       margin-bottom: 22px;
     }
 
-    @media (max-width: 580px) {
+    @media (max-width: 640px) {
       .avatar-grid {
         grid-template-columns: repeat(4, 1fr);
       }
       #depth-gauge {
-        display: none !important;
+        right: 6px;
+        padding: 8px 6px;
+        min-width: 58px;
       }
     }
 
@@ -419,7 +571,6 @@
       box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
     }
 
-    /* Mode & Option Selectors */
     .mode-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -538,7 +689,6 @@
       background: rgba(255, 255, 255, 0.18);
     }
 
-    /* Lobby & Room Code */
     .room-banner {
       background: rgba(6, 20, 38, 0.78);
       border: 1.5px dashed #38bdf8;
@@ -587,13 +737,12 @@
       gap: 10px;
     }
 
-    /* Gameplay HUD */
     .hud-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
@@ -612,7 +761,7 @@
       background: rgba(255, 255, 255, 0.14);
       border-radius: 999px;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .timer-bar-fill {
@@ -626,9 +775,9 @@
       background: rgba(6, 20, 38, 0.65);
       border: 1px solid rgba(125, 211, 252, 0.25);
       border-radius: 20px;
-      padding: 22px;
+      padding: 20px;
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .category-tag {
@@ -641,12 +790,24 @@
       background: rgba(14, 165, 233, 0.2);
       padding: 4px 12px;
       border-radius: 999px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .question-text {
-      font-size: clamp(1.25rem, 3vw, 1.65rem);
+      font-size: clamp(1.2rem, 3vw, 1.55rem);
       line-height: 1.35;
+    }
+
+    .retry-notice {
+      margin-top: 10px;
+      padding: 9px 14px;
+      border-radius: 12px;
+      background: rgba(251, 191, 36, 0.16);
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      color: #fde68a;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: none;
     }
 
     .answer-form {
@@ -660,45 +821,73 @@
       }
     }
 
-    /* Dive Result Card */
-    .dive-result-panel {
-      margin-top: 18px;
-      padding: 20px;
-      border-radius: 20px;
+    .q-table-card {
+      margin-top: 16px;
       background: rgba(4, 15, 32, 0.85);
-      border: 1.5px solid rgba(125, 211, 252, 0.35);
-      text-align: center;
-      animation: cardPop 0.35s ease;
+      border: 1px solid rgba(125, 211, 252, 0.26);
+      border-radius: 18px;
+      padding: 14px 16px;
     }
 
-    .tier-badge {
+    .q-table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #7dd3fc;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .q-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .q-table th {
+      text-align: left;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .q-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      vertical-align: middle;
+    }
+
+    .blurred-ans {
       display: inline-block;
-      font-family: 'Fredoka', sans-serif;
-      font-size: 1.35rem;
-      padding: 6px 18px;
-      border-radius: 999px;
-      margin-bottom: 8px;
-      color: #061326;
+      filter: blur(6px);
+      opacity: 0.72;
+      background: rgba(125, 211, 252, 0.18);
+      padding: 2px 8px;
+      border-radius: 6px;
+      transition: filter 0.5s ease, opacity 0.5s ease, background 0.5s ease;
+    }
+
+    .revealed-ans {
+      filter: none;
+      opacity: 1;
+      background: transparent;
+      padding: 0;
       font-weight: 700;
     }
 
-    .sample-answers {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
+    .auto-advance-bar {
       margin-top: 12px;
+      font-size: 0.84rem;
+      color: #bae6fd;
+      text-align: center;
+      font-weight: 600;
     }
 
-    .sample-chip {
-      font-size: 0.78rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.09);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    /* Podium */
     .podium-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -731,7 +920,17 @@
       border-color: #d97706;
     }
 
-    /* Toast */
+    .net-tip {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      font-size: 0.8rem;
+      color: #bae6fd;
+      line-height: 1.4;
+    }
+
     #toast {
       position: fixed;
       bottom: 22px;
@@ -757,31 +956,45 @@
 <body>
   <canvas id="ocean-canvas"></canvas>
 
-  <!-- Ocean Surface Waves & Sunbeams -->
   <div class="surface-layer" id="surface-layer">
     <div class="sun-rays"></div>
     <div class="wave-band"></div>
     <div class="wave-band second"></div>
   </div>
 
-  <!-- Animated Diver Avatar -->
+  <!-- High-Visibility Diver Stage -->
   <div id="diver-stage">
-    <div id="diver-actor" class="diver-bob">
-      <div class="diver-bubble-ring" id="diver-emoji">🐬</div>
-      <div class="diver-tag" id="diver-tag">Surface • 0m</div>
+    <div id="diver-actor">
+      <div class="diver-inner" id="diver-inner">
+        <div class="diver-bubble-ring" id="diver-emoji">🐬</div>
+        <div class="diver-tag" id="diver-tag">Surface • 0m</div>
+      </div>
     </div>
   </div>
 
-  <!-- Depth Meter -->
+  <!-- Tier Pop-Up Banner After Answering -->
+  <div id="tier-pop-overlay">
+    <div class="tier-pop-card" id="tier-pop-card">
+      <div class="tier-pop-title" id="tier-pop-title">ONE IN KRILLION!</div>
+      <div class="tier-pop-sub" id="tier-pop-sub">+5 Points • Plunging 1,200m!</div>
+    </div>
+  </div>
+
+  <!-- Right-Side Total Depth & Multiplayer Crew Depth Gauge -->
   <div id="depth-gauge">
-    <span style="font-size:0.72rem;font-weight:800;color:#7dd3fc;">0m</span>
-    <div class="gauge-track">
-      <div class="gauge-fill" id="gauge-fill"></div>
+    <span class="gauge-title">Depth</span>
+    <div class="gauge-track-wrap">
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gauge-fill"></div>
+      </div>
+      <div id="gauge-markers"></div>
     </div>
-    <span id="gauge-depth-label" style="font-size:0.75rem;font-weight:800;color:#fbbf24;">0m</span>
+    <div class="gauge-total-box">
+      <span class="gauge-total-val" id="gauge-depth-label">0m</span>
+      <span class="gauge-total-sub">Total</span>
+    </div>
   </div>
 
-  <!-- Top Navigation -->
   <header class="top-bar">
     <div class="logo-pill">
       <span>🌊</span>
@@ -793,12 +1006,12 @@
     </div>
   </header>
 
-  <main class="app-shell">
+  <main class="app-shell" id="app-shell">
     <!-- SCREEN 1: MAIN MENU -->
     <section id="screen-menu" class="screen active glass-card">
       <div class="title-hero">
         <h1>KRILLION</h1>
-        <p>Think outside the shoal. Rarer real-world answers dive deeper into the abyss!</p>
+        <p>Think outside the shoal • Rarer real-world answers dive deeper into the abyss!</p>
       </div>
 
       <div class="rarity-strip">
@@ -825,7 +1038,7 @@
           <button class="mode-card" id="btn-choose-single">
             <span class="mode-icon">🤿</span>
             <h3>Singleplayer</h3>
-            <p>Solo deep-sea expedition. Pick your question count and round timer.</p>
+            <p>Solo deep-sea dive. Retry unmatched answers until time runs out!</p>
           </button>
           <button class="mode-card" id="btn-choose-multi">
             <span class="mode-icon">🐋</span>
@@ -899,7 +1112,11 @@
         </div>
       </div>
 
-      <div style="margin-top:18px;">
+      <div class="net-tip">
+        💡 <strong>Multiplayer Tip:</strong> Host the HTML file on GitHub Pages (HTTPS) and keep the host's browser tab open. If joining on mobile data/university Wi-Fi, our multi-relay ICE + TURN fallback will automatically connect you.
+      </div>
+
+      <div style="margin-top:16px;">
         <button class="secondary-btn" id="mp-entry-back-btn">← Back to Menu</button>
       </div>
     </section>
@@ -916,6 +1133,7 @@
         <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
           <button class="secondary-btn" id="copy-code-btn">📋 Copy Code</button>
           <button class="secondary-btn" id="copy-link-btn">🔗 Copy Invite Link</button>
+          <button class="secondary-btn" id="retry-join-btn" style="display:none;">🔄 Retry Connect</button>
         </div>
       </div>
 
@@ -945,48 +1163,60 @@
 
     <!-- SCREEN 5: GAMEPLAY -->
     <section id="screen-game" class="screen glass-card">
-      <div class="hud-header">
-        <div class="hud-badge" id="hud-q-counter">Question 1 / 5</div>
-        <div class="hud-badge" id="hud-timer">⏱️ 30s</div>
-        <div class="hud-badge" id="hud-score">🌊 0 pts</div>
+      <div class="mini-summary-bar" id="mini-summary-bar">
+        <div>
+          <strong id="mini-q-label">Q1/5</strong> • <span id="mini-tier-badge" style="font-weight:800;"></span>
+        </div>
+        <div id="mini-status-note" style="font-size:0.84rem;color:#7dd3fc;font-weight:700;"></div>
       </div>
 
-      <div class="timer-bar-wrap">
-        <div class="timer-bar-fill" id="timer-bar-fill"></div>
+      <div class="qna-collapsible">
+        <div class="hud-header">
+          <div class="hud-badge" id="hud-q-counter">Question 1 / 5</div>
+          <div class="hud-badge" id="hud-timer">⏱️ 30s</div>
+          <div class="hud-badge" id="hud-score">🌊 0 pts</div>
+        </div>
+
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-fill" id="timer-bar-fill"></div>
+        </div>
+
+        <div class="question-box">
+          <div class="category-tag" id="q-category">General Knowledge</div>
+          <h2 class="question-text" id="q-prompt">Name a real fruit!</h2>
+        </div>
+
+        <div id="answer-input-area">
+          <form class="answer-form" id="answer-form" autocomplete="off">
+            <input id="answer-input" class="text-input" type="text" placeholder="Type your answer..." />
+            <button type="submit" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
+          </form>
+          <div class="retry-notice" id="retry-notice"></div>
+        </div>
+
+        <div id="spectator-banner" style="display:none;text-align:center;padding:14px;background:rgba(14,165,233,0.15);border-radius:14px;font-weight:700;color:#7dd3fc;">
+          🔭 Spectator Mode — Watching divers plunge in real time...
+        </div>
       </div>
 
-      <div class="question-box">
-        <div class="category-tag" id="q-category">General Knowledge</div>
-        <h2 class="question-text" id="q-prompt">Name a fruit!</h2>
-      </div>
-
-      <div id="answer-input-area">
-        <form class="answer-form" id="answer-form" autocomplete="off">
-          <input id="answer-input" class="text-input" type="text" placeholder="Type an uncommon real-world answer..." />
-          <button type="submit" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
-        </form>
-      </div>
-
-      <div id="spectator-banner" style="display:none;text-align:center;padding:14px;background:rgba(14,165,233,0.15);border-radius:14px;font-weight:700;color:#7dd3fc;">
-        🔭 Spectator Mode — Watching divers plunge in real time...
-      </div>
-
-      <div id="waiting-others-banner" style="display:none;text-align:center;padding:12px;margin-top:12px;color:var(--text-muted);font-weight:600;">
-        ⏳ Answer locked! Waiting for other divers...
-      </div>
-
-      <!-- Post-Answer Dive Result -->
-      <div id="dive-result-panel" class="dive-result-panel" style="display:none;">
-        <div id="result-tier-badge" class="tier-badge">ONE IN KRILLION • +5 PTS</div>
-        <div id="result-answer-echo" style="font-size:1.15rem;font-weight:700;margin-bottom:4px;"></div>
-        <div id="result-depth-msg" style="color:#7dd3fc;font-size:0.95rem;font-weight:600;"></div>
-
-        <div id="mp-round-feed" style="margin-top:12px;display:none;text-align:left;background:rgba(255,255,255,0.05);padding:10px 14px;border-radius:12px;"></div>
-
-        <div style="margin-top:12px;font-size:0.8rem;color:var(--text-muted);">Examples across rarity tiers:</div>
-        <div class="sample-answers" id="sample-answers"></div>
-
-        <button class="primary-btn" id="next-q-btn" style="margin-top:18px;">Next Question →</button>
+      <!-- Question Ranking Table (Shown After Answer / Revealed Once All Players Finish) -->
+      <div class="q-table-card" id="q-table-card" style="display:none;">
+        <div class="q-table-header">
+          <span>📊 Question Ranking</span>
+          <span id="q-table-state-tag">🔒 Answers Blurred Until Everyone Finishes</span>
+        </div>
+        <table class="q-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Diver</th>
+              <th>Answer</th>
+              <th style="text-align:right;">Q Pts</th>
+            </tr>
+          </thead>
+          <tbody id="q-table-body"></tbody>
+        </table>
+        <div class="auto-advance-bar" id="auto-advance-bar"></div>
       </div>
     </section>
 
@@ -1010,9 +1240,6 @@
   <div id="toast">Copied!</div>
 
   <script>
-    // ==========================================
-    // 1. AVATARS & REAL-WORLD QUESTION BANK
-    // ==========================================
     const AVATARS = [
       { emoji: '🐬', name: 'Dolphin' },
       { emoji: '🐙', name: 'Octopus' },
@@ -1024,189 +1251,175 @@
       { emoji: '🐡', name: 'Puffer' }
     ];
 
-    // Tiers: 1 = Common (+1), 2 = Uncommon (+2), 3 = Rare (+3), 4 = Deep Cut (+4), 5 = One in Krillion (+5)
+    // Prompts strictly in English; answer database accepts both English and Bahasa Melayu!
     const QUESTIONS = [
       {
-        category: 'Everyday Food',
+        category: 'Fruits',
         prompt: 'Name a real fruit!',
         answers: {
-          1: ['apple', 'banana', 'orange', 'grape', 'grapes', 'strawberry', 'watermelon', 'mango', 'pineapple'],
-          2: ['peach', 'pear', 'kiwi', 'blueberry', 'cherry', 'lemon', 'lime', 'coconut', 'papaya', 'plum', 'raspberry'],
-          3: ['pomegranate', 'apricot', 'fig', 'guava', 'lychee', 'passion fruit', 'dragon fruit', 'cantaloupe', 'blackberry', 'nectarine', 'tangerine'],
-          4: ['persimmon', 'starfruit', 'star fruit', 'jackfruit', 'durian', 'kumquat', 'mulberry', 'boysenberry', 'quince', 'rambutan', 'plantain'],
-          5: ['mangosteen', 'soursop', 'salak', 'snake fruit', 'jabuticaba', 'cherimoya', 'ackee', 'miracle fruit', 'cloudberry', 'pawpaw', 'feijoa', 'longan', 'tamarillo', 'loquat']
+          1: ['apple', 'epal', 'banana', 'pisang', 'orange', 'oren', 'mango', 'mangga', 'watermelon', 'tembikai', 'grape', 'grapes', 'anggur', 'strawberry', 'strawberi'],
+          2: ['papaya', 'betik', 'pineapple', 'nanas', 'coconut', 'kelapa', 'lemon', 'limau', 'lime', 'limau nipis', 'pear', 'lai', 'kiwi', 'cherry', 'ceri', 'peach', 'pic'],
+          3: ['durian', 'rambutan', 'cempedak', 'guava', 'jambu', 'jambu batu', 'lychee', 'laici', 'dragon fruit', 'buah naga', 'plum', 'raspberry', 'blackberry', 'pomegranate', 'delima'],
+          4: ['mangosteen', 'manggis', 'jackfruit', 'nangka', 'starfruit', 'belimbing', 'ciku', 'sapodilla', 'longan', 'mata kucing', 'persimmon', 'kesemek', 'fig', 'tin', 'passion fruit', 'markisa'],
+          5: ['soursop', 'durian belanda', 'salak', 'snake fruit', 'buah salak', 'tarap', 'terap', 'dabai', 'bambangan', 'pulasan', 'noni', 'mengkudu', 'kedondong', 'ambarella', 'rambai', 'dokong', 'duku']
         }
       },
       {
-        category: 'Colors & Shades',
+        category: 'Colors',
         prompt: 'Name a real color or named shade!',
         answers: {
-          1: ['red', 'blue', 'green', 'yellow', 'black', 'white', 'orange', 'purple', 'pink', 'brown', 'gray', 'grey'],
-          2: ['gold', 'silver', 'cyan', 'magenta', 'teal', 'navy', 'maroon', 'beige', 'ivory', 'violet', 'indigo', 'turquoise'],
-          3: ['crimson', 'scarlet', 'emerald', 'amber', 'coral', 'lavender', 'lilac', 'olive', 'khaki', 'burgundy', 'peach', 'mint', 'tan'],
+          1: ['red', 'merah', 'blue', 'biru', 'green', 'hijau', 'yellow', 'kuning', 'black', 'hitam', 'white', 'putih', 'orange', 'jingga', 'pink', 'merah jambu', 'purple', 'ungu', 'brown', 'coklat'],
+          2: ['grey', 'gray', 'kelabu', 'gold', 'emas', 'silver', 'perak', 'cyan', 'magenta', 'teal', 'navy', 'biru tua', 'maroon', 'beige', 'krem', 'violet', 'indigo', 'turquoise', 'firus'],
+          3: ['crimson', 'scarlet', 'emerald', 'zamrud', 'amber', 'coral', 'karang', 'lavender', 'lilac', 'olive', 'zaitun', 'burgundy', 'mint', 'peach', 'tan'],
           4: ['cerulean', 'chartreuse', 'vermilion', 'ochre', 'mauve', 'periwinkle', 'fuchsia', 'cobalt', 'aquamarine', 'sienna', 'umber', 'sepia'],
-          5: ['viridian', 'celadon', 'puce', 'amaranth', 'gamboge', 'heliotrope', 'smalt', 'coquelicot', 'fulvous', 'glaucous', 'xanthic', 'sarcoline', 'incarnadine']
+          5: ['viridian', 'celadon', 'puce', 'amaranth', 'gamboge', 'heliotrope', 'smalt', 'coquelicot', 'fulvous', 'glaucous', 'xanthic', 'incarnadine']
         }
       },
       {
-        category: 'Wildlife',
-        prompt: 'Name a land mammal!',
+        category: 'Land Animals',
+        prompt: 'Name a land animal!',
         answers: {
-          1: ['dog', 'cat', 'lion', 'tiger', 'bear', 'elephant', 'horse', 'cow', 'monkey', 'rabbit', 'wolf', 'deer'],
-          2: ['giraffe', 'zebra', 'kangaroo', 'koala', 'panda', 'gorilla', 'fox', 'squirrel', 'mouse', 'rat', 'pig', 'sheep', 'goat', 'camel'],
-          3: ['cheetah', 'leopard', 'rhino', 'rhinoceros', 'hippo', 'hippopotamus', 'hyena', 'bison', 'buffalo', 'moose', 'otter', 'beaver', 'badger', 'raccoon', 'hedgehog'],
-          4: ['platypus', 'armadillo', 'anteater', 'sloth', 'meerkat', 'lemur', 'wombat', 'chinchilla', 'porcupine', 'lynx', 'ocelot', 'tapir', 'wolverine'],
-          5: ['okapi', 'pangolin', 'axolotl', 'quokka', 'numbat', 'fossa', 'binturong', 'saiga', 'tarsier', 'kinkajou', 'echidna', 'capybara', 'aye-aye', 'narwhal']
+          1: ['dog', 'anjing', 'cat', 'kucing', 'lion', 'singa', 'tiger', 'harimau', 'bear', 'beruang', 'elephant', 'gajah', 'horse', 'kuda', 'cow', 'lembu', 'monkey', 'monyet', 'chicken', 'ayam'],
+          2: ['goat', 'kambing', 'deer', 'rusa', 'rabbit', 'arnab', 'mouse', 'tikus', 'rat', 'pig', 'babi', 'duck', 'itik', 'bird', 'burung', 'snake', 'ular', 'frog', 'katak', 'giraffe', 'zirafah'],
+          3: ['zebra', 'kangaroo', 'kanggaru', 'koala', 'panda', 'fox', 'musang', 'wolf', 'serigala', 'buffalo', 'kerbau', 'squirrel', 'tupai', 'lizard', 'cicak', 'biawak', 'crocodile', 'buaya', 'turtle', 'kura-kura', 'penyu'],
+          4: ['cheetah', 'leopard', 'harimau bintang', 'rhino', 'badak', 'badak sumbu', 'hippo', 'badak air', 'otter', 'memerang', 'hedgehog', 'landak', 'tapir', 'cipan', 'badger', 'raccoon', 'rakun', 'sloth'],
+          5: ['pangolin', 'tenggiling', 'sun bear', 'beruang matahari', 'orangutan', 'macaque', 'kera', 'lotong', 'pelanduk', 'mouse deer', 'kancil', 'platypus', 'armadillo', 'meerkat', 'wombat', 'capybara', 'okapi']
         }
       },
       {
         category: 'World Geography',
-        prompt: 'Name a real country in the world!',
+        prompt: 'Name a country in the world!',
         answers: {
-          1: ['usa', 'united states', 'america', 'china', 'india', 'japan', 'uk', 'united kingdom', 'france', 'germany', 'canada', 'brazil', 'australia', 'russia', 'italy', 'spain', 'mexico'],
-          2: ['south korea', 'korea', 'thailand', 'vietnam', 'indonesia', 'malaysia', 'singapore', 'philippines', 'egypt', 'south africa', 'argentina', 'sweden', 'norway', 'switzerland', 'netherlands', 'turkey'],
-          3: ['peru', 'chile', 'colombia', 'poland', 'greece', 'portugal', 'ireland', 'new zealand', 'nigeria', 'kenya', 'morocco', 'saudi arabia', 'ukraine', 'finland', 'denmark', 'belgium'],
-          4: ['iceland', 'croatia', 'mongolia', 'nepal', 'cambodia', 'laos', 'myanmar', 'kazakhstan', 'uzbekistan', 'ethiopia', 'ghana', 'tanzania', 'bolivia', 'ecuador', 'uruguay', 'slovenia', 'estonia'],
-          5: ['bhutan', 'liechtenstein', 'andorra', 'san marino', 'tuvalu', 'nauru', 'palau', 'kiribati', 'djibouti', 'eritrea', 'suriname', 'guyana', 'lesotho', 'eswatini', 'comoros', 'vanuatu', 'brunei']
-        }
-      },
-      {
-        category: 'Sports & Games',
-        prompt: 'Name an official Olympic or widely played sport!',
-        answers: {
-          1: ['football', 'soccer', 'basketball', 'tennis', 'swimming', 'running', 'baseball', 'golf', 'volleyball', 'boxing'],
-          2: ['badminton', 'hockey', 'ice hockey', 'cricket', 'rugby', 'cycling', 'gymnastics', 'table tennis', 'ping pong', 'skiing', 'surfing', 'skateboarding'],
-          3: ['archery', 'fencing', 'judo', 'karate', 'taekwondo', 'wrestling', 'rowing', 'sailing', 'diving', 'triathlon', 'handball', 'bowling'],
-          4: ['curling', 'water polo', 'lacrosse', 'polo', 'squash', 'bobsled', 'luge', 'biathlon', 'decathlon', 'equestrian', 'weightlifting', 'kayaking'],
-          5: ['sepak takraw', 'kabaddi', 'pelota', 'hurling', 'boccia', 'goalball', 'skeleton', 'modern pentathlon', 'orienteering', 'bandy', 'korfball', 'petanque']
+          1: ['malaysia', 'singapore', 'singapura', 'indonesia', 'thailand', 'china', 'japan', 'jepun', 'india', 'usa', 'united states', 'america', 'amerika syarikat', 'uk', 'united kingdom', 'england', 'australia'],
+          2: ['brunei', 'vietnam', 'philippines', 'filipina', 'south korea', 'korea selatan', 'korea', 'france', 'perancis', 'germany', 'jerman', 'italy', 'itali', 'spain', 'sepanyol', 'canada', 'kanada', 'brazil', 'russia', 'rusia'],
+          3: ['cambodia', 'kemboja', 'myanmar', 'laos', 'egypt', 'mesir', 'saudi arabia', 'arab saudi', 'turkey', 'turki', 'switzerland', 'sweden', 'norway', 'netherlands', 'belanda', 'argentina', 'mexico', 'new zealand'],
+          4: ['qatar', 'uae', 'emiriah arab bersatu', 'kuwait', 'oman', 'jordan', 'morocco', 'maghribi', 'south africa', 'afrika selatan', 'greece', 'yunani', 'portugal', 'poland', 'ireland', 'iceland', 'peru', 'chile', 'colombia'],
+          5: ['bhutan', 'nepal', 'sri lanka', 'maldives', 'maldiv', 'mongolia', 'kazakhstan', 'uzbekistan', 'fiji', 'papua new guinea', 'madagascar', 'kenya', 'nigeria', 'croatia', 'finland', 'denmark', 'austria', 'belgium', 'uruguay']
         }
       },
       {
         category: 'Marine Life',
-        prompt: 'Name a real sea creature or ocean animal!',
+        prompt: 'Name a sea creature or water animal!',
         answers: {
-          1: ['shark', 'whale', 'dolphin', 'fish', 'octopus', 'crab', 'turtle', 'sea turtle', 'jellyfish', 'starfish'],
-          2: ['seal', 'sea lion', 'walrus', 'lobster', 'shrimp', 'squid', 'eel', 'stingray', 'seahorse', 'clownfish', 'salmon', 'tuna'],
-          3: ['orca', 'killer whale', 'manatee', 'swordfish', 'hammerhead', 'manta ray', 'clam', 'oyster', 'mussel', 'urchin', 'sea urchin', 'coral', 'sponge', 'penguin'],
-          4: ['narwhal', 'beluga', 'barracuda', 'moray eel', 'anglerfish', 'lionfish', 'pufferfish', 'cuttlefish', 'nautilus', 'krill', 'kelp', 'anemone', 'sea anemone', 'barnacle'],
-          5: ['coelacanth', 'vaquita', 'dugong', 'mantis shrimp', 'nudibranch', 'isopod', 'giant isopod', 'hagfish', 'lamprey', 'oarfish', 'blobfish', 'sunfish', 'mola mola', 'geoduck']
+          1: ['fish', 'ikan', 'shark', 'jerung', 'whale', 'ikan paus', 'paus', 'dolphin', 'lumba-lumba', 'crab', 'ketam', 'shrimp', 'udang', 'turtle', 'penyu', 'squid', 'sotong', 'octopus', 'gurita'],
+          2: ['jellyfish', 'obor-obor', 'starfish', 'tapak sulaiman', 'seal', 'anjing laut', 'walrus', 'eel', 'belut', 'stingray', 'pari', 'ikan pari', 'seahorse', 'kuda laut', 'lobster', 'udang karang', 'clam', 'kerang'],
+          3: ['prawn', 'udang galah', 'cockle', 'siput', 'snail', 'siput sedut', 'oyster', 'tiram', 'mussel', 'kupang', 'orca', 'killer whale', 'manatee', 'lembu laut', 'swordfish', 'ikan todak', 'pufferfish', 'ikan buntal', 'coral', 'karang'],
+          4: ['narwhal', 'beluga', 'barracuda', 'alu-alu', 'moray eel', 'belut moray', 'anglerfish', 'lionfish', 'ikan depu', 'cuttlefish', 'sotong katak', 'nautilus', 'urchin', 'landak laut', 'sea anemone', 'buran', 'barnacle', 'teritip'],
+          5: ['coelacanth', 'dugong', 'duyung', 'mantis shrimp', 'udang lipan', 'nudibranch', 'giant isopod', 'oarfish', 'blobfish', 'sunfish', 'mola mola', 'geoduck', 'lamprey', 'hagfish', 'sea cucumber', 'gammat', 'gamat']
         }
       },
       {
-        category: 'Pizza & Food',
-        prompt: 'Name a real pizza topping!',
+        category: 'Food & Dishes',
+        prompt: 'Name a real food or dish!',
         answers: {
-          1: ['cheese', 'pepperoni', 'mushroom', 'mushrooms', 'sausage', 'onion', 'onions', 'pepper', 'peppers', 'bell pepper', 'ham', 'bacon'],
-          2: ['pineapple', 'olive', 'olives', 'black olives', 'chicken', 'tomato', 'tomatoes', 'spinach', 'garlic', 'jalapeno', 'beef', 'ground beef'],
-          3: ['anchovy', 'anchovies', 'basil', 'mozzarella', 'parmesan', 'salami', 'meatball', 'meatballs', 'broccoli', 'corn', 'feta', 'ricotta'],
-          4: ['artichoke', 'prosciutto', 'arugula', 'sun-dried tomato', 'sundried tomato', 'goat cheese', 'gorgonzola', 'capers', 'eggplant', 'pesto', 'truffle'],
-          5: ['nduja', 'burrata', 'bresaola', 'pancetta', 'mortadella', 'fig', 'figs', 'pear', 'walnut', 'squid ink', 'clams', 'bottarga', 'taleggio']
+          1: ['rice', 'nasi', 'nasi lemak', 'noodles', 'mee', 'mi', 'chicken', 'ayam', 'bread', 'roti', 'egg', 'telur', 'burger', 'pizza', 'soup', 'sup', 'cake', 'kek'],
+          2: ['fried rice', 'nasi goreng', 'mee goreng', 'mi goreng', 'satay', 'sate', 'curry', 'kari', 'rendang', 'roti canai', 'fries', 'kentang goreng', 'sandwich', 'pasta', 'spaghetti', 'ice cream', 'aiskrim', 'cookie', 'biskut'],
+          3: ['laksa', 'char kuey teow', 'kuey teow', 'nasi ayam', 'nasi kerabu', 'nasi dagang', 'soto', 'bakso', 'ramen', 'sushi', 'dim sum', 'dumpling', 'pancake', 'waffle', 'donut', 'donat', 'steak'],
+          4: ['murtabak', 'martabak', 'apam balik', 'onde-onde', 'kuih lapis', 'karipap', 'curry puff', 'lemang', 'ketupat', 'tempeh', 'tempe', 'tofu', 'tauhu', 'tacos', 'burrito', 'paella', 'croissant'],
+          5: ['nasi kandar', 'asam pedas', 'ikan bakar', 'bubur lambuk', 'dodol', 'serunding', 'pulut panggang', 'kuih talam', 'putu piring', 'putu mayam', 'bak kut teh', 'pho', 'bibimbap', 'ceviche', 'pierogi', 'falafel', 'hummus']
         }
       },
       {
-        category: 'Music',
-        prompt: 'Name a real musical instrument!',
+        category: 'Drinks & Beverages',
+        prompt: 'Name a real drink or beverage!',
         answers: {
-          1: ['piano', 'guitar', 'drums', 'drum', 'violin', 'flute', 'trumpet', 'saxophone', 'bass', 'bass guitar'],
-          2: ['cello', 'clarinet', 'trombone', 'harp', 'ukulele', 'keyboard', 'organ', 'harmonica', 'banjo', 'tambourine'],
-          3: ['viola', 'oboe', 'bassoon', 'tuba', 'french horn', 'accordion', 'xylophone', 'marimba', 'mandolin', 'sitar', 'bagpipes'],
-          4: ['harpsichord', 'piccolo', 'timpani', 'bongo', 'conga', 'didgeridoo', 'kalimba', 'lute', 'zither', 'dulcimer', 'ocarina'],
-          5: ['theremin', 'hurdy-gurdy', 'hurdy gurdy', 'balalaika', 'koto', 'shamisen', 'erhu', 'oud', 'hang drum', 'handpan', 'glass armonica', 'nyckelharpa', 'vuvuzela']
+          1: ['water', 'air', 'air kosong', 'milk', 'susu', 'coffee', 'kopi', 'tea', 'teh', 'juice', 'jus', 'milo', 'soda', 'cola', 'coke', 'sirap', 'air sirap'],
+          2: ['teh tarik', 'kopi o', 'teh o', 'teh o ais', 'kopi ais', 'lemonade', 'air limau', 'limau ais', 'hot chocolate', 'coklat panas', 'smoothie', 'milkshake', 'green tea', 'teh hijau', 'iced tea', 'teh ais', 'latte', 'espresso'],
+          3: ['cappuccino', 'mocha', 'matcha', 'bandung', 'air bandung', 'soy milk', 'air soya', 'coconut water', 'air kelapa', 'sugarcane juice', 'air tebu', 'root beer', 'ginger ale', 'boba', 'bubble tea', 'americano'],
+          4: ['horlicks', 'nescafe', 'cham', 'kopi peng', 'teh c', 'teh c peng', 'chai', 'kombucha', 'lassi', 'horchata', 'tonic water', 'seltzer', 'cider', 'hibiscus tea', 'teh bunga raya'],
+          5: ['ais kacang', 'abc', 'cendol', 'air katira', 'laici kang', 'mata kucing', 'yerba mate', 'kefir', 'ayran', 'kvass', 'oolong', 'pu-erh', 'genmaicha', 'barley tea', 'air barli']
+        }
+      },
+      {
+        category: 'Sports & Games',
+        prompt: 'Name a sport or athletic game!',
+        answers: {
+          1: ['football', 'bola sepak', 'soccer', 'badminton', 'basketball', 'bola keranjang', 'tennis', 'tenis', 'swimming', 'renang', 'running', 'lari', 'volleyball', 'bola tampar', 'ping pong', 'table tennis'],
+          2: ['hockey', 'hoki', 'golf', 'cycling', 'berbasikal', 'boxing', 'tinju', 'baseball', 'softball', 'bola baling', 'handball', 'gymnastics', 'gimnastik', 'karate', 'taekwondo', 'judo'],
+          3: ['archery', 'memanah', 'fencing', 'lawan pedang', 'wrestling', 'gusti', 'bowling', 'boling', 'squash', 'skuasy', 'surfing', 'meluncur', 'skateboarding', 'skiing', 'rowing', 'mendayung', 'sailing', 'berlayar', 'diving', 'terjun papan'],
+          4: ['silat', 'pencak silat', 'sepak takraw', 'takraw', 'rugby', 'ragbi', 'cricket', 'kriket', 'curling', 'water polo', 'polo air', 'lacrosse', 'polo', 'triathlon', 'wushu', 'muay thai'],
+          5: ['kabaddi', 'petanque', 'boccia', 'goalball', 'bobsled', 'luge', 'biathlon', 'decathlon', 'equestrian', 'ekuestrian', 'orienteering', 'pelayaran', 'gimrama', 'snooker', 'billiards']
+        }
+      },
+      {
+        category: 'Transport & Vehicles',
+        prompt: 'Name a vehicle or mode of transport!',
+        answers: {
+          1: ['car', 'kereta', 'bus', 'bas', 'motorcycle', 'motor', 'motosikal', 'bicycle', 'basikal', 'bike', 'train', 'kereta api', 'airplane', 'plane', 'kapal terbang', 'boat', 'bot', 'ship', 'kapal'],
+          2: ['truck', 'lori', 'van', 'taxi', 'teksi', 'helicopter', 'helikopter', 'scooter', 'skuter', 'ferry', 'feri', 'tram', 'trem', 'lrt', 'mrt', 'monorail', 'monorel', 'jet'],
+          3: ['submarine', 'kapal selam', 'ambulance', 'ambulans', 'firetruck', 'bomba', 'kereta bomba', 'tractor', 'traktor', 'canoe', 'kanu', 'kayak', 'sailboat', 'kapal layar', 'yacht', 'kapal layar mewah', 'grab', 'ehailing'],
+          4: ['sampan', 'beca', 'trishaw', 'hovercraft', 'blimp', 'zeppelin', 'gondola', 'tuk-tuk', 'tuktuk', 'bulldozer', 'jengkaut', 'excavator', 'glider', 'seaplane'],
+          5: ['funicular', 'hydrofoil', 'bathyscaphe', 'dirigible', 'autogiro', 'velomobile', 'maglev', 'snowcat', 'perahu', 'rakit', 'raft', 'tongkang', 'barge']
         }
       },
       {
         category: 'School & Science',
         prompt: 'Name a school subject or academic field!',
         answers: {
-          1: ['math', 'mathematics', 'science', 'english', 'history', 'art', 'music', 'pe', 'physical education', 'geography'],
-          2: ['biology', 'chemistry', 'physics', 'literature', 'computer science', 'computing', 'spanish', 'french', 'economics', 'health'],
-          3: ['psychology', 'sociology', 'philosophy', 'geometry', 'algebra', 'calculus', 'statistics', 'drama', 'theater', 'accounting', 'business'],
-          4: ['astronomy', 'geology', 'anthropology', 'archaeology', 'linguistics', 'political science', 'botany', 'zoology', 'ecology', 'anatomy'],
-          5: ['epistemology', 'entomology', 'ichthyology', 'ornithology', 'mycology', 'paleontology', 'meteorology', 'seismology', 'etymology', 'numismatics', 'vexillology']
+          1: ['math', 'maths', 'mathematics', 'matematik', 'science', 'sains', 'english', 'bahasa inggeris', 'malay', 'bahasa melayu', 'bm', 'history', 'sejarah', 'art', 'seni', 'music', 'muzik', 'pe', 'pj', 'pendidikan jasmani'],
+          2: ['geography', 'geografi', 'biology', 'biologi', 'chemistry', 'kimia', 'physics', 'fizik', 'computer', 'komputer', 'ict', 'moral', 'pendidikan moral', 'islamic studies', 'pendidikan islam', 'economics', 'ekonomi'],
+          3: ['accounting', 'akaun', 'perakaunan', 'algebra', 'geometry', 'geometri', 'calculus', 'kalkulus', 'statistics', 'statistik', 'psychology', 'psikologi', 'philosophy', 'falsafah', 'sociology', 'sosiologi', 'literature', 'kesusasteraan', 'sastera'],
+          4: ['astronomy', 'astronomi', 'geology', 'geologi', 'anthropology', 'antropologi', 'archaeology', 'arkeologi', 'linguistics', 'linguistik', 'botany', 'botani', 'zoology', 'zoologi', 'ecology', 'ekologi', 'anatomy', 'anatomi'],
+          5: ['entomology', 'entomologi', 'ichthyology', 'ornithology', 'mycology', 'paleontology', 'meteorology', 'seismology', 'etymology', 'epistemology', 'numismatics', 'vexillology', 'thermodynamics', 'optics']
         }
       },
       {
-        category: 'Transport',
-        prompt: 'Name a type of vehicle or mode of transport!',
+        category: 'Musical Instruments',
+        prompt: 'Name a real musical instrument!',
         answers: {
-          1: ['car', 'bus', 'train', 'airplane', 'plane', 'bike', 'bicycle', 'boat', 'truck', 'motorcycle'],
-          2: ['ship', 'subway', 'metro', 'taxi', 'van', 'helicopter', 'scooter', 'ferry', 'tram', 'jet'],
-          3: ['yacht', 'canoe', 'kayak', 'sailboat', 'submarine', 'ambulance', 'firetruck', 'tractor', 'bulldozer', 'moped', 'skateboard'],
-          4: ['hovercraft', 'blimp', 'zeppelin', 'gondola', 'rickshaw', 'tuk-tuk', 'tuktuk', 'monorail', 'catamaran', 'glider', 'seaplane'],
-          5: ['funicular', 'hydrofoil', 'bathyscaphe', 'dirigible', 'autogiro', 'velomobile', 'sampan', 'junk', 'coracle', 'maglev', 'snowcat']
-        }
-      },
-      {
-        category: 'Vegetables',
-        prompt: 'Name a real vegetable!',
-        answers: {
-          1: ['carrot', 'potato', 'broccoli', 'tomato', 'onion', 'lettuce', 'corn', 'cucumber', 'spinach', 'pea', 'peas'],
-          2: ['cabbage', 'garlic', 'pepper', 'bell pepper', 'celery', 'cauliflower', 'zucchini', 'mushroom', 'pumpkin', 'green bean', 'sweet potato'],
-          3: ['asparagus', 'eggplant', 'radish', 'beet', 'beetroot', 'kale', 'leek', 'turnip', 'brussels sprout', 'brussels sprouts', 'okra', 'yam'],
-          4: ['artichoke', 'fennel', 'parsnip', 'rutabaga', 'bok choy', 'watercress', 'rhubarb', 'shallot', 'collard greens', 'swiss chard', 'endive'],
-          5: ['kohlrabi', 'jicama', 'celeriac', 'salsify', 'romanesco', 'cardoon', 'chayote', 'daikon', 'taro', 'cassava', 'lotus root', 'burdock']
-        }
-      },
-      {
-        category: 'Solar System',
-        prompt: 'Name a planet, dwarf planet, or famous moon in our Solar System!',
-        answers: {
-          1: ['earth', 'mars', 'jupiter', 'saturn', 'venus', 'mercury', 'uranus', 'neptune', 'moon'],
-          2: ['pluto', 'europa', 'titan', 'io', 'ganymede', 'callisto', 'phobos', 'deimos'],
-          3: ['ceres', 'eris', 'makemake', 'haumea', 'enceladus', 'triton', 'charon', 'mimas'],
-          4: ['iapetus', 'rhea', 'dione', 'tethys', 'oberon', 'titania', 'miranda', 'ariel', 'umbriel'],
-          5: ['sedna', 'quaoar', 'orcus', 'gonggong', 'hyperion', 'phoebe', 'amalthea', 'nereid', 'proteus', 'pan']
-        }
-      },
-      {
-        category: 'Drinks & Beverages',
-        prompt: 'Name a common or traditional drink!',
-        answers: {
-          1: ['water', 'milk', 'coffee', 'tea', 'juice', 'orange juice', 'apple juice', 'soda', 'cola', 'coke'],
-          2: ['lemonade', 'hot chocolate', 'cocoa', 'smoothie', 'milkshake', 'green tea', 'iced tea', 'sparkling water', 'latte', 'espresso'],
-          3: ['cappuccino', 'mocha', 'matcha', 'kombucha', 'ginger ale', 'root beer', 'coconut water', 'cranberry juice', 'grape juice', 'americano'],
-          4: ['horchata', 'chai', 'yerba mate', 'kefir', 'lassi', 'mango lassi', 'seltzer', 'tonic water', 'cider', 'apple cider', 'boba', 'bubble tea'],
-          5: ['kvass', 'ayran', 'kumis', 'tepache', 'chicha', 'rooibos', 'pu-erh', 'oolong', 'genmaicha', 'barley tea', 'hibiscus tea', 'sorrel']
+          1: ['piano', 'guitar', 'gitar', 'drum', 'drums', 'dram', 'violin', 'biola', 'flute', 'seruling', 'trumpet', 'trompet', 'saxophone', 'saksofon', 'keyboard', 'bass'],
+          2: ['cello', 'selos', 'clarinet', 'klarinet', 'trombone', 'trombon', 'harp', 'harpa', 'ukulele', 'organ', 'harmonica', 'harmonika', 'banjo', 'tambourine', 'tamborin', 'accordion', 'akordion'],
+          3: ['viola', 'oboe', 'bassoon', 'tuba', 'french horn', 'xylophone', 'silofon', 'marimba', 'mandolin', 'sitar', 'bagpipes', 'kompang', 'rebana', 'gong', 'angklung'],
+          4: ['gamelan', 'sape', 'gambus', 'serunai', 'caklempong', 'bonang', 'harpsichord', 'piccolo', 'timpani', 'bongo', 'conga', 'kalimba', 'lute', 'ocarina'],
+          5: ['theremin', 'hurdy-gurdy', 'hurdy gurdy', 'balalaika', 'koto', 'shamisen', 'erhu', 'oud', 'hang drum', 'handpan', 'glass armonica', 'nyckelharpa', 'didgeridoo', 'zither']
         }
       },
       {
         category: 'Weather & Nature',
-        prompt: 'Name a weather phenomenon or type of precipitation!',
+        prompt: 'Name a weather or natural sky phenomenon!',
         answers: {
-          1: ['rain', 'snow', 'wind', 'sun', 'sunshine', 'cloud', 'clouds', 'storm', 'thunderstorm', 'fog'],
-          2: ['hail', 'sleet', 'lightning', 'thunder', 'hurricane', 'tornado', 'blizzard', 'rainbow', 'mist', 'frost', 'dew'],
-          3: ['drizzle', 'typhoon', 'cyclone', 'monsoon', 'drought', 'heatwave', 'heat wave', 'avalanche', 'sandstorm', 'dust storm', 'smog'],
-          4: ['aurora', 'northern lights', 'waterspout', 'haboob', 'freezing rain', 'black ice', 'ice storm', 'squall', 'gale', 'chinook'],
-          5: ['virga', 'graupel', 'petrichor', 'derecho', 'ball lightning', 'st elmos fire', 'sun dog', 'sundog', 'katabatic wind', 'sirocco', 'mistral']
+          1: ['rain', 'hujan', 'snow', 'salji', 'wind', 'angin', 'sun', 'matahari', 'cloud', 'clouds', 'awan', 'storm', 'ribut', 'thunder', 'guruh', 'lightning', 'kilat', 'fog', 'kabus'],
+          2: ['rainbow', 'pelangi', 'hail', 'hujan batu', 'sleet', 'hurricane', 'taufan', 'tornado', 'puting beliung', 'blizzard', 'mist', 'embun', 'frost', 'fros', 'dew', 'embun pagi'],
+          3: ['drizzle', 'gerimis', 'typhoon', 'cyclone', 'siklon', 'monsoon', 'monsun', 'drought', 'kemarau', 'heatwave', 'gelombang haba', 'avalanche', 'runtuhan salji', 'sandstorm', 'ribut pasir', 'haze', 'jerebu'],
+          4: ['aurora', 'cahaya kutub', 'northern lights', 'waterspout', 'belalai air', 'haboob', 'freezing rain', 'black ice', 'ice storm', 'squall', 'gale', 'chinook'],
+          5: ['virga', 'graupel', 'petrichor', 'derecho', 'ball lightning', 'kilat bebola', 'sundog', 'sun dog', 'katabatic wind', 'sirocco', 'mistral', 'foehn']
         }
       },
       {
-        category: 'Clothing & Wearables',
+        category: 'Clothing & Footwear',
         prompt: 'Name an item of clothing or footwear!',
         answers: {
-          1: ['shirt', 't-shirt', 'tshirt', 'pants', 'jeans', 'shoes', 'socks', 'jacket', 'coat', 'dress', 'hat', 'shorts'],
-          2: ['sweater', 'hoodie', 'skirt', 'boots', 'sneakers', 'sandals', 'gloves', 'scarf', 'tie', 'suit', 'belt', 'pajamas'],
-          3: ['cardigan', 'blazer', 'vest', 'waistcoat', 'leggings', 'overalls', 'raincoat', 'slippers', 'heels', 'high heels', 'beanie', 'cap'],
-          4: ['trench coat', 'parka', 'poncho', 'kimono', 'tuxedo', 'loafers', 'moccasins', 'espadrilles', 'clogs', 'beret', 'fedora', 'shawl'],
-          5: ['dashiki', 'sarong', 'cheongsam', 'qipao', 'dirndl', 'lederhosen', 'kaftan', 'caftan', 'kilt', 'hanbok', 'sari', 'bolero', 'ascot']
+          1: ['shirt', 'baju', 't-shirt', 'tshirt', 'baju kemeja', 'pants', 'seluar', 'jeans', 'seluar jeans', 'shoes', 'kasut', 'socks', 'stoking', 'jacket', 'jaket', 'coat', 'kot', 'dress', 'gaun', 'hat', 'topi'],
+          2: ['shorts', 'seluar pendek', 'sweater', 'baju sejuk', 'hoodie', 'skirt', 'rok', 'boots', 'but', 'sneakers', 'kasut sukan', 'sandals', 'selipar', 'gloves', 'sarung tangan', 'scarf', 'selendang', 'tie', 'tali leher', 'belt', 'tali pinggang'],
+          3: ['baju kurung', 'baju melayu', 'suit', 'sut', 'pajamas', 'baju tidur', 'cardigan', 'blazer', 'vest', 'leggings', 'overalls', 'raincoat', 'baju hujan', 'slippers', 'cap', 'songkok', 'tudung', 'hijab'],
+          4: ['trench coat', 'parka', 'poncho', 'kimono', 'tuxedo', 'loafers', 'moccasins', 'espadrilles', 'clogs', 'beret', 'fedora', 'shawl', 'samping', 'kain pelikat', 'kain batik'],
+          5: ['sarong', 'kebaya', 'cheongsam', 'qipao', 'dirndl', 'lederhosen', 'kaftan', 'caftan', 'kilt', 'hanbok', 'sari', 'bolero', 'ascot', 'tanjak', 'dastar']
         }
       },
       {
         category: 'Birds',
         prompt: 'Name a real species or type of bird!',
         answers: {
-          1: ['eagle', 'owl', 'penguin', 'duck', 'chicken', 'parrot', 'pigeon', 'crow', 'sparrow', 'robin', 'flamingo'],
-          2: ['hawk', 'falcon', 'swan', 'goose', 'turkey', 'peacock', 'seagull', 'hummingbird', 'woodpecker', 'ostrich', 'pelican', 'raven'],
-          3: ['toucan', 'puffin', 'stork', 'heron', 'crane', 'albatross', 'canary', 'parakeet', 'cockatoo', 'macaw', 'vulture', 'condor', 'kiwi'],
-          4: ['kingfisher', 'magpie', 'jay', 'blue jay', 'cardinal', 'oriole', 'starling', 'swallow', 'nightingale', 'emu', 'cassowary', 'kestrel', 'osprey'],
-          5: ['shoebill', 'quetzal', 'hoatzin', 'kakapo', 'lyrebird', 'bowerbird', 'secretary bird', 'ptarmigan', 'booby', 'frigatebird', 'hornbill', 'ibis']
+          1: ['eagle', 'helang', 'owl', 'burung hantu', 'penguin', 'pinguin', 'duck', 'itik', 'chicken', 'ayam', 'parrot', 'burung kakak tua', 'pigeon', 'merpati', 'crow', 'gagak', 'sparrow', 'pipit', 'flamingo'],
+          2: ['hawk', 'falcon', 'swan', 'angsa', 'goose', 'angsa liar', 'turkey', 'ayam belanda', 'peacock', 'merak', 'seagull', 'burung camar', 'hummingbird', 'woodpecker', 'burung belatuk', 'ostrich', 'burung unta', 'pelican', 'unduk-unduk', 'raven'],
+          3: ['toucan', 'puffin', 'stork', 'burung bangau', 'heron', 'pucung', 'crane', 'jenjang', 'albatross', 'canary', 'parakeet', 'cockatoo', 'macaw', 'vulture', 'hering', 'condor', 'kiwi', 'kingfisher', 'pekaka'],
+          4: ['magpie', 'murai', 'jay', 'blue jay', 'cardinal', 'oriole', 'starling', 'perling', 'swallow', 'layang-layang', 'nightingale', 'emu', 'cassowary', 'kestrel', 'osprey'],
+          5: ['shoebill', 'quetzal', 'hoatzin', 'kakapo', 'lyrebird', 'bowerbird', 'secretary bird', 'ptarmigan', 'booby', 'frigatebird', 'hornbill', 'kenyalang', 'enggang', 'ibis']
+        }
+      },
+      {
+        category: 'Planets & Space',
+        prompt: 'Name a planet, moon, or space object!',
+        answers: {
+          1: ['earth', 'bumi', 'mars', 'marikh', 'jupiter', 'musytari', 'saturn', 'zuhal', 'venus', 'zuhrah', 'mercury', 'utarid', 'uranus', 'neptune', 'neptun', 'moon', 'bulan', 'sun', 'matahari'],
+          2: ['pluto', 'europa', 'titan', 'io', 'ganymede', 'callisto', 'phobos', 'deimos', 'comet', 'komet', 'asteroid', 'star', 'bintang', 'galaxy', 'galaksi'],
+          3: ['ceres', 'eris', 'makemake', 'haumea', 'enceladus', 'triton', 'charon', 'mimas', 'nebula', 'meteor', 'meteorite', 'tahik bintang', 'milky way', 'bima sakti'],
+          4: ['iapetus', 'rhea', 'dione', 'tethys', 'oberon', 'titania', 'miranda', 'ariel', 'umbriel', 'pulsar', 'quasar', 'magnetar', 'black hole', 'lohong hitam', 'exoplanet'],
+          5: ['sedna', 'quaoar', 'orcus', 'gonggong', 'hyperion', 'phoebe', 'amalthea', 'nereid', 'proteus', 'pan', 'trappist-1', 'proxima centauri', 'betelgeuse', 'sirius']
         }
       }
     ];
 
-    // ==========================================
-    // 2. SOUND ENGINE (Web Audio API)
-    // ==========================================
     let soundEnabled = true;
     let audioCtx = null;
 
@@ -1228,13 +1441,17 @@
       } catch (e) {}
     }
 
+    function playRetryBuzz() {
+      playTone(220, 'triangle', 0.14, 0, 0.09);
+      playTone(175, 'triangle', 0.16, 0.09, 0.09);
+    }
+
     function playDiveSound(tier) {
       if (tier === 0) {
         playTone(190, 'sawtooth', 0.25, 0, 0.08);
         playTone(145, 'sawtooth', 0.3, 0.12, 0.08);
         return;
       }
-      // Bubble splash + harmonic chord based on rarity
       playTone(320, 'sine', 0.18, 0, 0.12);
       playTone(480, 'sine', 0.22, 0.07, 0.12);
       if (tier >= 2) playTone(600, 'triangle', 0.28, 0.14, 0.12);
@@ -1246,9 +1463,6 @@
       }
     }
 
-    // ==========================================
-    // 3. PARTICLE OCEAN CANVAS
-    // ==========================================
     const canvas = document.getElementById('ocean-canvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
@@ -1262,7 +1476,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    for (let i = 0; i < 65; i++) {
+    for (let i = 0; i < 70; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -1273,17 +1487,17 @@
       });
     }
 
-    function spawnSplashBurst(count = 26) {
+    function spawnSplashBurst(count = 32) {
       const cx = window.innerWidth / 2;
-      const cy = 90;
+      const cy = 65;
       for (let i = 0; i < count; i++) {
         particles.push({
-          x: cx + (Math.random() - 0.5) * 70,
-          y: cy + (Math.random() - 0.5) * 30,
-          r: Math.random() * 5 + 2,
-          vy: -(Math.random() * 3.2 + 1.2),
-          vx: (Math.random() - 0.5) * 3.5,
-          alpha: 0.85,
+          x: cx + (Math.random() - 0.5) * 90,
+          y: cy + (Math.random() - 0.5) * 35,
+          r: Math.random() * 5.5 + 2,
+          vy: -(Math.random() * 3.6 + 1.5),
+          vx: (Math.random() - 0.5) * 4.2,
+          alpha: 0.92,
           temp: true
         });
       }
@@ -1291,7 +1505,7 @@
 
     function animateOcean() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const isDeep = currentDepthMeters >= 600;
+      const isDeep = currentDepthMeters >= 900;
 
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
@@ -1330,46 +1544,70 @@
     }
     animateOcean();
 
-    // ==========================================
-    // 4. DIVER ANIMATION & DEPTH ENVIRONMENT
-    // ==========================================
     const diverActor = document.getElementById('diver-actor');
+    const diverInner = document.getElementById('diver-inner');
     const diverEmoji = document.getElementById('diver-emoji');
     const diverTag = document.getElementById('diver-tag');
     const surfaceLayer = document.getElementById('surface-layer');
     const gaugeFill = document.getElementById('gauge-fill');
     const gaugeDepthLabel = document.getElementById('gauge-depth-label');
+    const gaugeMarkers = document.getElementById('gauge-markers');
+    const appShell = document.getElementById('app-shell');
+    const gameCard = document.getElementById('screen-game');
 
-    function setOceanThemeByDepth(depth) {
-      currentDepthMeters = depth;
-      gaugeDepthLabel.textContent = `${depth}m`;
-      const pct = Math.min(100, Math.max(6, (depth / 1500) * 100));
+    function getMaxExpeditionDepth() {
+      return Math.max(1200, (state.questionCount || 5) * 900);
+    }
+
+    function updateDepthGaugeUI(myTotalDepth, allPlayersList = []) {
+      currentDepthMeters = myTotalDepth;
+      gaugeDepthLabel.textContent = `${myTotalDepth}m`;
+
+      const maxScale = getMaxExpeditionDepth();
+      const pct = Math.min(100, Math.max(4, (myTotalDepth / maxScale) * 100));
       gaugeFill.style.height = `${pct}%`;
 
+      gaugeMarkers.innerHTML = '';
+      const list = allPlayersList.length
+        ? allPlayersList.filter(p => p.role === 'player')
+        : [{ id: 'local', name: state.name, avatar: state.avatar, depth: myTotalDepth }];
+
+      list.forEach((p, idx) => {
+        const d = p.depth || 0;
+        const topPct = Math.min(96, Math.max(4, (d / maxScale) * 100));
+        const isMe = (state.mode === 'single') || (state.peer && p.id === state.peer.id);
+
+        const marker = document.createElement('div');
+        marker.className = 'gauge-marker' + (isMe ? ' me' : '');
+        marker.style.top = `${topPct}%`;
+        if (!isMe && list.length > 1) {
+          marker.style.left = `${50 + ((idx % 2 === 0 ? -1 : 1) * 14)}%`;
+        }
+        marker.title = `${p.name}: ${d}m`;
+        marker.innerHTML = `<div class="gauge-marker-dot">${p.avatar}</div>`;
+        gaugeMarkers.appendChild(marker);
+      });
+
       const root = document.documentElement.style;
-      if (depth <= 50) {
-        // Surface sunlight zone
+      if (myTotalDepth <= 100) {
         root.setProperty('--bg-top', '#0ea5e9');
         root.setProperty('--bg-mid', '#0369a1');
         root.setProperty('--bg-bot', '#0c4a6e');
         surfaceLayer.style.transform = 'translateY(0px)';
         surfaceLayer.style.opacity = '1';
-      } else if (depth <= 350) {
-        // Shallow reef
+      } else if (myTotalDepth <= 600) {
         root.setProperty('--bg-top', '#0284c7');
         root.setProperty('--bg-mid', '#075985');
         root.setProperty('--bg-bot', '#0f172a');
-        surfaceLayer.style.transform = 'translateY(-90px)';
-        surfaceLayer.style.opacity = '0.55';
-      } else if (depth <= 750) {
-        // Twilight zone
+        surfaceLayer.style.transform = 'translateY(-95px)';
+        surfaceLayer.style.opacity = '0.5';
+      } else if (myTotalDepth <= 1500) {
         root.setProperty('--bg-top', '#075985');
         root.setProperty('--bg-mid', '#1e3a8a');
         root.setProperty('--bg-bot', '#090d16');
-        surfaceLayer.style.transform = 'translateY(-190px)';
+        surfaceLayer.style.transform = 'translateY(-195px)';
         surfaceLayer.style.opacity = '0.15';
       } else {
-        // Midnight / Abyssal Krillion zone
         root.setProperty('--bg-top', '#1e1b4b');
         root.setProperty('--bg-mid', '#0f172a');
         root.setProperty('--bg-bot', '#020617');
@@ -1378,47 +1616,76 @@
       }
     }
 
-    function resetDiverToSurface() {
-      diverActor.classList.remove('diver-diving');
-      diverActor.classList.add('diver-bob');
-      diverActor.style.top = '44px';
-      diverTag.textContent = `${state.name} • Surface (0m)`;
-      setOceanThemeByDepth(0);
+    function resetDiverForNextQuestion(totalDepthSoFar) {
+      diverInner.classList.remove('diving');
+      diverActor.style.top = '16px';
+      diverTag.textContent = `${state.name} • Total: ${totalDepthSoFar}m`;
+      appShell.classList.remove('minimized-mode');
+      gameCard.classList.remove('minimized-qna');
+      updateDepthGaugeUI(totalDepthSoFar, Object.values(state.players));
     }
 
-    function triggerAvatarDive(tier, totalCumulativeDepth) {
-      // Depth plunged on this specific answer
-      const tierDivePx = [52, 130, 230, 340, 450, 560][tier] || 52;
-      const tierDiveMeters = [0, 80, 220, 450, 780, 1200][tier] || 0;
+    function showTierPopup(tier, earnedPts, depthGain) {
+      const overlay = document.getElementById('tier-pop-overlay');
+      const card = document.getElementById('tier-pop-card');
+      const title = document.getElementById('tier-pop-title');
+      const sub = document.getElementById('tier-pop-sub');
+
+      const meta = TIER_META[tier];
+      card.style.borderColor = meta.color;
+      title.style.color = meta.color;
+      title.textContent = tier > 0 ? meta.shortTitle : 'TIME EXPIRED!';
+      sub.textContent = tier > 0
+        ? `+${earnedPts} Points • Diving -${depthGain}m!`
+        : '+0 Points • No Dive This Round';
+
+      overlay.classList.add('active');
+      setTimeout(() => {
+        overlay.classList.remove('active');
+      }, 1500);
+    }
+
+    function triggerCleanDiveSequence(tier, earnedPts, newTotalDepth, statusNoteText, onComplete) {
+      const meta = TIER_META[tier];
+
+      showTierPopup(tier, earnedPts, meta.depthGain);
+
+      appShell.classList.add('minimized-mode');
+      gameCard.classList.add('minimized-qna');
+
+      document.getElementById('mini-q-label').textContent = `Q${state.currentIndex + 1}/${state.questions.length}`;
+      const badge = document.getElementById('mini-tier-badge');
+      badge.textContent = meta.label;
+      badge.style.color = meta.color;
+      document.getElementById('mini-status-note').textContent = statusNoteText || '';
+
+      const tierDivePx = [12, 55, 95, 130, 160, 185][tier] || 12;
+      diverInner.classList.remove('diving');
+      void diverInner.offsetWidth;
 
       if (tier > 0) {
-        spawnSplashBurst(12 + tier * 7);
-        diveBurstSpeed = 2.5 + tier * 1.8;
-        diverActor.classList.remove('diver-bob');
-        diverActor.classList.add('diver-diving');
+        spawnSplashBurst(16 + tier * 7);
+        diveBurstSpeed = 2.8 + tier * 1.7;
+        diverInner.classList.add('diving');
       }
 
-      const targetTop = Math.min(window.innerHeight - 130, 44 + tierDivePx);
-      diverActor.style.top = `${targetTop}px`;
+      diverActor.style.top = `${16 + tierDivePx}px`;
       diverTag.textContent = tier > 0
-        ? `⬇️ Diving -${tierDiveMeters}m (Total: ${totalCumulativeDepth}m)`
-        : `💦 Stayed near surface (0m)`;
+        ? `⬇️ -${meta.depthGain}m • Total: ${newTotalDepth}m`
+        : `Total: ${newTotalDepth}m`;
 
-      setOceanThemeByDepth(Math.max(tierDiveMeters, totalCumulativeDepth));
+      updateDepthGaugeUI(newTotalDepth, Object.values(state.players));
 
       setTimeout(() => {
-        diverActor.classList.remove('diver-diving');
-        diverActor.classList.add('diver-bob');
-      }, 1450);
+        diverInner.classList.remove('diving');
+        if (typeof onComplete === 'function') onComplete();
+      }, 1350);
     }
 
-    // ==========================================
-    // 5. GAME STATE & MULTIPLAYER ENGINE
-    // ==========================================
     const state = {
       name: 'Diver',
       avatar: '🐬',
-      mode: 'single', // 'single' | 'multi'
+      mode: 'single',
       questionCount: 5,
       timeLimit: 30,
       questions: [],
@@ -1426,31 +1693,28 @@
       score: 0,
       totalDepth: 0,
       timerInterval: null,
+      autoAdvanceTimeout: null,
       timeLeft: 30,
-      answeredCurrent: false,
+      lockedCurrent: false,
 
-      // Multiplayer
       peer: null,
       isHost: false,
       roomCode: '',
-      hostRole: 'player', // 'player' | 'spectator'
-      connections: [], // host stores guest DataConnections
-      hostConn: null, // guest stores DataConnection to host
-      players: {} // id -> { id, name, avatar, score, depth, role, lastResult, answered }
+      hostRole: 'player',
+      connections: [],
+      hostConn: null,
+      players: {}
     };
 
     const TIER_META = {
-      0: { label: 'NO MATCH • +0 PTS', color: '#64748b', depthGain: 0 },
-      1: { label: 'COMMON • +1 PT', color: '#94a3b8', depthGain: 80 },
-      2: { label: 'UNCOMMON • +2 PTS', color: '#34d399', depthGain: 220 },
-      3: { label: 'RARE • +3 PTS', color: '#38bdf8', depthGain: 450 },
-      4: { label: 'DEEP CUT • +4 PTS', color: '#c084fc', depthGain: 780 },
-      5: { label: 'ONE IN KRILLION • +5 PTS', color: '#fbbf24', depthGain: 1200 }
+      0: { shortTitle: 'TIME EXPIRED', label: 'NO MATCH • +0 PTS', color: '#94a3b8', depthGain: 0 },
+      1: { shortTitle: 'COMMON!', label: 'COMMON • +1 PT', color: '#94a3b8', depthGain: 80 },
+      2: { shortTitle: 'UNCOMMON!', label: 'UNCOMMON • +2 PTS', color: '#34d399', depthGain: 220 },
+      3: { shortTitle: 'RARE!', label: 'RARE • +3 PTS', color: '#38bdf8', depthGain: 450 },
+      4: { shortTitle: 'DEEP CUT!', label: 'DEEP CUT • +4 PTS', color: '#c084fc', depthGain: 780 },
+      5: { shortTitle: 'ONE IN KRILLION!', label: 'ONE IN KRILLION • +5 PTS', color: '#fbbf24', depthGain: 1200 }
     };
 
-    // ==========================================
-    // 6. UI HELPERS & NAVIGATION
-    // ==========================================
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -1467,7 +1731,8 @@
       document.getElementById('depth-gauge').style.display = screenId === 'screen-game' ? 'flex' : 'none';
 
       if (screenId !== 'screen-game') {
-        resetDiverToSurface();
+        state.totalDepth = 0;
+        resetDiverForNextQuestion(0);
       }
     }
 
@@ -1475,10 +1740,9 @@
       const rawName = document.getElementById('player-name-input').value.trim();
       state.name = rawName || 'Diver';
       diverEmoji.textContent = state.avatar;
-      diverTag.textContent = `${state.name} • Surface (0m)`;
+      diverTag.textContent = `${state.name} • Total: ${state.totalDepth}m`;
     }
 
-    // Build Avatar Selector
     const avatarGrid = document.getElementById('avatar-grid');
     AVATARS.forEach((av, idx) => {
       const btn = document.createElement('button');
@@ -1496,7 +1760,6 @@
 
     document.getElementById('player-name-input').addEventListener('input', syncProfileFromInputs);
 
-    // Chip Group Helper
     function bindChipGroup(containerId, callback) {
       const container = document.getElementById(containerId);
       container.querySelectorAll('.chip-btn').forEach(btn => {
@@ -1513,15 +1776,14 @@
     bindChipGroup('mp-count-chips', val => { state.questionCount = val; });
     bindChipGroup('mp-time-chips', val => { state.timeLimit = val; });
 
-    // Sound Toggle
     document.getElementById('sound-toggle-btn').addEventListener('click', (e) => {
       soundEnabled = !soundEnabled;
       e.target.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Muted';
     });
 
-    // Return Home
     function cleanupAndGoHome() {
       clearInterval(state.timerInterval);
+      clearTimeout(state.autoAdvanceTimeout);
       if (state.peer) {
         try { state.peer.destroy(); } catch (e) {}
         state.peer = null;
@@ -1529,7 +1791,8 @@
       state.connections = [];
       state.hostConn = null;
       state.players = {};
-      resetDiverToSurface();
+      state.totalDepth = 0;
+      resetDiverForNextQuestion(0);
       showScreen('screen-menu');
     }
 
@@ -1538,7 +1801,6 @@
     document.getElementById('sp-back-btn').addEventListener('click', () => showScreen('screen-menu'));
     document.getElementById('mp-entry-back-btn').addEventListener('click', () => showScreen('screen-menu'));
 
-    // Mode Selection
     document.getElementById('btn-choose-single').addEventListener('click', () => {
       syncProfileFromInputs();
       state.mode = 'single';
@@ -1551,9 +1813,6 @@
       showScreen('screen-multi-entry');
     });
 
-    // ==========================================
-    // 7. ANSWER EVALUATION ENGINE
-    // ==========================================
     function normalizeText(str) {
       return str
         .toLowerCase()
@@ -1566,7 +1825,6 @@
       const cleaned = normalizeText(rawInput);
       if (!cleaned) return { tier: 0, points: 0, matched: '' };
 
-      // Check from rarest (5) down to common (1)
       for (let tier = 5; tier >= 1; tier--) {
         const list = questionObj.answers[tier] || [];
         for (const candidate of list) {
@@ -1584,9 +1842,7 @@
       return shuffled.slice(0, Math.min(count, shuffled.length));
     }
 
-    // ==========================================
-    // 8. SINGLEPLAYER FLOW
-    // ==========================================
+    // SINGLEPLAYER START
     document.getElementById('sp-start-btn').addEventListener('click', () => {
       syncProfileFromInputs();
       state.mode = 'single';
@@ -1594,16 +1850,38 @@
       state.currentIndex = 0;
       state.score = 0;
       state.totalDepth = 0;
+      state.players = {
+        local: {
+          id: 'local',
+          name: state.name,
+          avatar: state.avatar,
+          score: 0,
+          depth: 0,
+          qPoints: 0,
+          answer: '-',
+          tier: 0,
+          answered: false,
+          role: 'player'
+        }
+      };
       startQuestionRound();
     });
 
     function startQuestionRound() {
+      clearTimeout(state.autoAdvanceTimeout);
       showScreen('screen-game');
-      resetDiverToSurface();
+      resetDiverForNextQuestion(state.totalDepth);
 
       const q = state.questions[state.currentIndex];
-      state.answeredCurrent = false;
+      state.lockedCurrent = false;
       state.timeLeft = state.timeLimit;
+
+      if (state.mode === 'single') {
+        state.players.local.answered = false;
+        state.players.local.qPoints = 0;
+        state.players.local.answer = '-';
+        state.players.local.tier = 0;
+      }
 
       document.getElementById('hud-q-counter').textContent = `Question ${state.currentIndex + 1} / ${state.questions.length}`;
       document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
@@ -1613,8 +1891,8 @@
       const isSpectator = state.mode === 'multi' && state.isHost && state.hostRole === 'spectator';
       document.getElementById('answer-input-area').style.display = isSpectator ? 'none' : 'block';
       document.getElementById('spectator-banner').style.display = isSpectator ? 'block' : 'none';
-      document.getElementById('waiting-others-banner').style.display = 'none';
-      document.getElementById('dive-result-panel').style.display = 'none';
+      document.getElementById('retry-notice').style.display = 'none';
+      document.getElementById('q-table-card').style.display = 'none';
 
       const ansInput = document.getElementById('answer-input');
       ansInput.value = '';
@@ -1644,28 +1922,53 @@
 
     document.getElementById('answer-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      if (state.answeredCurrent) return;
+      if (state.lockedCurrent) return;
       const val = document.getElementById('answer-input').value.trim();
       if (!val) return;
-      submitPlayerAnswer(val);
+      handleAttempt(val);
     });
 
-    function submitPlayerAnswer(rawAnswer) {
-      state.answeredCurrent = true;
-      document.getElementById('answer-input').disabled = true;
-
+    function handleAttempt(rawAnswer) {
       const q = state.questions[state.currentIndex];
       const evalRes = evaluateAnswer(q, rawAnswer);
+      const retryBox = document.getElementById('retry-notice');
+
+      if (evalRes.tier === 0) {
+        playRetryBuzz();
+        retryBox.style.display = 'block';
+        retryBox.textContent = `"${rawAnswer}" is not recognized yet — try another answer before time runs out!`;
+        const inp = document.getElementById('answer-input');
+        inp.value = '';
+        inp.focus();
+        return;
+      }
+
+      retryBox.style.display = 'none';
+      state.lockedCurrent = true;
+      document.getElementById('answer-input').disabled = true;
 
       if (state.mode === 'single') {
         clearInterval(state.timerInterval);
         state.score += evalRes.points;
         state.totalDepth += TIER_META[evalRes.tier].depthGain;
         document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
-        revealRoundResult(evalRes, rawAnswer);
+
+        state.players.local.answered = true;
+        state.players.local.qPoints = evalRes.points;
+        state.players.local.answer = rawAnswer;
+        state.players.local.tier = evalRes.tier;
+        state.players.local.score = state.score;
+        state.players.local.depth = state.totalDepth;
+
+        playDiveSound(evalRes.tier);
+        triggerCleanDiveSequence(evalRes.tier, evalRes.points, state.totalDepth, 'Round Complete', () => {
+          renderQuestionStandingsTable(Object.values(state.players), true);
+          scheduleAutoAdvance();
+        });
       } else {
-        // Multiplayer submission
-        document.getElementById('waiting-others-banner').style.display = 'block';
+        const nextTotalDepth = state.totalDepth + TIER_META[evalRes.tier].depthGain;
+        playDiveSound(evalRes.tier);
+
         const payload = {
           type: 'SUBMIT_ANSWER',
           playerId: state.peer.id,
@@ -1673,6 +1976,11 @@
           tier: evalRes.tier,
           points: evalRes.points
         };
+
+        triggerCleanDiveSequence(evalRes.tier, evalRes.points, nextTotalDepth, 'Waiting for other players...', () => {
+          renderQuestionStandingsTable(Object.values(state.players), false);
+        });
+
         if (state.isHost) {
           hostProcessSubmission(payload);
         } else if (state.hostConn && state.hostConn.open) {
@@ -1683,64 +1991,79 @@
 
     function handleRoundTimeout() {
       if (state.mode === 'single') {
-        if (!state.answeredCurrent) {
-          state.answeredCurrent = true;
-          revealRoundResult({ tier: 0, points: 0, matched: '' }, '(Time Expired)');
+        if (!state.lockedCurrent) {
+          state.lockedCurrent = true;
+          document.getElementById('answer-input').disabled = true;
+          state.players.local.answered = true;
+          state.players.local.qPoints = 0;
+          state.players.local.answer = '(Time Up)';
+          state.players.local.tier = 0;
+
+          playDiveSound(0);
+          triggerCleanDiveSequence(0, 0, state.totalDepth, 'Time Expired', () => {
+            renderQuestionStandingsTable(Object.values(state.players), true);
+            scheduleAutoAdvance();
+          });
         }
       } else if (state.isHost) {
-        // Host forces round reveal when timer hits zero
         hostFinalizeRound();
       }
     }
 
-    function revealRoundResult(evalRes, submittedText) {
-      const meta = TIER_META[evalRes.tier];
-      playDiveSound(evalRes.tier);
-      triggerAvatarDive(evalRes.tier, state.totalDepth);
+    function renderQuestionStandingsTable(playersArr, revealAnswers) {
+      const tableCard = document.getElementById('q-table-card');
+      const tbody = document.getElementById('q-table-body');
+      const stateTag = document.getElementById('q-table-state-tag');
 
-      const panel = document.getElementById('dive-result-panel');
-      const badge = document.getElementById('result-tier-badge');
-      badge.textContent = meta.label;
-      badge.style.background = meta.color;
+      tableCard.style.display = 'block';
+      stateTag.textContent = revealAnswers
+        ? '🔓 Answers Revealed!'
+        : '🔒 Answers Blurred Until Everyone Finishes';
 
-      document.getElementById('result-answer-echo').textContent =
-        evalRes.tier > 0
-          ? `Your Answer: "${submittedText}"`
-          : `Answer: "${submittedText}" — Not in our real-world database!`;
+      const sorted = playersArr
+        .filter(p => p.role === 'player')
+        .sort((a, b) => (b.qPoints || 0) - (a.qPoints || 0) || (b.score || 0) - (a.score || 0));
 
-      document.getElementById('result-depth-msg').textContent =
-        evalRes.tier > 0
-          ? `Plunged ${meta.depthGain}m deep! Total expedition depth: ${state.totalDepth}m`
-          : `No depth gained this round. Total depth: ${state.totalDepth}m`;
+      tbody.innerHTML = '';
+      sorted.forEach((p, idx) => {
+        const qPts = p.qPoints || 0;
+        const ansText = p.answered ? (p.answer || '-') : 'Thinking...';
+        const ansClass = revealAnswers ? 'blurred-ans revealed-ans' : 'blurred-ans';
+        const tierColor = revealAnswers && p.tier ? TIER_META[p.tier].color : '#e2e8f0';
 
-      // Show sample answers across tiers
-      const q = state.questions[state.currentIndex];
-      const samplesEl = document.getElementById('sample-answers');
-      samplesEl.innerHTML = '';
-      [1, 3, 5].forEach(t => {
-        const list = q.answers[t];
-        if (list && list.length) {
-          const pick = list[Math.floor(Math.random() * Math.min(4, list.length))];
-          const chip = document.createElement('span');
-          chip.className = 'sample-chip';
-          chip.style.borderColor = TIER_META[t].color;
-          chip.textContent = `${t === 1 ? 'Common' : t === 3 ? 'Rare' : 'One in Krillion'}: ${pick}`;
-          samplesEl.appendChild(chip);
-        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>#${idx + 1}</strong></td>
+          <td>${p.avatar} <strong>${p.name}</strong> ${p.answered ? '✅' : '⏳'}</td>
+          <td><span class="${ansClass}" style="color:${tierColor};">${ansText}</span></td>
+          <td style="text-align:right;font-weight:800;color:#7dd3fc;">+${qPts} pts</td>
+        `;
+        tbody.appendChild(tr);
       });
-
-      const nextBtn = document.getElementById('next-q-btn');
-      if (state.mode === 'multi' && !state.isHost) {
-        nextBtn.style.display = 'none';
-      } else {
-        nextBtn.style.display = 'inline-block';
-        nextBtn.textContent = state.currentIndex + 1 >= state.questions.length ? '🏆 See Final Podium' : 'Next Question →';
-      }
-
-      panel.style.display = 'block';
     }
 
-    document.getElementById('next-q-btn').addEventListener('click', () => {
+    function scheduleAutoAdvance() {
+      clearTimeout(state.autoAdvanceTimeout);
+      const advanceBar = document.getElementById('auto-advance-bar');
+      let sec = 4;
+      advanceBar.textContent = `Next question starting automatically in ${sec}s...`;
+
+      const countdown = setInterval(() => {
+        sec--;
+        if (sec > 0) {
+          advanceBar.textContent = `Next question starting automatically in ${sec}s...`;
+        } else {
+          clearInterval(countdown);
+        }
+      }, 1000);
+
+      state.autoAdvanceTimeout = setTimeout(() => {
+        clearInterval(countdown);
+        goToNextQuestionOrFinish();
+      }, 4200);
+    }
+
+    function goToNextQuestionOrFinish() {
       if (state.mode === 'single') {
         state.currentIndex++;
         if (state.currentIndex >= state.questions.length) {
@@ -1760,23 +2083,41 @@
           hostStartNextQuestion();
         }
       }
-    });
+    }
 
     // ==========================================
-    // 9. PEERJS MULTIPLAYER (GITHUB PAGES READY)
+    // MULTIPLAYER (RESILIENT PEERJS + MULTI-STUN/TURN)
     // ==========================================
-    const ROOM_PREFIX = 'krillion-dive-2026-';
+    const ROOM_PREFIX = 'krillion26-';
+    let peerHeartbeatInterval = null;
 
     function getPeerConfig() {
       return {
+        host: '0.peerjs.com',
+        port: 443,
+        secure: true,
+        path: '/',
+        pingInterval: 5000,
         debug: 1,
         config: {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
             { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:global.stun.twilio.com:3478' }
-          ]
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' },
+            {
+              urls: 'turn:openrelay.metered.ca:80',
+              username: 'openrelayproject',
+              credential: 'openrelayproject'
+            },
+            {
+              urls: 'turn:openrelay.metered.ca:443',
+              username: 'openrelayproject',
+              credential: 'openrelayproject'
+            }
+          ],
+          iceCandidatePoolSize: 10
         }
       };
     }
@@ -1788,7 +2129,6 @@
       return code;
     }
 
-    // Check URL ?room=CODE parameter on load
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room');
@@ -1802,25 +2142,11 @@
       }
     });
 
-    // Create Room (Host)
-    document.getElementById('mp-create-btn').addEventListener('click', () => {
-      syncProfileFromInputs();
-      state.isHost = true;
-      state.hostRole = 'player';
-      state.roomCode = generateRoomCode();
-      state.connections = [];
-      state.players = {};
-
-      showScreen('screen-lobby');
-      document.getElementById('lobby-room-code').textContent = state.roomCode;
-      document.getElementById('host-role-box').style.display = 'block';
-      document.getElementById('lobby-start-btn').style.display = 'block';
-      document.getElementById('guest-wait-msg').style.display = 'none';
-      document.getElementById('lobby-settings-summary').textContent = `${state.questionCount} Qs • ${state.timeLimit}s`;
-      document.getElementById('relay-dot').classList.remove('online');
-      document.getElementById('relay-status-text').textContent = 'Registering room on Ocean Relay...';
-
-      const fullPeerId = ROOM_PREFIX + state.roomCode;
+    function createHostPeerWithCode(code) {
+      const fullPeerId = ROOM_PREFIX + code;
+      if (state.peer) {
+        try { state.peer.destroy(); } catch (e) {}
+      }
       state.peer = new Peer(fullPeerId, getPeerConfig());
 
       state.peer.on('open', (id) => {
@@ -1833,11 +2159,20 @@
           avatar: state.avatar,
           score: 0,
           depth: 0,
+          qPoints: 0,
+          answer: '-',
+          tier: 0,
           role: state.hostRole,
-          answered: false,
-          lastResult: null
+          answered: false
         };
         renderLobbyPlayers();
+
+        clearInterval(peerHeartbeatInterval);
+        peerHeartbeatInterval = setInterval(() => {
+          if (state.peer && state.peer.disconnected && !state.peer.destroyed) {
+            state.peer.reconnect();
+          }
+        }, 5000);
       });
 
       state.peer.on('connection', (conn) => {
@@ -1851,12 +2186,42 @@
       });
 
       state.peer.on('error', (err) => {
-        console.error(err);
-        showToast('Relay notice: ' + err.type);
+        console.warn('Host PeerJS notice:', err.type);
+        if (err.type === 'unavailable-id') {
+          state.roomCode = generateRoomCode();
+          document.getElementById('lobby-room-code').textContent = state.roomCode;
+          createHostPeerWithCode(state.roomCode);
+        } else if (err.type === 'network' || err.type === 'disconnected' || err.type === 'server-error') {
+          document.getElementById('relay-dot').classList.remove('online');
+          document.getElementById('relay-status-text').textContent = 'Reconnecting to Ocean Relay...';
+          setTimeout(() => {
+            if (state.peer && !state.peer.destroyed) state.peer.reconnect();
+          }, 1500);
+        }
       });
+    }
+
+    document.getElementById('mp-create-btn').addEventListener('click', () => {
+      syncProfileFromInputs();
+      state.isHost = true;
+      state.hostRole = 'player';
+      state.roomCode = generateRoomCode();
+      state.connections = [];
+      state.players = {};
+
+      showScreen('screen-lobby');
+      document.getElementById('lobby-room-code').textContent = state.roomCode;
+      document.getElementById('host-role-box').style.display = 'block';
+      document.getElementById('lobby-start-btn').style.display = 'block';
+      document.getElementById('retry-join-btn').style.display = 'none';
+      document.getElementById('guest-wait-msg').style.display = 'none';
+      document.getElementById('lobby-settings-summary').textContent = `${state.questionCount} Qs • ${state.timeLimit}s`;
+      document.getElementById('relay-dot').classList.remove('online');
+      document.getElementById('relay-status-text').textContent = 'Registering room on Ocean Relay...';
+
+      createHostPeerWithCode(state.roomCode);
     });
 
-    // Host Role Toggle (Player vs Spectator)
     document.getElementById('role-player-btn').addEventListener('click', () => {
       state.hostRole = 'player';
       document.getElementById('role-player-btn').classList.add('active');
@@ -1877,7 +2242,6 @@
       }
     });
 
-    // Copy Code & Copy Invite Link
     document.getElementById('copy-code-btn').addEventListener('click', () => {
       navigator.clipboard.writeText(state.roomCode);
       showToast(`Room code ${state.roomCode} copied!`);
@@ -1890,7 +2254,38 @@
       showToast('Invite link copied to clipboard!');
     });
 
-    // Join Room (Guest) with Retry Logic
+    function startGuestJoinFlow(cleanCode) {
+      state.isHost = false;
+      state.roomCode = cleanCode;
+
+      showScreen('screen-lobby');
+      document.getElementById('lobby-room-code').textContent = state.roomCode;
+      document.getElementById('host-role-box').style.display = 'none';
+      document.getElementById('lobby-start-btn').style.display = 'none';
+      document.getElementById('retry-join-btn').style.display = 'none';
+      document.getElementById('guest-wait-msg').style.display = 'block';
+      document.getElementById('relay-dot').classList.remove('online');
+      document.getElementById('relay-status-text').textContent = 'Connecting to Ocean Relay...';
+
+      if (state.peer) {
+        try { state.peer.destroy(); } catch (e) {}
+      }
+
+      state.peer = new Peer(getPeerConfig());
+      state.peer.on('open', () => {
+        attemptConnectToHost(1);
+      });
+
+      state.peer.on('error', (err) => {
+        console.warn('Guest PeerJS notice:', err.type);
+        if (err.type === 'peer-unavailable') {
+          document.getElementById('relay-status-text').textContent = `Room ${state.roomCode} not found yet — retrying...`;
+        } else {
+          document.getElementById('relay-status-text').textContent = `Relay notice (${err.type}) — retrying...`;
+        }
+      });
+    }
+
     document.getElementById('mp-join-btn').addEventListener('click', () => {
       syncProfileFromInputs();
       const rawCode = document.getElementById('join-code-input').value;
@@ -1899,51 +2294,39 @@
         showToast('Please enter a valid 5-character room code.');
         return;
       }
+      startGuestJoinFlow(cleanCode);
+    });
 
-      state.isHost = false;
-      state.roomCode = cleanCode;
-
-      showScreen('screen-lobby');
-      document.getElementById('lobby-room-code').textContent = state.roomCode;
-      document.getElementById('host-role-box').style.display = 'none';
-      document.getElementById('lobby-start-btn').style.display = 'none';
-      document.getElementById('guest-wait-msg').style.display = 'block';
-      document.getElementById('relay-dot').classList.remove('online');
-      document.getElementById('relay-status-text').textContent = 'Connecting to host room...';
-
-      state.peer = new Peer(getPeerConfig());
-      state.peer.on('open', () => {
-        attemptConnectToHost(1);
-      });
-
-      state.peer.on('error', (err) => {
-        if (err.type === 'peer-unavailable') {
-          showToast('Room not found yet — retrying...');
-        } else {
-          showToast('Connection error: ' + err.type);
-        }
-      });
+    document.getElementById('retry-join-btn').addEventListener('click', () => {
+      startGuestJoinFlow(state.roomCode);
     });
 
     function attemptConnectToHost(attempt) {
       const targetId = ROOM_PREFIX + state.roomCode;
-      const conn = state.peer.connect(targetId, { reliable: true });
+      document.getElementById('relay-status-text').textContent = `Connecting to room ${state.roomCode} (Attempt ${attempt}/4)...`;
+
+      const conn = state.peer.connect(targetId, {
+        reliable: true,
+        serialization: 'json'
+      });
       state.hostConn = conn;
 
       let opened = false;
       const timeout = setTimeout(() => {
-        if (!opened && attempt < 3) {
+        if (!opened && attempt < 4) {
           try { conn.close(); } catch (e) {}
-          document.getElementById('relay-status-text').textContent = `Retrying connection (${attempt + 1}/3)...`;
           attemptConnectToHost(attempt + 1);
         } else if (!opened) {
-          document.getElementById('relay-status-text').textContent = 'Could not reach room. Check code & try again.';
+          document.getElementById('relay-status-text').textContent =
+            'Could not reach room. Make sure the host created the room and kept their tab open.';
+          document.getElementById('retry-join-btn').style.display = 'inline-block';
         }
-      }, 3200);
+      }, 3800);
 
       conn.on('open', () => {
         opened = true;
         clearTimeout(timeout);
+        document.getElementById('retry-join-btn').style.display = 'none';
         document.getElementById('relay-dot').classList.add('online');
         document.getElementById('relay-status-text').textContent = 'Connected to Host Crew!';
         conn.send({
@@ -1970,8 +2353,10 @@
           ...data.player,
           score: 0,
           depth: 0,
-          answered: false,
-          lastResult: null
+          qPoints: 0,
+          answer: '-',
+          tier: 0,
+          answered: false
         };
         broadcastLobbyState();
       } else if (data.type === 'SUBMIT_ANSWER') {
@@ -2017,7 +2402,6 @@
 
     document.getElementById('lobby-leave-btn').addEventListener('click', cleanupAndGoHome);
 
-    // Host Starts Multiplayer Game
     document.getElementById('lobby-start-btn').addEventListener('click', () => {
       const activeDivers = Object.values(state.players).filter(p => p.role === 'player');
       if (activeDivers.length === 0) {
@@ -2034,7 +2418,9 @@
     function hostStartNextQuestion() {
       Object.values(state.players).forEach(p => {
         p.answered = false;
-        p.lastResult = null;
+        p.qPoints = 0;
+        p.answer = '-';
+        p.tier = 0;
       });
       const q = state.questions[state.currentIndex];
       broadcastToGuests({
@@ -2042,7 +2428,8 @@
         index: state.currentIndex,
         total: state.questions.length,
         timeLimit: state.timeLimit,
-        question: q
+        question: q,
+        players: state.players
       });
       startQuestionRound();
     }
@@ -2051,13 +2438,11 @@
       const p = state.players[sub.playerId];
       if (!p || p.answered) return;
       p.answered = true;
+      p.qPoints = sub.points;
+      p.answer = sub.answer;
+      p.tier = sub.tier;
       p.score += sub.points;
       p.depth += TIER_META[sub.tier].depthGain;
-      p.lastResult = {
-        answer: sub.answer,
-        tier: sub.tier,
-        points: sub.points
-      };
 
       if (sub.playerId === state.peer.id) {
         state.score = p.score;
@@ -2065,7 +2450,13 @@
         document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
       }
 
-      // Check if all active divers have answered
+      broadcastToGuests({
+        type: 'QUESTION_PROGRESS',
+        players: state.players
+      });
+      updateDepthGaugeUI(state.totalDepth, Object.values(state.players));
+      renderQuestionStandingsTable(Object.values(state.players), false);
+
       const activeDivers = Object.values(state.players).filter(pl => pl.role === 'player');
       if (activeDivers.every(pl => pl.answered)) {
         clearInterval(state.timerInterval);
@@ -2077,7 +2468,9 @@
       Object.values(state.players).forEach(p => {
         if (p.role === 'player' && !p.answered) {
           p.answered = true;
-          p.lastResult = { answer: '(No Answer)', tier: 0, points: 0 };
+          p.qPoints = 0;
+          p.answer = '(Time Up)';
+          p.tier = 0;
         }
       });
 
@@ -2086,7 +2479,7 @@
         players: state.players
       });
 
-      showMultiplayerRoundReveal(state.players);
+      revealMultiplayerQuestionTable();
     }
 
     function handleGuestReceivedData(data) {
@@ -2100,10 +2493,17 @@
         state.questions[data.index] = data.question;
         state.currentIndex = data.index;
         state.timeLimit = data.timeLimit;
+        state.players = data.players || state.players;
         if (!state.questions.length || state.questions.length !== data.total) {
           state.questions = new Array(data.total).fill(data.question);
         }
         startQuestionRound();
+      } else if (data.type === 'QUESTION_PROGRESS') {
+        state.players = data.players;
+        updateDepthGaugeUI(state.totalDepth, Object.values(state.players));
+        if (state.lockedCurrent || (state.isHost && state.hostRole === 'spectator')) {
+          renderQuestionStandingsTable(Object.values(state.players), false);
+        }
       } else if (data.type === 'ROUND_REVEAL') {
         clearInterval(state.timerInterval);
         state.players = data.players;
@@ -2113,36 +2513,34 @@
           state.totalDepth = me.depth;
           document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
         }
-        showMultiplayerRoundReveal(state.players);
+        revealMultiplayerQuestionTable();
       } else if (data.type === 'GAME_OVER') {
         showFinalPodium(data.rankings);
       }
     }
 
-    function showMultiplayerRoundReveal(playersMap) {
-      document.getElementById('waiting-others-banner').style.display = 'none';
-      const me = playersMap[state.peer.id];
-      const myRes = me && me.lastResult ? me.lastResult : { tier: 0, points: 0, answer: 'Spectating' };
-      revealRoundResult({ tier: myRes.tier, points: myRes.points }, myRes.answer);
+    function revealMultiplayerQuestionTable() {
+      const me = state.players[state.peer.id];
+      const tier = me ? (me.tier || 0) : 0;
+      const qPts = me ? (me.qPoints || 0) : 0;
 
-      // Render all players' round results
-      const feed = document.getElementById('mp-round-feed');
-      feed.style.display = 'block';
-      feed.innerHTML = '<div style="font-size:0.78rem;font-weight:800;color:#7dd3fc;margin-bottom:6px;">CREW DIVE RESULTS:</div>';
-
-      Object.values(playersMap)
-        .filter(p => p.role === 'player')
-        .sort((a, b) => b.score - a.score)
-        .forEach(p => {
-          const r = p.lastResult || { answer: '-', tier: 0, points: 0 };
-          const row = document.createElement('div');
-          row.style.cssText = 'display:flex;justify-content:space-between;font-size:0.86rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.07);';
-          row.innerHTML = `
-            <span>${p.avatar} <strong>${p.name}</strong>: "${r.answer}"</span>
-            <span style="color:${TIER_META[r.tier].color};font-weight:700;">+${r.points} pts (${p.score})</span>
-          `;
-          feed.appendChild(row);
+      if (!state.lockedCurrent) {
+        state.lockedCurrent = true;
+        document.getElementById('answer-input').disabled = true;
+        triggerCleanDiveSequence(tier, qPts, state.totalDepth, 'All Players Finished!', () => {
+          renderQuestionStandingsTable(Object.values(state.players), true);
         });
+      } else {
+        document.getElementById('mini-status-note').textContent = 'All Players Finished!';
+        updateDepthGaugeUI(state.totalDepth, Object.values(state.players));
+        renderQuestionStandingsTable(Object.values(state.players), true);
+      }
+
+      if (state.isHost) {
+        scheduleAutoAdvance();
+      } else {
+        document.getElementById('auto-advance-bar').textContent = 'Answers revealed! Host is advancing to the next question...';
+      }
     }
 
     function getSortedMultiplayerPlayers() {
@@ -2151,11 +2549,9 @@
         .sort((a, b) => b.score - a.score || b.depth - a.depth);
     }
 
-    // ==========================================
-    // 10. FINAL PODIUM & LEADERBOARD
-    // ==========================================
     function showFinalPodium(rankedPlayers) {
       clearInterval(state.timerInterval);
+      clearTimeout(state.autoAdvanceTimeout);
       showScreen('screen-results');
       playDiveSound(5);
 
@@ -2168,7 +2564,6 @@
       podiumGrid.innerHTML = '';
       restList.innerHTML = '';
 
-      // Visual order: #2 (left), #1 (center), #3 (right)
       const displayOrder = [1, 0, 2];
       const medals = ['🥇 #1', '🥈 #2', '🥉 #3'];
 
@@ -2191,7 +2586,6 @@
         podiumGrid.appendChild(col);
       });
 
-      // Remaining players (#4+)
       rankedPlayers.slice(3).forEach((p, idx) => {
         const row = document.createElement('div');
         row.className = 'player-chip';
