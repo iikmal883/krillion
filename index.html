@@ -1944,6 +1944,20 @@
         .join(' ');
     }
 
+    function levenshteinDist(a, b) {
+      const m = a.length, n = b.length;
+      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        }
+      }
+      return dp[m][n];
+    }
+
     function evaluateAnswer(questionObj, rawInput) {
       const cleaned = normalizePhrase(rawInput);
       if (!cleaned) return { tier: 0, points: 0, matched: '' };
@@ -1955,11 +1969,7 @@
           if (cleaned === normCand) {
             return { tier, points: tier, matched: candidate };
           }
-          if (
-            cleaned.length >= 4 &&
-            normCand.includes(cleaned) &&
-            cleaned.length >= normCand.length - 2
-          ) {
+          if (cleaned.length >= 5 && Math.abs(cleaned.length - normCand.length) <= 1 && levenshteinDist(cleaned, normCand) === 1) {
             return { tier, points: tier, matched: candidate };
           }
         }
@@ -2153,6 +2163,8 @@
       state.isEvaluating = false;
       submitBtn.textContent = 'Dive! 🤿';
 
+      const displayAnswer = evalRes.matched || rawAnswer;
+
       if (state.mode === 'single') {
         clearInterval(state.timerInterval);
         state.score += evalRes.points;
@@ -2161,7 +2173,7 @@
 
         state.players.local.answered = true;
         state.players.local.qPoints = evalRes.points;
-        state.players.local.answer = rawAnswer;
+        state.players.local.answer = displayAnswer;
         state.players.local.tier = evalRes.tier;
         state.players.local.score = state.score;
         state.players.local.depth = state.totalDepth;
@@ -2178,7 +2190,7 @@
         const payload = {
           type: 'SUBMIT_ANSWER',
           playerId: state.peer.id,
-          answer: rawAnswer,
+          answer: displayAnswer,
           tier: evalRes.tier,
           points: evalRes.points
         };
