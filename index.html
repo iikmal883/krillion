@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KRILLION — Deep Sea Rarity Trivia</title>
-  <script src="[https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js](https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js)"></script>
-  <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)" />
-  <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin />
-  <link href="[https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap)" rel="stylesheet" />
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg-top: #0ea5e9;
@@ -106,7 +106,7 @@
       left: 0;
       width: 200%;
       height: 64px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,32 C200,88 400,-12 600,32 C800,76 1000,-12 1200,32 L1200,0 L0,0 Z' fill='%23e0f2fe' fill-opacity='0.45'/%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,32 C200,88 400,-12 600,32 C800,76 1000,-12 1200,32 L1200,0 L0,0 Z' fill='%23e0f2fe' fill-opacity='0.45'/%3E%3C/svg%3E");
       background-size: 50% 100%;
       animation: waveMove 7s linear infinite;
     }
@@ -1286,7 +1286,7 @@
   <div id="toast">Copied!</div>
 
   <script>
-    const APPS_SCRIPT_AI_URL = '[https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec](https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec)';
+    const APPS_SCRIPT_AI_URL = 'https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec';
 
     const AVATARS = [
       { emoji: '🐬', name: 'Dolphin' },
@@ -1299,7 +1299,6 @@
       { emoji: '🐡', name: 'Puffer' }
     ];
 
-    // English-only prompts and answer database
     const QUESTIONS = [
       {
         category: 'Fruits',
@@ -1726,7 +1725,6 @@
 
       showTierPopup(tier, earnedPts, meta.depthGain);
 
-      // Scale depth drop, speed, scale, and card clearance by tier (1 = shallow, 5 = abyssal plunge)
       const maxSafeDrop = Math.min(440, Math.max(220, window.innerHeight * 0.46));
       const tierRatio = [0, 0.16, 0.36, 0.58, 0.80, 1.0][tier] || 0;
       const tierDivePx = Math.round(tierRatio * maxSafeDrop);
@@ -1832,7 +1830,6 @@
       document.getElementById('home-btn').style.display = isMenu ? 'none' : 'inline-flex';
       document.getElementById('depth-gauge').style.display = isGame ? 'flex' : 'none';
 
-      // Scroll diver with page on menu/setup screens; keep fixed overlay during gameplay
       if (isGame) {
         diverStage.classList.remove('menu-scroll-mode');
       } else {
@@ -1971,57 +1968,57 @@
     }
 
     async function evaluateAnswerWithAI(questionObj, rawInput) {
-  const localResult = evaluateAnswer(questionObj, rawInput);
-  if (localResult.tier > 0) {
-    return { ...localResult, source: 'local' };
-  }
+      const localResult = evaluateAnswer(questionObj, rawInput);
+      if (localResult.tier > 0) {
+        return { ...localResult, source: 'local' };
+      }
 
-  if (!APPS_SCRIPT_AI_URL) {
-    return { ...localResult, source: 'no-url' };
-  }
+      if (!APPS_SCRIPT_AI_URL) {
+        return { ...localResult, source: 'no-url' };
+      }
 
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 7000);
 
-    const resp = await fetch(APPS_SCRIPT_AI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        category: questionObj.category,
-        prompt: questionObj.prompt,
-        answer: rawInput
-      }),
-      signal: controller.signal
-    });
+        const url = new URL(APPS_SCRIPT_AI_URL);
+        url.searchParams.set('category', questionObj.category);
+        url.searchParams.set('prompt', questionObj.prompt);
+        url.searchParams.set('answer', rawInput.trim());
 
-    clearTimeout(timer);
-    if (!resp.ok) {
-      return { tier: 0, points: 0, matched: '', source: 'ai-error', error: `HTTP ${resp.status}` };
+        const resp = await fetch(url.toString(), {
+          method: 'GET',
+          redirect: 'follow',
+          signal: controller.signal
+        });
+
+        clearTimeout(timer);
+        if (!resp.ok) {
+          return { tier: 0, points: 0, matched: '', source: 'ai-error', error: `HTTP ${resp.status}` };
+        }
+
+        const aiData = await resp.json();
+        if (aiData.source === 'ai-error') {
+          return { tier: 0, points: 0, matched: '', source: 'ai-error', error: aiData.error || 'AI error' };
+        }
+
+        const tier = Math.max(0, Math.min(5, Number(aiData.tier) || 0));
+        return {
+          tier,
+          points: tier,
+          matched: aiData.matched || rawInput.trim(),
+          source: aiData.source || 'ai-search'
+        };
+      } catch (err) {
+        return {
+          tier: 0,
+          points: 0,
+          matched: '',
+          source: 'ai-error',
+          error: err && err.name === 'AbortError' ? 'AI search timed out' : 'Network error'
+        };
+      }
     }
-
-    const aiData = await resp.json();
-    if (aiData.source === 'ai-error') {
-      return { tier: 0, points: 0, matched: '', source: 'ai-error', error: aiData.error || 'AI error' };
-    }
-
-    const tier = Math.max(0, Math.min(5, Number(aiData.tier) || 0));
-    return {
-      tier,
-      points: tier,
-      matched: aiData.matched || rawInput.trim(),
-      source: aiData.source || 'ai-search'
-    };
-  } catch (err) {
-    return {
-      tier: 0,
-      points: 0,
-      matched: '',
-      source: 'ai-error',
-      error: err && err.name === 'AbortError' ? 'AI search timed out' : 'Network error'
-    };
-  }
-}
 
     function pickRandomQuestions(count) {
       const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
@@ -2119,84 +2116,85 @@
     });
 
     async function handleAttempt(rawAnswer) {
-  const q = state.questions[state.currentIndex];
-  const ansInput = document.getElementById('answer-input');
-  const submitBtn = document.getElementById('answer-submit-btn');
-  const retryBox = document.getElementById('retry-notice');
+      const q = state.questions[state.currentIndex];
+      const ansInput = document.getElementById('answer-input');
+      const submitBtn = document.getElementById('answer-submit-btn');
+      const retryBox = document.getElementById('retry-notice');
 
-  state.isEvaluating = true;
-  ansInput.disabled = true;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Searching... 🔎';
+      state.isEvaluating = true;
+      ansInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Searching... 🔎';
 
-  const evalRes = await evaluateAnswerWithAI(q, rawAnswer);
+      const evalRes = await evaluateAnswerWithAI(q, rawAnswer);
 
-  if (state.lockedCurrent) {
-    state.isEvaluating = false;
-    return;
-  }
+      if (state.lockedCurrent) {
+        state.isEvaluating = false;
+        return;
+      }
 
-  if (evalRes.tier === 0) {
-    state.isEvaluating = false;
-    playRetryBuzz();
-    retryBox.style.display = 'block';
-    retryBox.textContent = evalRes.source === 'ai-error'
-      ? `AI Search check failed (${evalRes.error}) — try again or enter another answer.`
-      : `"${rawAnswer}" is not recognized — try another English answer before time runs out!`;
-    ansInput.disabled = false;
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Dive! 🤿';
-    ansInput.value = '';
-    ansInput.focus();
-    return;
-  }
+      if (evalRes.tier === 0) {
+        state.isEvaluating = false;
+        playRetryBuzz();
+        retryBox.style.display = 'block';
+        retryBox.textContent = evalRes.source === 'ai-error'
+          ? `AI Search check failed (${evalRes.error}) — try again or enter another answer.`
+          : `"${rawAnswer}" is not recognized — try another English answer before time runs out!`;
+        ansInput.disabled = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Dive! 🤿';
+        ansInput.value = '';
+        ansInput.focus();
+        return;
+      }
 
-  retryBox.style.display = 'none';
-  state.lockedCurrent = true;
-  state.isEvaluating = false;
-  submitBtn.textContent = 'Dive! 🤿';
+      retryBox.style.display = 'none';
+      state.lockedCurrent = true;
+      state.isEvaluating = false;
+      submitBtn.textContent = 'Dive! 🤿';
 
-  if (state.mode === 'single') {
-    clearInterval(state.timerInterval);
-    state.score += evalRes.points;
-    state.totalDepth += TIER_META[evalRes.tier].depthGain;
-    document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
+      if (state.mode === 'single') {
+        clearInterval(state.timerInterval);
+        state.score += evalRes.points;
+        state.totalDepth += TIER_META[evalRes.tier].depthGain;
+        document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
 
-    state.players.local.answered = true;
-    state.players.local.qPoints = evalRes.points;
-    state.players.local.answer = rawAnswer;
-    state.players.local.tier = evalRes.tier;
-    state.players.local.score = state.score;
-    state.players.local.depth = state.totalDepth;
+        state.players.local.answered = true;
+        state.players.local.qPoints = evalRes.points;
+        state.players.local.answer = rawAnswer;
+        state.players.local.tier = evalRes.tier;
+        state.players.local.score = state.score;
+        state.players.local.depth = state.totalDepth;
 
-    playDiveSound(evalRes.tier);
-    triggerCleanDiveSequence(evalRes.tier, evalRes.points, state.totalDepth, 'Round Complete', () => {
-      renderQuestionStandingsTable(Object.values(state.players), true);
-      scheduleAutoAdvance();
-    });
-  } else {
-    const nextTotalDepth = state.totalDepth + TIER_META[evalRes.tier].depthGain;
-    playDiveSound(evalRes.tier);
+        playDiveSound(evalRes.tier);
+        triggerCleanDiveSequence(evalRes.tier, evalRes.points, state.totalDepth, 'Round Complete', () => {
+          renderQuestionStandingsTable(Object.values(state.players), true);
+          scheduleAutoAdvance();
+        });
+      } else {
+        const nextTotalDepth = state.totalDepth + TIER_META[evalRes.tier].depthGain;
+        playDiveSound(evalRes.tier);
 
-    const payload = {
-      type: 'SUBMIT_ANSWER',
-      playerId: state.peer.id,
-      answer: rawAnswer,
-      tier: evalRes.tier,
-      points: evalRes.points
-    };
+        const payload = {
+          type: 'SUBMIT_ANSWER',
+          playerId: state.peer.id,
+          answer: rawAnswer,
+          tier: evalRes.tier,
+          points: evalRes.points
+        };
 
-    triggerCleanDiveSequence(evalRes.tier, evalRes.points, nextTotalDepth, 'Waiting for other players...', () => {
-      renderQuestionStandingsTable(Object.values(state.players), false);
-    });
+        triggerCleanDiveSequence(evalRes.tier, evalRes.points, nextTotalDepth, 'Waiting for other players...', () => {
+          renderQuestionStandingsTable(Object.values(state.players), false);
+        });
 
-    if (state.isHost) {
-      hostProcessSubmission(payload);
-    } else if (state.hostConn && state.hostConn.open) {
-      state.hostConn.send(payload);
+        if (state.isHost) {
+          hostProcessSubmission(payload);
+        } else if (state.hostConn && state.hostConn.open) {
+          state.hostConn.send(payload);
+        }
+      }
     }
-  }
-}
+
     function handleRoundTimeout() {
       if (state.mode === 'single') {
         if (!state.lockedCurrent) {
