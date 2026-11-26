@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KRILLION — Deep Sea Rarity Trivia</title>
-  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="[https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js](https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js)"></script>
+  <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)" />
+  <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin />
+  <link href="[https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap)" rel="stylesheet" />
   <style>
     :root {
       --bg-top: #0ea5e9;
@@ -38,8 +38,19 @@
       min-height: 100vh;
       overflow-x: hidden;
       background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 48%, var(--bg-bot) 100%);
-      transition: background 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: background 1.2s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
+    }
+
+    body.abyss-shake {
+      animation: abyssShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes abyssShake {
+      10%, 90% { transform: translate3d(-2px, 1px, 0); }
+      20%, 80% { transform: translate3d(3px, -2px, 0); }
+      30%, 50%, 70% { transform: translate3d(-5px, 3px, 0); }
+      40%, 60% { transform: translate3d(5px, -3px, 0); }
     }
 
     h1, h2, h3, .brand-font {
@@ -64,7 +75,7 @@
       height: 220px;
       pointer-events: none;
       z-index: 1;
-      transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.1s ease;
+      transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 1s ease;
     }
 
     .sun-rays {
@@ -95,7 +106,7 @@
       left: 0;
       width: 200%;
       height: 64px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,32 C200,88 400,-12 600,32 C800,76 1000,-12 1200,32 L1200,0 L0,0 Z' fill='%23e0f2fe' fill-opacity='0.45'/%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,32 C200,88 400,-12 600,32 C800,76 1000,-12 1200,32 L1200,0 L0,0 Z' fill='%23e0f2fe' fill-opacity='0.45'/%3E%3C/svg%3E");
       background-size: 50% 100%;
       animation: waveMove 7s linear infinite;
     }
@@ -111,13 +122,23 @@
       100% { transform: translateX(-50%); }
     }
 
-    /* High-Visibility Diver Stage (Always Above Cards During Dive) */
+    /* Diver Stage: Scrolls with page on Menu, fixed overlay during Gameplay */
     #diver-stage {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 25;
       overflow: hidden;
+    }
+
+    #diver-stage.menu-scroll-mode {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 220px;
+      inset: auto;
+      z-index: 12;
     }
 
     #diver-actor {
@@ -128,11 +149,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      transition: top 1.45s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: top 1.15s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: top;
     }
 
     .diver-inner {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -140,7 +162,7 @@
     }
 
     .diver-inner.diving {
-      animation: divePlunge 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: divePlunge var(--dive-dur, 1.15s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes surfaceFloat {
@@ -150,9 +172,31 @@
 
     @keyframes divePlunge {
       0% { transform: scale(1) rotate(0deg); }
-      25% { transform: scale(1.24) rotate(165deg); }
-      70% { transform: scale(1.2) rotate(195deg); }
-      100% { transform: scale(1.06) rotate(0deg); }
+      20% { transform: scale(var(--dive-scale, 1.28)) rotate(172deg); }
+      72% { transform: scale(var(--dive-scale, 1.28)) rotate(192deg); }
+      100% { transform: scale(1.08) rotate(0deg); }
+    }
+
+    .diver-shockwave {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      transform: translate(-50%, 0) scale(0.8);
+      border: 3px solid var(--tier-glow, #38bdf8);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .diver-shockwave.pulse {
+      animation: shockwaveExpand 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes shockwaveExpand {
+      0% { transform: translate(-50%, 0) scale(0.85); opacity: 0.95; }
+      100% { transform: translate(-50%, 0) scale(3.4); opacity: 0; }
     }
 
     .diver-bubble-ring {
@@ -167,6 +211,7 @@
       justify-content: center;
       font-size: 2.3rem;
       backdrop-filter: blur(4px);
+      transition: box-shadow 0.35s ease, border-color 0.35s ease;
     }
 
     .diver-tag {
@@ -236,7 +281,7 @@
       height: 4%;
       background: linear-gradient(180deg, #38bdf8, #818cf8, #fbbf24);
       border-radius: 999px;
-      transition: height 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: height 1.1s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     #gauge-markers {
@@ -252,7 +297,7 @@
       display: flex;
       align-items: center;
       gap: 3px;
-      transition: top 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: top 1.1s cubic-bezier(0.22, 1, 0.36, 1);
       white-space: nowrap;
     }
 
@@ -307,7 +352,7 @@
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.28s ease;
     }
 
     #tier-pop-overlay.active {
@@ -323,7 +368,7 @@
       text-align: center;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
       transform: scale(0.75);
-      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     #tier-pop-overlay.active .tier-pop-card {
@@ -407,7 +452,7 @@
     }
 
     .app-shell.minimized-mode {
-      margin-top: 230px;
+      margin-top: var(--post-dive-margin, 230px);
     }
 
     .glass-card {
@@ -962,12 +1007,13 @@
     <div class="wave-band second"></div>
   </div>
 
-  <!-- High-Visibility Diver Stage -->
-  <div id="diver-stage">
+  <!-- Diver Stage (Scrolls with page on Menu, Fixed during Dive) -->
+  <div id="diver-stage" class="menu-scroll-mode">
     <div id="diver-actor">
       <div class="diver-inner" id="diver-inner">
+        <div class="diver-shockwave" id="diver-shockwave"></div>
         <div class="diver-bubble-ring" id="diver-emoji">🐬</div>
-        <div class="diver-tag" id="diver-tag">Surface • 0m</div>
+        <div class="diver-tag" id="diver-tag">Diver • Total: 0m</div>
       </div>
     </div>
   </div>
@@ -1011,7 +1057,7 @@
     <section id="screen-menu" class="screen active glass-card">
       <div class="title-hero">
         <h1>KRILLION</h1>
-        <p>Think outside the shoal • Rarer real-world answers dive deeper into the abyss!</p>
+        <p>Think outside the shoal • Rarer English answers dive deeper into the abyss!</p>
       </div>
 
       <div class="rarity-strip">
@@ -1188,7 +1234,7 @@
 
         <div id="answer-input-area">
           <form class="answer-form" id="answer-form" autocomplete="off">
-            <input id="answer-input" class="text-input" type="text" placeholder="Type your answer..." />
+            <input id="answer-input" class="text-input" type="text" placeholder="Type an English answer..." />
             <button type="submit" id="answer-submit-btn" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
           </form>
           <div class="retry-notice" id="retry-notice"></div>
@@ -1240,8 +1286,7 @@
   <div id="toast">Copied!</div>
 
   <script>
-    // Replace with your deployed Google Apps Script Web App (/exec) URL
-    const APPS_SCRIPT_AI_URL = 'https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec';
+    const APPS_SCRIPT_AI_URL = '[https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec](https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec)';
 
     const AVATARS = [
       { emoji: '🐬', name: 'Dolphin' },
@@ -1254,26 +1299,26 @@
       { emoji: '🐡', name: 'Puffer' }
     ];
 
-    // Prompts strictly in English; answer database accepts both English and Bahasa Melayu!
+    // English-only prompts and answer database
     const QUESTIONS = [
       {
         category: 'Fruits',
         prompt: 'Name a real fruit!',
         answers: {
-          1: ['apple', 'epal', 'banana', 'pisang', 'orange', 'oren', 'mango', 'mangga', 'watermelon', 'tembikai', 'grape', 'grapes', 'anggur', 'strawberry', 'strawberi'],
-          2: ['papaya', 'betik', 'pineapple', 'nanas', 'coconut', 'kelapa', 'lemon', 'limau', 'lime', 'limau nipis', 'pear', 'lai', 'kiwi', 'cherry', 'ceri', 'peach', 'pic'],
-          3: ['durian', 'rambutan', 'cempedak', 'guava', 'jambu', 'jambu batu', 'lychee', 'laici', 'dragon fruit', 'buah naga', 'plum', 'raspberry', 'blackberry', 'pomegranate', 'delima'],
-          4: ['mangosteen', 'manggis', 'jackfruit', 'nangka', 'starfruit', 'belimbing', 'ciku', 'sapodilla', 'longan', 'mata kucing', 'persimmon', 'kesemek', 'fig', 'tin', 'passion fruit', 'markisa'],
-          5: ['soursop', 'durian belanda', 'salak', 'snake fruit', 'buah salak', 'tarap', 'terap', 'dabai', 'bambangan', 'pulasan', 'noni', 'mengkudu', 'kedondong', 'ambarella', 'rambai', 'dokong', 'duku']
+          1: ['apple', 'banana', 'orange', 'mango', 'watermelon', 'grape', 'grapes', 'strawberry'],
+          2: ['papaya', 'pineapple', 'coconut', 'lemon', 'lime', 'pear', 'kiwi', 'cherry', 'peach'],
+          3: ['durian', 'rambutan', 'guava', 'lychee', 'dragon fruit', 'plum', 'raspberry', 'blackberry', 'pomegranate'],
+          4: ['mangosteen', 'jackfruit', 'starfruit', 'sapodilla', 'longan', 'persimmon', 'fig', 'passion fruit'],
+          5: ['soursop', 'snake fruit', 'breadfruit', 'noni', 'ambarella', 'miracle fruit', 'kumquat', 'loquat', 'jabuticaba', 'cherimoya']
         }
       },
       {
         category: 'Colors',
         prompt: 'Name a real color or named shade!',
         answers: {
-          1: ['red', 'merah', 'blue', 'biru', 'green', 'hijau', 'yellow', 'kuning', 'black', 'hitam', 'white', 'putih', 'orange', 'jingga', 'pink', 'merah jambu', 'purple', 'ungu', 'brown', 'coklat'],
-          2: ['grey', 'gray', 'kelabu', 'gold', 'emas', 'silver', 'perak', 'cyan', 'magenta', 'teal', 'navy', 'biru tua', 'maroon', 'beige', 'krem', 'violet', 'indigo', 'turquoise', 'firus'],
-          3: ['crimson', 'scarlet', 'emerald', 'zamrud', 'amber', 'coral', 'karang', 'lavender', 'lilac', 'olive', 'zaitun', 'burgundy', 'mint', 'peach', 'tan'],
+          1: ['red', 'blue', 'green', 'yellow', 'black', 'white', 'orange', 'pink', 'purple', 'brown'],
+          2: ['grey', 'gray', 'gold', 'silver', 'cyan', 'magenta', 'teal', 'navy', 'maroon', 'beige', 'violet', 'indigo', 'turquoise'],
+          3: ['crimson', 'scarlet', 'emerald', 'amber', 'coral', 'lavender', 'lilac', 'olive', 'burgundy', 'mint', 'peach', 'tan'],
           4: ['cerulean', 'chartreuse', 'vermilion', 'ochre', 'mauve', 'periwinkle', 'fuchsia', 'cobalt', 'aquamarine', 'sienna', 'umber', 'sepia'],
           5: ['viridian', 'celadon', 'puce', 'amaranth', 'gamboge', 'heliotrope', 'smalt', 'coquelicot', 'fulvous', 'glaucous', 'xanthic', 'incarnadine']
         }
@@ -1282,98 +1327,98 @@
         category: 'Land Animals',
         prompt: 'Name a land animal!',
         answers: {
-          1: ['dog', 'anjing', 'cat', 'kucing', 'lion', 'singa', 'tiger', 'harimau', 'bear', 'beruang', 'elephant', 'gajah', 'horse', 'kuda', 'cow', 'lembu', 'monkey', 'monyet', 'chicken', 'ayam'],
-          2: ['goat', 'kambing', 'deer', 'rusa', 'rabbit', 'arnab', 'mouse', 'tikus', 'rat', 'pig', 'babi', 'duck', 'itik', 'bird', 'burung', 'snake', 'ular', 'frog', 'katak', 'giraffe', 'zirafah'],
-          3: ['zebra', 'kangaroo', 'kanggaru', 'koala', 'panda', 'fox', 'musang', 'wolf', 'serigala', 'buffalo', 'kerbau', 'squirrel', 'tupai', 'lizard', 'cicak', 'biawak', 'crocodile', 'buaya', 'turtle', 'kura-kura', 'penyu'],
-          4: ['cheetah', 'leopard', 'harimau bintang', 'rhino', 'badak', 'badak sumbu', 'hippo', 'badak air', 'otter', 'memerang', 'hedgehog', 'landak', 'tapir', 'cipan', 'badger', 'raccoon', 'rakun', 'sloth'],
-          5: ['pangolin', 'tenggiling', 'sun bear', 'beruang matahari', 'orangutan', 'macaque', 'kera', 'lotong', 'pelanduk', 'mouse deer', 'kancil', 'platypus', 'armadillo', 'meerkat', 'wombat', 'capybara', 'okapi']
+          1: ['dog', 'cat', 'lion', 'tiger', 'bear', 'elephant', 'horse', 'cow', 'monkey', 'chicken'],
+          2: ['goat', 'deer', 'rabbit', 'mouse', 'rat', 'pig', 'duck', 'bird', 'snake', 'frog', 'giraffe'],
+          3: ['zebra', 'kangaroo', 'koala', 'panda', 'fox', 'wolf', 'buffalo', 'squirrel', 'lizard', 'crocodile', 'turtle'],
+          4: ['cheetah', 'leopard', 'rhino', 'rhinoceros', 'hippo', 'hippopotamus', 'otter', 'hedgehog', 'tapir', 'badger', 'raccoon', 'sloth'],
+          5: ['pangolin', 'sun bear', 'orangutan', 'macaque', 'mouse deer', 'platypus', 'armadillo', 'meerkat', 'wombat', 'capybara', 'okapi', 'axolotl']
         }
       },
       {
         category: 'World Geography',
         prompt: 'Name a country in the world!',
         answers: {
-          1: ['malaysia', 'singapore', 'singapura', 'indonesia', 'thailand', 'china', 'japan', 'jepun', 'india', 'usa', 'united states', 'america', 'amerika syarikat', 'uk', 'united kingdom', 'england', 'australia'],
-          2: ['brunei', 'vietnam', 'philippines', 'filipina', 'south korea', 'korea selatan', 'korea', 'france', 'perancis', 'germany', 'jerman', 'italy', 'itali', 'spain', 'sepanyol', 'canada', 'kanada', 'brazil', 'russia', 'rusia'],
-          3: ['cambodia', 'kemboja', 'myanmar', 'laos', 'egypt', 'mesir', 'saudi arabia', 'arab saudi', 'turkey', 'turki', 'switzerland', 'sweden', 'norway', 'netherlands', 'belanda', 'argentina', 'mexico', 'new zealand'],
-          4: ['qatar', 'uae', 'emiriah arab bersatu', 'kuwait', 'oman', 'jordan', 'morocco', 'maghribi', 'south africa', 'afrika selatan', 'greece', 'yunani', 'portugal', 'poland', 'ireland', 'iceland', 'peru', 'chile', 'colombia'],
-          5: ['bhutan', 'nepal', 'sri lanka', 'maldives', 'maldiv', 'mongolia', 'kazakhstan', 'uzbekistan', 'fiji', 'papua new guinea', 'madagascar', 'kenya', 'nigeria', 'croatia', 'finland', 'denmark', 'austria', 'belgium', 'uruguay']
+          1: ['malaysia', 'singapore', 'indonesia', 'thailand', 'china', 'japan', 'india', 'usa', 'united states', 'america', 'uk', 'united kingdom', 'england', 'australia'],
+          2: ['brunei', 'vietnam', 'philippines', 'south korea', 'korea', 'france', 'germany', 'italy', 'spain', 'canada', 'brazil', 'russia'],
+          3: ['cambodia', 'myanmar', 'laos', 'egypt', 'saudi arabia', 'turkey', 'switzerland', 'sweden', 'norway', 'netherlands', 'argentina', 'mexico', 'new zealand'],
+          4: ['qatar', 'uae', 'united arab emirates', 'kuwait', 'oman', 'jordan', 'morocco', 'south africa', 'greece', 'portugal', 'poland', 'ireland', 'iceland', 'peru', 'chile', 'colombia'],
+          5: ['bhutan', 'nepal', 'sri lanka', 'maldives', 'mongolia', 'kazakhstan', 'uzbekistan', 'fiji', 'papua new guinea', 'madagascar', 'kenya', 'nigeria', 'croatia', 'finland', 'denmark', 'austria', 'belgium', 'uruguay']
         }
       },
       {
         category: 'Marine Life',
         prompt: 'Name a sea creature or water animal!',
         answers: {
-          1: ['fish', 'ikan', 'shark', 'jerung', 'whale', 'ikan paus', 'paus', 'dolphin', 'lumba-lumba', 'crab', 'ketam', 'shrimp', 'udang', 'turtle', 'penyu', 'squid', 'sotong', 'octopus', 'gurita'],
-          2: ['jellyfish', 'obor-obor', 'starfish', 'tapak sulaiman', 'seal', 'anjing laut', 'walrus', 'eel', 'belut', 'stingray', 'pari', 'ikan pari', 'seahorse', 'kuda laut', 'lobster', 'udang karang', 'clam', 'kerang'],
-          3: ['prawn', 'udang galah', 'cockle', 'siput', 'snail', 'siput sedut', 'oyster', 'tiram', 'mussel', 'kupang', 'orca', 'killer whale', 'manatee', 'lembu laut', 'swordfish', 'ikan todak', 'pufferfish', 'ikan buntal', 'coral', 'karang'],
-          4: ['narwhal', 'beluga', 'barracuda', 'alu-alu', 'moray eel', 'belut moray', 'anglerfish', 'lionfish', 'ikan depu', 'cuttlefish', 'sotong katak', 'nautilus', 'urchin', 'landak laut', 'sea anemone', 'buran', 'barnacle', 'teritip'],
-          5: ['coelacanth', 'dugong', 'duyung', 'mantis shrimp', 'udang lipan', 'nudibranch', 'giant isopod', 'oarfish', 'blobfish', 'sunfish', 'mola mola', 'geoduck', 'lamprey', 'hagfish', 'sea cucumber', 'gammat', 'gamat']
+          1: ['fish', 'shark', 'whale', 'dolphin', 'crab', 'shrimp', 'turtle', 'squid', 'octopus'],
+          2: ['jellyfish', 'starfish', 'seal', 'walrus', 'eel', 'stingray', 'seahorse', 'lobster', 'clam'],
+          3: ['prawn', 'cockle', 'snail', 'oyster', 'mussel', 'orca', 'killer whale', 'manatee', 'swordfish', 'pufferfish', 'coral'],
+          4: ['narwhal', 'beluga', 'barracuda', 'moray eel', 'anglerfish', 'lionfish', 'cuttlefish', 'nautilus', 'urchin', 'sea urchin', 'sea anemone', 'barnacle'],
+          5: ['coelacanth', 'dugong', 'mantis shrimp', 'nudibranch', 'giant isopod', 'oarfish', 'blobfish', 'sunfish', 'mola mola', 'geoduck', 'lamprey', 'hagfish', 'sea cucumber']
         }
       },
       {
         category: 'Food & Dishes',
         prompt: 'Name a real food or dish!',
         answers: {
-          1: ['rice', 'nasi', 'nasi lemak', 'noodles', 'mee', 'mi', 'chicken', 'ayam', 'bread', 'roti', 'egg', 'telur', 'burger', 'pizza', 'soup', 'sup', 'cake', 'kek'],
-          2: ['fried rice', 'nasi goreng', 'mee goreng', 'mi goreng', 'satay', 'sate', 'curry', 'kari', 'rendang', 'roti canai', 'fries', 'kentang goreng', 'sandwich', 'pasta', 'spaghetti', 'ice cream', 'aiskrim', 'cookie', 'biskut'],
-          3: ['laksa', 'char kuey teow', 'kuey teow', 'nasi ayam', 'nasi kerabu', 'nasi dagang', 'soto', 'bakso', 'ramen', 'sushi', 'dim sum', 'dumpling', 'pancake', 'waffle', 'donut', 'donat', 'steak'],
-          4: ['murtabak', 'martabak', 'apam balik', 'onde-onde', 'kuih lapis', 'karipap', 'curry puff', 'lemang', 'ketupat', 'tempeh', 'tempe', 'tofu', 'tauhu', 'tacos', 'burrito', 'paella', 'croissant'],
-          5: ['nasi kandar', 'asam pedas', 'ikan bakar', 'bubur lambuk', 'dodol', 'serunding', 'pulut panggang', 'kuih talam', 'putu piring', 'putu mayam', 'bak kut teh', 'pho', 'bibimbap', 'ceviche', 'pierogi', 'falafel', 'hummus']
+          1: ['rice', 'noodles', 'chicken', 'bread', 'egg', 'burger', 'pizza', 'soup', 'cake'],
+          2: ['fried rice', 'satay', 'curry', 'fries', 'french fries', 'sandwich', 'pasta', 'spaghetti', 'ice cream', 'cookie'],
+          3: ['laksa', 'ramen', 'sushi', 'dim sum', 'dumpling', 'pancake', 'waffle', 'donut', 'doughnut', 'steak', 'lasagna'],
+          4: ['curry puff', 'tofu', 'tacos', 'burrito', 'paella', 'croissant', 'risotto', 'gnocchi', 'quesadilla', 'kebab'],
+          5: ['pho', 'bibimbap', 'ceviche', 'pierogi', 'falafel', 'hummus', 'shakshuka', 'ratatouille', 'bouillabaisse', 'goulash', 'empanada']
         }
       },
       {
         category: 'Drinks & Beverages',
         prompt: 'Name a real drink or beverage!',
         answers: {
-          1: ['water', 'air', 'air kosong', 'milk', 'susu', 'coffee', 'kopi', 'tea', 'teh', 'juice', 'jus', 'milo', 'soda', 'cola', 'coke', 'sirap', 'air sirap'],
-          2: ['teh tarik', 'kopi o', 'teh o', 'teh o ais', 'kopi ais', 'lemonade', 'air limau', 'limau ais', 'hot chocolate', 'coklat panas', 'smoothie', 'milkshake', 'green tea', 'teh hijau', 'iced tea', 'teh ais', 'latte', 'espresso'],
-          3: ['cappuccino', 'mocha', 'matcha', 'bandung', 'air bandung', 'soy milk', 'air soya', 'coconut water', 'air kelapa', 'sugarcane juice', 'air tebu', 'root beer', 'ginger ale', 'boba', 'bubble tea', 'americano'],
-          4: ['horlicks', 'nescafe', 'cham', 'kopi peng', 'teh c', 'teh c peng', 'chai', 'kombucha', 'lassi', 'horchata', 'tonic water', 'seltzer', 'cider', 'hibiscus tea', 'teh bunga raya'],
-          5: ['ais kacang', 'abc', 'cendol', 'air katira', 'laici kang', 'mata kucing', 'yerba mate', 'kefir', 'ayran', 'kvass', 'oolong', 'pu-erh', 'genmaicha', 'barley tea', 'air barli']
+          1: ['water', 'milk', 'coffee', 'tea', 'juice', 'soda', 'cola', 'coke'],
+          2: ['lemonade', 'hot chocolate', 'smoothie', 'milkshake', 'green tea', 'iced tea', 'latte', 'espresso'],
+          3: ['cappuccino', 'mocha', 'matcha', 'soy milk', 'coconut water', 'sugarcane juice', 'root beer', 'ginger ale', 'boba', 'bubble tea', 'americano'],
+          4: ['chai', 'kombucha', 'lassi', 'horchata', 'tonic water', 'seltzer', 'cider', 'hibiscus tea', 'macchiato', 'flat white'],
+          5: ['yerba mate', 'kefir', 'ayran', 'kvass', 'oolong', 'pu-erh', 'genmaicha', 'barley tea', 'rooibos', 'cortado', 'affogato']
         }
       },
       {
         category: 'Sports & Games',
         prompt: 'Name a sport or athletic game!',
         answers: {
-          1: ['football', 'bola sepak', 'soccer', 'badminton', 'basketball', 'bola keranjang', 'tennis', 'tenis', 'swimming', 'renang', 'running', 'lari', 'volleyball', 'bola tampar', 'ping pong', 'table tennis'],
-          2: ['hockey', 'hoki', 'golf', 'cycling', 'berbasikal', 'boxing', 'tinju', 'baseball', 'softball', 'bola baling', 'handball', 'gymnastics', 'gimnastik', 'karate', 'taekwondo', 'judo'],
-          3: ['archery', 'memanah', 'fencing', 'lawan pedang', 'wrestling', 'gusti', 'bowling', 'boling', 'squash', 'skuasy', 'surfing', 'meluncur', 'skateboarding', 'skiing', 'rowing', 'mendayung', 'sailing', 'berlayar', 'diving', 'terjun papan'],
-          4: ['silat', 'pencak silat', 'sepak takraw', 'takraw', 'rugby', 'ragbi', 'cricket', 'kriket', 'curling', 'water polo', 'polo air', 'lacrosse', 'polo', 'triathlon', 'wushu', 'muay thai'],
-          5: ['kabaddi', 'petanque', 'boccia', 'goalball', 'bobsled', 'luge', 'biathlon', 'decathlon', 'equestrian', 'ekuestrian', 'orienteering', 'pelayaran', 'gimrama', 'snooker', 'billiards']
+          1: ['football', 'soccer', 'badminton', 'basketball', 'tennis', 'swimming', 'running', 'volleyball', 'ping pong', 'table tennis'],
+          2: ['hockey', 'golf', 'cycling', 'boxing', 'baseball', 'softball', 'handball', 'gymnastics', 'karate', 'taekwondo', 'judo'],
+          3: ['archery', 'fencing', 'wrestling', 'bowling', 'squash', 'surfing', 'skateboarding', 'skiing', 'rowing', 'sailing', 'diving'],
+          4: ['rugby', 'cricket', 'curling', 'water polo', 'lacrosse', 'polo', 'triathlon', 'wushu', 'muay thai', 'kickboxing'],
+          5: ['kabaddi', 'petanque', 'boccia', 'goalball', 'bobsled', 'luge', 'biathlon', 'decathlon', 'equestrian', 'orienteering', 'snooker', 'billiards']
         }
       },
       {
         category: 'Transport & Vehicles',
         prompt: 'Name a vehicle or mode of transport!',
         answers: {
-          1: ['car', 'kereta', 'bus', 'bas', 'motorcycle', 'motor', 'motosikal', 'bicycle', 'basikal', 'bike', 'train', 'kereta api', 'airplane', 'plane', 'kapal terbang', 'boat', 'bot', 'ship', 'kapal'],
-          2: ['truck', 'lori', 'van', 'taxi', 'teksi', 'helicopter', 'helikopter', 'scooter', 'skuter', 'ferry', 'feri', 'tram', 'trem', 'lrt', 'mrt', 'monorail', 'monorel', 'jet'],
-          3: ['submarine', 'kapal selam', 'ambulance', 'ambulans', 'firetruck', 'bomba', 'kereta bomba', 'tractor', 'traktor', 'canoe', 'kanu', 'kayak', 'sailboat', 'kapal layar', 'yacht', 'kapal layar mewah', 'grab', 'ehailing'],
-          4: ['sampan', 'beca', 'trishaw', 'hovercraft', 'blimp', 'zeppelin', 'gondola', 'tuk-tuk', 'tuktuk', 'bulldozer', 'jengkaut', 'excavator', 'glider', 'seaplane'],
-          5: ['funicular', 'hydrofoil', 'bathyscaphe', 'dirigible', 'autogiro', 'velomobile', 'maglev', 'snowcat', 'perahu', 'rakit', 'raft', 'tongkang', 'barge']
+          1: ['car', 'bus', 'motorcycle', 'bicycle', 'bike', 'train', 'airplane', 'plane', 'boat', 'ship'],
+          2: ['truck', 'van', 'taxi', 'helicopter', 'scooter', 'ferry', 'tram', 'monorail', 'jet', 'subway'],
+          3: ['submarine', 'ambulance', 'firetruck', 'fire truck', 'tractor', 'canoe', 'kayak', 'sailboat', 'yacht'],
+          4: ['trishaw', 'hovercraft', 'blimp', 'zeppelin', 'gondola', 'bulldozer', 'excavator', 'glider', 'seaplane', 'catamaran'],
+          5: ['funicular', 'hydrofoil', 'bathyscaphe', 'dirigible', 'autogiro', 'velomobile', 'maglev', 'snowcat', 'raft', 'barge', 'galleon']
         }
       },
       {
         category: 'School & Science',
         prompt: 'Name a school subject or academic field!',
         answers: {
-          1: ['math', 'maths', 'mathematics', 'matematik', 'science', 'sains', 'english', 'bahasa inggeris', 'malay', 'bahasa melayu', 'bm', 'history', 'sejarah', 'art', 'seni', 'music', 'muzik', 'pe', 'pj', 'pendidikan jasmani'],
-          2: ['geography', 'geografi', 'biology', 'biologi', 'chemistry', 'kimia', 'physics', 'fizik', 'computer', 'komputer', 'ict', 'moral', 'pendidikan moral', 'islamic studies', 'pendidikan islam', 'economics', 'ekonomi'],
-          3: ['accounting', 'akaun', 'perakaunan', 'algebra', 'geometry', 'geometri', 'calculus', 'kalkulus', 'statistics', 'statistik', 'psychology', 'psikologi', 'philosophy', 'falsafah', 'sociology', 'sosiologi', 'literature', 'kesusasteraan', 'sastera'],
-          4: ['astronomy', 'astronomi', 'geology', 'geologi', 'anthropology', 'antropologi', 'archaeology', 'arkeologi', 'linguistics', 'linguistik', 'botany', 'botani', 'zoology', 'zoologi', 'ecology', 'ekologi', 'anatomy', 'anatomi'],
-          5: ['entomology', 'entomologi', 'ichthyology', 'ornithology', 'mycology', 'paleontology', 'meteorology', 'seismology', 'etymology', 'epistemology', 'numismatics', 'vexillology', 'thermodynamics', 'optics']
+          1: ['math', 'maths', 'mathematics', 'science', 'english', 'history', 'art', 'music', 'pe', 'physical education'],
+          2: ['geography', 'biology', 'chemistry', 'physics', 'computer science', 'computing', 'economics', 'drama'],
+          3: ['accounting', 'algebra', 'geometry', 'calculus', 'statistics', 'psychology', 'philosophy', 'sociology', 'literature'],
+          4: ['astronomy', 'geology', 'anthropology', 'archaeology', 'linguistics', 'botany', 'zoology', 'ecology', 'anatomy'],
+          5: ['entomology', 'ichthyology', 'ornithology', 'mycology', 'paleontology', 'meteorology', 'seismology', 'etymology', 'epistemology', 'numismatics', 'vexillology', 'thermodynamics', 'optics']
         }
       },
       {
         category: 'Musical Instruments',
         prompt: 'Name a real musical instrument!',
         answers: {
-          1: ['piano', 'guitar', 'gitar', 'drum', 'drums', 'dram', 'violin', 'biola', 'flute', 'seruling', 'trumpet', 'trompet', 'saxophone', 'saksofon', 'keyboard', 'bass'],
-          2: ['cello', 'selos', 'clarinet', 'klarinet', 'trombone', 'trombon', 'harp', 'harpa', 'ukulele', 'organ', 'harmonica', 'harmonika', 'banjo', 'tambourine', 'tamborin', 'accordion', 'akordion'],
-          3: ['viola', 'oboe', 'bassoon', 'tuba', 'french horn', 'xylophone', 'silofon', 'marimba', 'mandolin', 'sitar', 'bagpipes', 'kompang', 'rebana', 'gong', 'angklung'],
-          4: ['gamelan', 'sape', 'gambus', 'serunai', 'caklempong', 'bonang', 'harpsichord', 'piccolo', 'timpani', 'bongo', 'conga', 'kalimba', 'lute', 'ocarina'],
+          1: ['piano', 'guitar', 'drum', 'drums', 'violin', 'flute', 'trumpet', 'saxophone', 'keyboard', 'bass'],
+          2: ['cello', 'clarinet', 'trombone', 'harp', 'ukulele', 'organ', 'harmonica', 'banjo', 'tambourine', 'accordion'],
+          3: ['viola', 'oboe', 'bassoon', 'tuba', 'french horn', 'xylophone', 'marimba', 'mandolin', 'sitar', 'bagpipes', 'gong'],
+          4: ['gamelan', 'harpsichord', 'piccolo', 'timpani', 'bongo', 'conga', 'kalimba', 'lute', 'ocarina', 'vibraphone'],
           5: ['theremin', 'hurdy-gurdy', 'hurdy gurdy', 'balalaika', 'koto', 'shamisen', 'erhu', 'oud', 'hang drum', 'handpan', 'glass armonica', 'nyckelharpa', 'didgeridoo', 'zither']
         }
       },
@@ -1381,43 +1426,43 @@
         category: 'Weather & Nature',
         prompt: 'Name a weather or natural sky phenomenon!',
         answers: {
-          1: ['rain', 'hujan', 'snow', 'salji', 'wind', 'angin', 'sun', 'matahari', 'cloud', 'clouds', 'awan', 'storm', 'ribut', 'thunder', 'guruh', 'lightning', 'kilat', 'fog', 'kabus'],
-          2: ['rainbow', 'pelangi', 'hail', 'hujan batu', 'sleet', 'hurricane', 'taufan', 'tornado', 'puting beliung', 'blizzard', 'mist', 'embun', 'frost', 'fros', 'dew', 'embun pagi'],
-          3: ['drizzle', 'gerimis', 'typhoon', 'cyclone', 'siklon', 'monsoon', 'monsun', 'drought', 'kemarau', 'heatwave', 'gelombang haba', 'avalanche', 'runtuhan salji', 'sandstorm', 'ribut pasir', 'haze', 'jerebu'],
-          4: ['aurora', 'cahaya kutub', 'northern lights', 'waterspout', 'belalai air', 'haboob', 'freezing rain', 'black ice', 'ice storm', 'squall', 'gale', 'chinook'],
-          5: ['virga', 'graupel', 'petrichor', 'derecho', 'ball lightning', 'kilat bebola', 'sundog', 'sun dog', 'katabatic wind', 'sirocco', 'mistral', 'foehn']
+          1: ['rain', 'snow', 'wind', 'sun', 'cloud', 'clouds', 'storm', 'thunder', 'lightning', 'fog'],
+          2: ['rainbow', 'hail', 'sleet', 'hurricane', 'tornado', 'blizzard', 'mist', 'frost', 'dew'],
+          3: ['drizzle', 'typhoon', 'cyclone', 'monsoon', 'drought', 'heatwave', 'avalanche', 'sandstorm', 'haze'],
+          4: ['aurora', 'northern lights', 'waterspout', 'haboob', 'freezing rain', 'black ice', 'ice storm', 'squall', 'gale', 'chinook'],
+          5: ['virga', 'graupel', 'petrichor', 'derecho', 'ball lightning', 'sundog', 'sun dog', 'katabatic wind', 'sirocco', 'mistral', 'foehn']
         }
       },
       {
         category: 'Clothing & Footwear',
         prompt: 'Name an item of clothing or footwear!',
         answers: {
-          1: ['shirt', 'baju', 't-shirt', 'tshirt', 'baju kemeja', 'pants', 'seluar', 'jeans', 'seluar jeans', 'shoes', 'kasut', 'socks', 'stoking', 'jacket', 'jaket', 'coat', 'kot', 'dress', 'gaun', 'hat', 'topi'],
-          2: ['shorts', 'seluar pendek', 'sweater', 'baju sejuk', 'hoodie', 'skirt', 'rok', 'boots', 'but', 'sneakers', 'kasut sukan', 'sandals', 'selipar', 'gloves', 'sarung tangan', 'scarf', 'selendang', 'tie', 'tali leher', 'belt', 'tali pinggang'],
-          3: ['baju kurung', 'baju melayu', 'suit', 'sut', 'pajamas', 'baju tidur', 'cardigan', 'blazer', 'vest', 'leggings', 'overalls', 'raincoat', 'baju hujan', 'slippers', 'cap', 'songkok', 'tudung', 'hijab'],
-          4: ['trench coat', 'parka', 'poncho', 'kimono', 'tuxedo', 'loafers', 'moccasins', 'espadrilles', 'clogs', 'beret', 'fedora', 'shawl', 'samping', 'kain pelikat', 'kain batik'],
-          5: ['sarong', 'kebaya', 'cheongsam', 'qipao', 'dirndl', 'lederhosen', 'kaftan', 'caftan', 'kilt', 'hanbok', 'sari', 'bolero', 'ascot', 'tanjak', 'dastar']
+          1: ['shirt', 't-shirt', 'tshirt', 'pants', 'jeans', 'shoes', 'socks', 'jacket', 'coat', 'dress', 'hat'],
+          2: ['shorts', 'sweater', 'hoodie', 'skirt', 'boots', 'sneakers', 'sandals', 'gloves', 'scarf', 'tie', 'belt'],
+          3: ['suit', 'pajamas', 'pyjamas', 'cardigan', 'blazer', 'vest', 'leggings', 'overalls', 'raincoat', 'slippers', 'cap', 'hijab'],
+          4: ['trench coat', 'parka', 'poncho', 'kimono', 'tuxedo', 'loafers', 'moccasins', 'espadrilles', 'clogs', 'beret', 'fedora', 'shawl'],
+          5: ['sarong', 'kebaya', 'cheongsam', 'qipao', 'dirndl', 'lederhosen', 'kaftan', 'caftan', 'kilt', 'hanbok', 'sari', 'bolero', 'ascot']
         }
       },
       {
         category: 'Birds',
         prompt: 'Name a real species or type of bird!',
         answers: {
-          1: ['eagle', 'helang', 'owl', 'burung hantu', 'penguin', 'pinguin', 'duck', 'itik', 'chicken', 'ayam', 'parrot', 'burung kakak tua', 'pigeon', 'merpati', 'crow', 'gagak', 'sparrow', 'pipit', 'flamingo'],
-          2: ['hawk', 'falcon', 'swan', 'angsa', 'goose', 'angsa liar', 'turkey', 'ayam belanda', 'peacock', 'merak', 'seagull', 'burung camar', 'hummingbird', 'woodpecker', 'burung belatuk', 'ostrich', 'burung unta', 'pelican', 'unduk-unduk', 'raven'],
-          3: ['toucan', 'puffin', 'stork', 'burung bangau', 'heron', 'pucung', 'crane', 'jenjang', 'albatross', 'canary', 'parakeet', 'cockatoo', 'macaw', 'vulture', 'hering', 'condor', 'kiwi', 'kingfisher', 'pekaka'],
-          4: ['magpie', 'murai', 'jay', 'blue jay', 'cardinal', 'oriole', 'starling', 'perling', 'swallow', 'layang-layang', 'nightingale', 'emu', 'cassowary', 'kestrel', 'osprey'],
-          5: ['shoebill', 'quetzal', 'hoatzin', 'kakapo', 'lyrebird', 'bowerbird', 'secretary bird', 'ptarmigan', 'booby', 'frigatebird', 'hornbill', 'kenyalang', 'enggang', 'ibis']
+          1: ['eagle', 'owl', 'penguin', 'duck', 'chicken', 'parrot', 'pigeon', 'crow', 'sparrow', 'flamingo'],
+          2: ['hawk', 'falcon', 'swan', 'goose', 'turkey', 'peacock', 'seagull', 'hummingbird', 'woodpecker', 'ostrich', 'pelican', 'raven'],
+          3: ['toucan', 'puffin', 'stork', 'heron', 'crane', 'albatross', 'canary', 'parakeet', 'cockatoo', 'macaw', 'vulture', 'condor', 'kiwi', 'kingfisher'],
+          4: ['magpie', 'jay', 'blue jay', 'cardinal', 'oriole', 'starling', 'swallow', 'nightingale', 'emu', 'cassowary', 'kestrel', 'osprey'],
+          5: ['shoebill', 'quetzal', 'hoatzin', 'kakapo', 'lyrebird', 'bowerbird', 'secretary bird', 'ptarmigan', 'booby', 'frigatebird', 'hornbill', 'ibis']
         }
       },
       {
         category: 'Planets & Space',
         prompt: 'Name a planet, moon, or space object!',
         answers: {
-          1: ['earth', 'bumi', 'mars', 'marikh', 'jupiter', 'musytari', 'saturn', 'zuhal', 'venus', 'zuhrah', 'mercury', 'utarid', 'uranus', 'neptune', 'neptun', 'moon', 'bulan', 'sun', 'matahari'],
-          2: ['pluto', 'europa', 'titan', 'io', 'ganymede', 'callisto', 'phobos', 'deimos', 'comet', 'komet', 'asteroid', 'star', 'bintang', 'galaxy', 'galaksi'],
-          3: ['ceres', 'eris', 'makemake', 'haumea', 'enceladus', 'triton', 'charon', 'mimas', 'nebula', 'meteor', 'meteorite', 'tahik bintang', 'milky way', 'bima sakti'],
-          4: ['iapetus', 'rhea', 'dione', 'tethys', 'oberon', 'titania', 'miranda', 'ariel', 'umbriel', 'pulsar', 'quasar', 'magnetar', 'black hole', 'lohong hitam', 'exoplanet'],
+          1: ['earth', 'mars', 'jupiter', 'saturn', 'venus', 'mercury', 'uranus', 'neptune', 'moon', 'sun'],
+          2: ['pluto', 'europa', 'titan', 'io', 'ganymede', 'callisto', 'phobos', 'deimos', 'comet', 'asteroid', 'star', 'galaxy'],
+          3: ['ceres', 'eris', 'makemake', 'haumea', 'enceladus', 'triton', 'charon', 'mimas', 'nebula', 'meteor', 'meteorite', 'milky way'],
+          4: ['iapetus', 'rhea', 'dione', 'tethys', 'oberon', 'titania', 'miranda', 'ariel', 'umbriel', 'pulsar', 'quasar', 'magnetar', 'black hole', 'exoplanet'],
           5: ['sedna', 'quaoar', 'orcus', 'gonggong', 'hyperion', 'phoebe', 'amalthea', 'nereid', 'proteus', 'pan', 'trappist-1', 'proxima centauri', 'betelgeuse', 'sirius']
         }
       }
@@ -1471,6 +1516,7 @@
     let particles = [];
     let currentDepthMeters = 0;
     let diveBurstSpeed = 0;
+    let activeTierTint = null;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -1479,7 +1525,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 75; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -1490,18 +1536,31 @@
       });
     }
 
-    function spawnSplashBurst(count = 32) {
+    function spawnTierDiveEffects(tier, targetY) {
       const cx = window.innerWidth / 2;
-      const cy = 65;
+      const count = 18 + tier * 22;
+      const speedMult = 1 + tier * 0.65;
+      const colors = {
+        1: 'rgba(224, 242, 254, ',
+        2: 'rgba(52, 211, 153, ',
+        3: 'rgba(56, 189, 248, ',
+        4: 'rgba(192, 132, 252, ',
+        5: 'rgba(251, 191, 36, '
+      };
+      activeTierTint = colors[tier] || 'rgba(224, 242, 254, ';
+
       for (let i = 0; i < count; i++) {
+        const progress = i / count;
+        const spawnY = 48 + progress * Math.max(60, targetY - 20);
         particles.push({
-          x: cx + (Math.random() - 0.5) * 90,
-          y: cy + (Math.random() - 0.5) * 35,
-          r: Math.random() * 5.5 + 2,
-          vy: -(Math.random() * 3.6 + 1.5),
-          vx: (Math.random() - 0.5) * 4.2,
-          alpha: 0.92,
-          temp: true
+          x: cx + (Math.random() - 0.5) * (70 + tier * 24),
+          y: spawnY + (Math.random() - 0.5) * 25,
+          r: Math.random() * (3.5 + tier * 1.1) + 2,
+          vy: -(Math.random() * 3.8 + 1.8) * speedMult,
+          vx: (Math.random() - 0.5) * (3.5 + tier * 1.6),
+          alpha: 0.95,
+          temp: true,
+          tint: activeTierTint
         });
       }
     }
@@ -1515,7 +1574,11 @@
         p.y += p.vy - diveBurstSpeed;
         p.x += p.vx;
 
-        if (p.y < -20) {
+        if (p.temp) {
+          p.alpha *= 0.975;
+        }
+
+        if (p.y < -25 || (p.temp && p.alpha < 0.05)) {
           if (p.temp) {
             particles.splice(i, 1);
             continue;
@@ -1526,7 +1589,11 @@
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        if (isDeep) {
+        if (p.tint) {
+          ctx.fillStyle = `${p.tint}${p.alpha})`;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = `${p.tint}0.9)`;
+        } else if (isDeep) {
           ctx.fillStyle = `rgba(192, 132, 252, ${p.alpha})`;
           ctx.shadowBlur = 10;
           ctx.shadowColor = '#38bdf8';
@@ -1538,7 +1605,7 @@
       }
 
       if (diveBurstSpeed > 0.05) {
-        diveBurstSpeed *= 0.94;
+        diveBurstSpeed *= 0.93;
       } else {
         diveBurstSpeed = 0;
       }
@@ -1547,9 +1614,11 @@
     }
     animateOcean();
 
+    const diverStage = document.getElementById('diver-stage');
     const diverActor = document.getElementById('diver-actor');
     const diverInner = document.getElementById('diver-inner');
-    const diverEmoji = document.getElementById('diver-emoji');
+    const diverBubbleRing = document.getElementById('diver-emoji');
+    const diverShockwave = document.getElementById('diver-shockwave');
     const diverTag = document.getElementById('diver-tag');
     const surfaceLayer = document.getElementById('surface-layer');
     const gaugeFill = document.getElementById('gauge-fill');
@@ -1621,7 +1690,11 @@
 
     function resetDiverForNextQuestion(totalDepthSoFar) {
       diverInner.classList.remove('diving');
+      diverShockwave.classList.remove('pulse');
+      diverActor.style.transition = 'top 0.9s cubic-bezier(0.22, 1, 0.36, 1)';
       diverActor.style.top = '16px';
+      diverBubbleRing.style.borderColor = 'rgba(255, 255, 255, 0.85)';
+      diverBubbleRing.style.boxShadow = '0 10px 30px rgba(14, 165, 233, 0.6), inset 0 0 16px rgba(255, 255, 255, 0.5)';
       diverTag.textContent = `${state.name} • Total: ${totalDepthSoFar}m`;
       appShell.classList.remove('minimized-mode');
       gameCard.classList.remove('minimized-qna');
@@ -1645,7 +1718,7 @@
       overlay.classList.add('active');
       setTimeout(() => {
         overlay.classList.remove('active');
-      }, 1500);
+      }, 1450);
     }
 
     function triggerCleanDiveSequence(tier, earnedPts, newTotalDepth, statusNoteText, onComplete) {
@@ -1653,6 +1726,15 @@
 
       showTierPopup(tier, earnedPts, meta.depthGain);
 
+      // Scale depth drop, speed, scale, and card clearance by tier (1 = shallow, 5 = abyssal plunge)
+      const maxSafeDrop = Math.min(440, Math.max(220, window.innerHeight * 0.46));
+      const tierRatio = [0, 0.16, 0.36, 0.58, 0.80, 1.0][tier] || 0;
+      const tierDivePx = Math.round(tierRatio * maxSafeDrop);
+      const diveDurationSec = [0.6, 1.35, 1.15, 0.95, 0.78, 0.62][tier] || 1.0;
+      const diveScale = [1, 1.12, 1.22, 1.34, 1.48, 1.65][tier] || 1.1;
+
+      const targetDiverTop = 16 + tierDivePx;
+      appShell.style.setProperty('--post-dive-margin', `${Math.max(165, targetDiverTop + 115)}px`);
       appShell.classList.add('minimized-mode');
       gameCard.classList.add('minimized-qna');
 
@@ -1662,17 +1744,30 @@
       badge.style.color = meta.color;
       document.getElementById('mini-status-note').textContent = statusNoteText || '';
 
-      const tierDivePx = [12, 55, 95, 130, 160, 185][tier] || 12;
+      diverInner.style.setProperty('--dive-dur', `${diveDurationSec}s`);
+      diverInner.style.setProperty('--dive-scale', `${diveScale}`);
+      diverShockwave.style.setProperty('--tier-glow', meta.color);
+
       diverInner.classList.remove('diving');
+      diverShockwave.classList.remove('pulse');
+      document.body.classList.remove('abyss-shake');
       void diverInner.offsetWidth;
 
       if (tier > 0) {
-        spawnSplashBurst(16 + tier * 7);
-        diveBurstSpeed = 2.8 + tier * 1.7;
+        spawnTierDiveEffects(tier, targetDiverTop);
+        diveBurstSpeed = 2.5 + tier * 3.4;
         diverInner.classList.add('diving');
+        diverShockwave.classList.add('pulse');
+        diverBubbleRing.style.borderColor = meta.color;
+        diverBubbleRing.style.boxShadow = `0 0 ${18 + tier * 8}px ${meta.color}, inset 0 0 18px rgba(255,255,255,0.65)`;
+
+        if (tier >= 4) {
+          document.body.classList.add('abyss-shake');
+        }
       }
 
-      diverActor.style.top = `${16 + tierDivePx}px`;
+      diverActor.style.transition = `top ${diveDurationSec}s cubic-bezier(0.16, 1, 0.3, 1)`;
+      diverActor.style.top = `${targetDiverTop}px`;
       diverTag.textContent = tier > 0
         ? `⬇️ -${meta.depthGain}m • Total: ${newTotalDepth}m`
         : `Total: ${newTotalDepth}m`;
@@ -1681,8 +1776,9 @@
 
       setTimeout(() => {
         diverInner.classList.remove('diving');
+        document.body.classList.remove('abyss-shake');
         if (typeof onComplete === 'function') onComplete();
-      }, 1350);
+      }, Math.max(1150, Math.round(diveDurationSec * 1000) + 150));
     }
 
     const state = {
@@ -1731,10 +1827,16 @@
       document.getElementById(screenId).classList.add('active');
 
       const isMenu = screenId === 'screen-menu';
-      document.getElementById('home-btn').style.display = isMenu ? 'none' : 'inline-flex';
-      document.getElementById('depth-gauge').style.display = screenId === 'screen-game' ? 'flex' : 'none';
+      const isGame = screenId === 'screen-game';
 
-      if (screenId !== 'screen-game') {
+      document.getElementById('home-btn').style.display = isMenu ? 'none' : 'inline-flex';
+      document.getElementById('depth-gauge').style.display = isGame ? 'flex' : 'none';
+
+      // Scroll diver with page on menu/setup screens; keep fixed overlay during gameplay
+      if (isGame) {
+        diverStage.classList.remove('menu-scroll-mode');
+      } else {
+        diverStage.classList.add('menu-scroll-mode');
         state.totalDepth = 0;
         resetDiverForNextQuestion(0);
       }
@@ -1743,7 +1845,7 @@
     function syncProfileFromInputs() {
       const rawName = document.getElementById('player-name-input').value.trim();
       state.name = rawName || 'Diver';
-      diverEmoji.textContent = state.avatar;
+      diverBubbleRing.textContent = state.avatar;
       diverTag.textContent = `${state.name} • Total: ${state.totalDepth}m`;
     }
 
@@ -1822,7 +1924,7 @@
       return str
         .toLowerCase()
         .trim()
-        .replace(/^(the|a|an|buah|ikan|pokok|burung|warna)\s+/i, '')
+        .replace(/^(the|a|an)\s+/i, '')
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
@@ -1870,17 +1972,13 @@
 
     async function evaluateAnswerWithAI(questionObj, rawInput) {
       const localResult = evaluateAnswer(questionObj, rawInput);
-      if (
-        localResult.tier > 0 ||
-        !APPS_SCRIPT_AI_URL ||
-        APPS_SCRIPT_AI_URL.includes('YOUR_DEPLOYMENT_ID')
-      ) {
+      if (localResult.tier > 0 || !APPS_SCRIPT_AI_URL) {
         return localResult;
       }
 
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 2600);
+        const timer = setTimeout(() => controller.abort(), 3200);
 
         const resp = await fetch(APPS_SCRIPT_AI_URL, {
           method: 'POST',
@@ -2028,7 +2126,7 @@
         state.isEvaluating = false;
         playRetryBuzz();
         retryBox.style.display = 'block';
-        retryBox.textContent = `"${rawAnswer}" is not recognized yet — try another answer before time runs out!`;
+        retryBox.textContent = `"${rawAnswer}" is not recognized — try another English answer before time runs out!`;
         ansInput.disabled = false;
         submitBtn.disabled = false;
         submitBtn.textContent = 'Dive! 🤿';
