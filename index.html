@@ -972,7 +972,7 @@
     </div>
   </div>
 
-  <!-- Tier Pop-Up Banner After Answering -->
+  <!-- Tier Result Pop Overlay -->
   <div id="tier-pop-overlay">
     <div class="tier-pop-card" id="tier-pop-card">
       <div class="tier-pop-title" id="tier-pop-title">ONE IN KRILLION!</div>
@@ -1189,7 +1189,7 @@
         <div id="answer-input-area">
           <form class="answer-form" id="answer-form" autocomplete="off">
             <input id="answer-input" class="text-input" type="text" placeholder="Type your answer..." />
-            <button type="submit" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
+            <button type="submit" id="answer-submit-btn" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
           </form>
           <div class="retry-notice" id="retry-notice"></div>
         </div>
@@ -1240,6 +1240,9 @@
   <div id="toast">Copied!</div>
 
   <script>
+    // Replace with your deployed Google Apps Script Web App (/exec) URL
+    const APPS_SCRIPT_AI_URL = 'https://script.google.com/macros/s/AKfycbzjFc1YMdoRMB-UTX686OsVDKHqvec8lHAY4mT9D1J-rXC1BYu2DqZmkJELlQ51yiMgjg/exec';
+
     const AVATARS = [
       { emoji: '🐬', name: 'Dolphin' },
       { emoji: '🐙', name: 'Octopus' },
@@ -1696,6 +1699,7 @@
       autoAdvanceTimeout: null,
       timeLeft: 30,
       lockedCurrent: false,
+      isEvaluating: false,
 
       peer: null,
       isHost: false,
@@ -1792,6 +1796,7 @@
       state.hostConn = null;
       state.players = {};
       state.totalDepth = 0;
+      state.isEvaluating = false;
       resetDiverForNextQuestion(0);
       showScreen('screen-menu');
     }
@@ -1817,24 +1822,93 @@
       return str
         .toLowerCase()
         .trim()
+        .replace(/^(the|a|an|buah|ikan|pokok|burung|warna)\s+/i, '')
         .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, ' ');
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function singularizeToken(word) {
+      if (word.length <= 3) return word;
+      if (word.endsWith('ies') && word.length > 4) return word.slice(0, -3) + 'y';
+      if (word.endsWith('es') && !word.endsWith('ses')) return word.slice(0, -2);
+      if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
+      return word;
+    }
+
+    function normalizePhrase(str) {
+      const base = normalizeText(str);
+      if (!base) return '';
+      return base
+        .split(' ')
+        .map(part => part.split('-').map(singularizeToken).join('-'))
+        .join(' ');
     }
 
     function evaluateAnswer(questionObj, rawInput) {
-      const cleaned = normalizeText(rawInput);
+      const cleaned = normalizePhrase(rawInput);
       if (!cleaned) return { tier: 0, points: 0, matched: '' };
 
       for (let tier = 5; tier >= 1; tier--) {
         const list = questionObj.answers[tier] || [];
         for (const candidate of list) {
-          const normCand = normalizeText(candidate);
-          if (cleaned === normCand || (cleaned.length >= 4 && normCand.includes(cleaned) && cleaned.length >= normCand.length - 2)) {
+          const normCand = normalizePhrase(candidate);
+          if (cleaned === normCand) {
+            return { tier, points: tier, matched: candidate };
+          }
+          if (
+            cleaned.length >= 4 &&
+            normCand.includes(cleaned) &&
+            cleaned.length >= normCand.length - 2
+          ) {
             return { tier, points: tier, matched: candidate };
           }
         }
       }
       return { tier: 0, points: 0, matched: rawInput.trim() };
+    }
+
+    async function evaluateAnswerWithAI(questionObj, rawInput) {
+      const localResult = evaluateAnswer(questionObj, rawInput);
+      if (
+        localResult.tier > 0 ||
+        !APPS_SCRIPT_AI_URL ||
+        APPS_SCRIPT_AI_URL.includes('YOUR_DEPLOYMENT_ID')
+      ) {
+        return localResult;
+      }
+
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2600);
+
+        const resp = await fetch(APPS_SCRIPT_AI_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            category: questionObj.category,
+            prompt: questionObj.prompt,
+            answer: rawInput
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timer);
+        if (!resp.ok) return localResult;
+
+        const aiData = await resp.json();
+        const tier = Number(aiData.tier) || 0;
+        if (tier >= 1 && tier <= 5) {
+          return {
+            tier,
+            points: tier,
+            matched: aiData.matched || rawInput.trim()
+          };
+        }
+        return localResult;
+      } catch (e) {
+        return localResult;
+      }
     }
 
     function pickRandomQuestions(count) {
@@ -1874,6 +1948,7 @@
 
       const q = state.questions[state.currentIndex];
       state.lockedCurrent = false;
+      state.isEvaluating = false;
       state.timeLeft = state.timeLimit;
 
       if (state.mode === 'single') {
@@ -1895,8 +1970,11 @@
       document.getElementById('q-table-card').style.display = 'none';
 
       const ansInput = document.getElementById('answer-input');
+      const submitBtn = document.getElementById('answer-submit-btn');
       ansInput.value = '';
       ansInput.disabled = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Dive! 🤿';
       if (!isSpectator) setTimeout(() => ansInput.focus(), 60);
 
       updateTimerUI();
@@ -1922,30 +2000,47 @@
 
     document.getElementById('answer-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      if (state.lockedCurrent) return;
+      if (state.lockedCurrent || state.isEvaluating) return;
       const val = document.getElementById('answer-input').value.trim();
       if (!val) return;
       handleAttempt(val);
     });
 
-    function handleAttempt(rawAnswer) {
+    async function handleAttempt(rawAnswer) {
       const q = state.questions[state.currentIndex];
-      const evalRes = evaluateAnswer(q, rawAnswer);
+      const ansInput = document.getElementById('answer-input');
+      const submitBtn = document.getElementById('answer-submit-btn');
       const retryBox = document.getElementById('retry-notice');
 
+      state.isEvaluating = true;
+      ansInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Checking... 🔎';
+
+      const evalRes = await evaluateAnswerWithAI(q, rawAnswer);
+
+      if (state.lockedCurrent) {
+        state.isEvaluating = false;
+        return;
+      }
+
       if (evalRes.tier === 0) {
+        state.isEvaluating = false;
         playRetryBuzz();
         retryBox.style.display = 'block';
         retryBox.textContent = `"${rawAnswer}" is not recognized yet — try another answer before time runs out!`;
-        const inp = document.getElementById('answer-input');
-        inp.value = '';
-        inp.focus();
+        ansInput.disabled = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Dive! 🤿';
+        ansInput.value = '';
+        ansInput.focus();
         return;
       }
 
       retryBox.style.display = 'none';
       state.lockedCurrent = true;
-      document.getElementById('answer-input').disabled = true;
+      state.isEvaluating = false;
+      submitBtn.textContent = 'Dive! 🤿';
 
       if (state.mode === 'single') {
         clearInterval(state.timerInterval);
@@ -1993,7 +2088,9 @@
       if (state.mode === 'single') {
         if (!state.lockedCurrent) {
           state.lockedCurrent = true;
+          state.isEvaluating = false;
           document.getElementById('answer-input').disabled = true;
+          document.getElementById('answer-submit-btn').disabled = true;
           state.players.local.answered = true;
           state.players.local.qPoints = 0;
           state.players.local.answer = '(Time Up)';
@@ -2527,6 +2624,7 @@
       if (!state.lockedCurrent) {
         state.lockedCurrent = true;
         document.getElementById('answer-input').disabled = true;
+        document.getElementById('answer-submit-btn').disabled = true;
         triggerCleanDiveSequence(tier, qPts, state.totalDepth, 'All Players Finished!', () => {
           renderQuestionStandingsTable(Object.values(state.players), true);
         });
