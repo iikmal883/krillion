@@ -2324,28 +2324,46 @@
       const tbody = document.getElementById('q-table-body');
       const stateTag = document.getElementById('q-table-state-tag');
 
+      // Multiplayer: the table only appears once YOU have answered (or you are spectating),
+      // so it never pops up on players who are still thinking.
+      const iCanWatch = state.lockedCurrent || (state.isHost && state.hostRole === 'spectator');
+      if (state.mode === 'multi' && !revealAnswers && !iCanWatch) {
+        tableCard.style.display = 'none';
+        return;
+      }
+
       tableCard.style.display = 'block';
       stateTag.textContent = revealAnswers
         ? '🔓 Answers Revealed!'
-        : '🔒 Answers Blurred Until Everyone Finishes';
+        : '🔒 Points Hidden Until Everyone Finishes';
 
-      const sorted = playersArr
-        .filter(p => p.role === 'player')
-        .sort((a, b) => (b.qPoints || 0) - (a.qPoints || 0) || (b.score || 0) - (a.score || 0));
+      const players = playersArr.filter(p => p.role === 'player');
+      // While hidden, do not sort by points (the order itself would leak who scored more).
+      const sorted = revealAnswers
+        ? players.sort((a, b) => (b.qPoints || 0) - (a.qPoints || 0) || (b.score || 0) - (a.score || 0))
+        : players;
 
       tbody.innerHTML = '';
       sorted.forEach((p, idx) => {
         const qPts = p.qPoints || 0;
+        const mine = isMePlayer(p);
         const ansText = p.answered ? (p.answer || '-') : 'Thinking...';
         const ansClass = revealAnswers ? 'blurred-ans revealed-ans' : 'blurred-ans';
         const tierColor = revealAnswers && p.tier ? TIER_META[p.tier].color : '#e2e8f0';
 
+        // Points: everyone sees them once the round is revealed; before that only your own.
+        const showPts = revealAnswers || mine;
+        const ptsHTML = showPts
+          ? `+${qPts} pts`
+          : `<span class="blurred-ans">+? pts</span>`;
+        const rankHTML = revealAnswers ? `#${idx + 1}` : '–';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><strong>#${idx + 1}</strong></td>
+          <td><strong>${rankHTML}</strong></td>
           <td>${p.avatar} <strong>${nameHTML(p)}</strong> ${p.answered ? '✅' : '⏳'}</td>
-          <td><span class="${ansClass}" style="color:${tierColor};">${ansText}</span></td>
-          <td style="text-align:right;font-weight:800;color:#7dd3fc;">+${qPts} pts</td>
+          <td><span class="${ansClass}" style="color:${tierColor};">${esc(ansText)}</span></td>
+          <td style="text-align:right;font-weight:800;color:#7dd3fc;">${ptsHTML}</td>
         `;
         tbody.appendChild(tr);
       });
