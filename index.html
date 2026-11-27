@@ -2311,7 +2311,39 @@
     const ROOM_PREFIX = 'krillion26-';
     let peerHeartbeatInterval = null;
 
+    // ---- TURN SETUP (REQUIRED for friends on different networks) ----
+    // 1. Make a free account at https://www.metered.ca  (Open Relay / TURN)
+    // 2. Create an app, then copy its subdomain + API key into the two lines below.
+    const METERED_APP = 'iikmalxd';      // e.g. 'krillion'  -> krillion.metered.live
+    const METERED_API_KEY = '7a9482cb83221c2e67f58c724f126a40d6f8';  // e.g. 'abc123...'
+    let fetchedIceServers = null;
+
+    async function loadTurnCredentials() {
+      if (!METERED_APP || !METERED_API_KEY) return;
+      try {
+        const r = await fetch('https://' + METERED_APP + '.metered.live/api/v1/turn/credentials?apiKey=' + METERED_API_KEY);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        fetchedIceServers = await r.json();
+        console.log('TURN credentials loaded:', fetchedIceServers.length, 'servers');
+      } catch (e) {
+        console.warn('Could not load TURN credentials:', e);
+      }
+    }
+    loadTurnCredentials();
+
     function getPeerConfig() {
+      const baseStun = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
+      ];
+      // Old public "openrelayproject" credentials are kept only as a last resort;
+      // they are often disabled, so do not rely on them.
+      const fallbackTurn = [
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turns:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+      ];
       return {
         host: '0.peerjs.com',
         port: 443,
@@ -2320,24 +2352,8 @@
         pingInterval: 5000,
         debug: 1,
         config: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:global.stun.twilio.com:3478' },
-            {
-              urls: 'turn:openrelay.metered.ca:80',
-              username: 'openrelayproject',
-              credential: 'openrelayproject'
-            },
-            {
-              urls: 'turn:openrelay.metered.ca:443',
-              username: 'openrelayproject',
-              credential: 'openrelayproject'
-            }
-          ],
-          iceCandidatePoolSize: 10
+          iceServers: fetchedIceServers ? baseStun.concat(fetchedIceServers) : baseStun.concat(fallbackTurn),
+          iceCandidatePoolSize: 4
         }
       };
     }
@@ -2468,6 +2484,10 @@
     });
 
     document.getElementById('copy-link-btn').addEventListener('click', () => {
+      const h = window.location.hostname;
+      if (window.location.protocol === 'file:' || h === 'localhost' || h === '127.0.0.1' || /^192\.168\.|^10\./.test(h)) {
+        showToast('This link only works on YOUR device. Host the game online first (see guide), then share that link.');
+      }
       const url = new URL(window.location.href);
       url.searchParams.set('room', state.roomCode);
       navigator.clipboard.writeText(url.toString());
@@ -2523,7 +2543,7 @@
 
     function attemptConnectToHost(attempt) {
       const targetId = ROOM_PREFIX + state.roomCode;
-      document.getElementById('relay-status-text').textContent = `Connecting to room ${state.roomCode} (Attempt ${attempt}/4)...`;
+      document.getElementById('relay-status-text').textContent = `Connecting to room ${state.roomCode} (Attempt ${attempt}/3)...`;
 
       const conn = state.peer.connect(targetId, {
         reliable: true,
@@ -2533,7 +2553,7 @@
 
       let opened = false;
       const timeout = setTimeout(() => {
-        if (!opened && attempt < 4) {
+        if (!opened && attempt < 3) {
           try { conn.close(); } catch (e) {}
           attemptConnectToHost(attempt + 1);
         } else if (!opened) {
@@ -2541,7 +2561,19 @@
             'Could not reach room. Make sure the host created the room and kept their tab open.';
           document.getElementById('retry-join-btn').style.display = 'inline-block';
         }
-      }, 3800);
+      }, 15000);
+
+      conn.on('error', (e) => console.warn('Data connection error:', e));
+      setTimeout(() => {
+        const pc = conn.peerConnection;
+        if (pc) pc.addEventListener('iceconnectionstatechange', () => {
+          console.log('ICE state:', pc.iceConnectionState);
+          if (pc.iceConnectionState === 'failed') {
+            document.getElementById('relay-status-text').textContent =
+              'Network blocked direct connection (TURN relay needed). Ask the host to check the TURN setup.';
+          }
+        });
+      }, 0);
 
       conn.on('open', () => {
         opened = true;
@@ -2819,5 +2851,636 @@
       });
     }
   </script>
+<!-- ===== KRILLION UPGRADE v6 =====
+     REMOVE the previous upgrade block, then paste this whole block right BEFORE </body>. -->
+<style>
+  /* 1. Bubble-free neon avatar with a diving-light cone */
+  .diver-inner { animation: none !important; }
+  .diver-shockwave { display: none; }
+  .diver-bubble-ring {
+    position: relative;
+    background: none !important; border: none !important; box-shadow: none !important;
+    backdrop-filter: none !important;
+    width: auto; height: auto; font-size: 3.6rem; line-height: 1;
+    filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 14px var(--aura, #38bdf8)) drop-shadow(0 10px 12px rgba(0,0,0,.55));
+    transition: filter .5s ease;
+    animation: swimIdle 3.4s ease-in-out infinite;
+  }
+  @keyframes swimIdle {
+    0%,100% { transform: translate(0,0) rotate(-5deg); }
+    50%     { transform: translate(0,-6px) rotate(5deg); }
+  }
+  /* soft light cone shining downward */
+  .diver-bubble-ring::before {
+    content: ""; position: absolute; top: 78%; left: 50%; z-index: -1;
+    width: 130px; height: 190px; transform: translateX(-50%);
+    clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, var(--aura, #38bdf8), transparent 85%);
+    opacity: .2; filter: blur(7px); pointer-events: none;
+  }
+  /* speed trail above the diver while plunging */
+  .diver-bubble-ring::after {
+    content: ""; position: absolute; left: 50%; bottom: 85%;
+    width: 14px; height: 0; transform: translateX(-50%); opacity: 0;
+    border-radius: 999px; filter: blur(3px);
+    background: linear-gradient(0deg, var(--aura, #38bdf8), transparent);
+  }
+  .diver-bubble-ring.plunging { animation: ringPlunge var(--ring-dur, 3s) ease-in-out forwards; }
+  .diver-bubble-ring.plunging::after { height: var(--trail, 0px); opacity: .8; transition: height .6s ease; }
+  .diver-bubble-ring.plunging::before { opacity: .45; }
+  @keyframes ringPlunge {
+    0%   { transform: scale(1) rotate(0); }
+    30%  { transform: scale(var(--sx), var(--sy)) rotate(0); }
+    75%  { transform: scale(var(--sx), var(--sy)) rotate(0); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .diver-tag {
+    margin-top: 10px; border: none;
+    background: linear-gradient(90deg, rgba(4,16,34,.9), rgba(12,50,90,.9));
+    box-shadow: 0 0 14px color-mix(in srgb, var(--aura, #38bdf8) 55%, transparent), 0 4px 14px rgba(0,0,0,.4);
+  }
+  #dive-vignette {
+    position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(2,6,23,.9) 100%);
+  }
+  /* avatar picker */
+  .avatar-btn { font-size: 2.1rem; background: linear-gradient(160deg, rgba(14,116,144,.35), rgba(6,20,38,.7)); }
+  .avatar-btn:hover { transform: translateY(-3px); border-color: #7dd3fc; }
+  .avatar-btn.selected { box-shadow: 0 0 22px rgba(56,189,248,.65); animation: swimIdle 2.6s ease-in-out infinite; }
+  /* v3: answer word dives */
+  #dive-word{position:fixed;left:50%;z-index:28;pointer-events:none;font-family:'Fredoka',sans-serif;font-weight:700;
+    letter-spacing:.03em;white-space:nowrap;color:var(--wc);transform:translate(-50%,-50%);
+    text-shadow:0 0 6px var(--wc),0 0 22px var(--wc),0 4px 14px rgba(0,0,0,.6)}
+  #dive-word::after{content:"";position:absolute;left:50%;bottom:100%;width:6px;height:var(--trail,0px);
+    transform:translateX(-50%);border-radius:99px;filter:blur(3px);opacity:.7;
+    background:linear-gradient(0deg,var(--wc),transparent)}
+  /* v3: living ocean background */
+  .krc{position:fixed;left:0;z-index:1;pointer-events:none;will-change:transform}
+  #seabed{position:fixed;left:0;right:0;bottom:-6px;height:90px;z-index:1;pointer-events:none;display:flex;
+    justify-content:space-around;align-items:flex-end;font-size:2.4rem;opacity:.3;transition:opacity 1.5s;
+    filter:drop-shadow(0 0 10px rgba(52,211,153,.4))}
+  /* v4 */
+  body.in-game #diver-stage{display:none}
+  body.in-game .app-shell{margin-top:86px}
+  body.in-game .app-shell.minimized-mode{margin-top:92px !important}
+  #depth-gauge{right:auto;left:16px}
+  @media (max-width:640px){#depth-gauge{left:6px;right:auto}}
+  .gauge-marker-dot{background:none !important;border:none !important;box-shadow:none !important;width:auto;height:auto;
+    font-size:1.55rem;line-height:1;filter:drop-shadow(0 0 6px #38bdf8)}
+  .gauge-marker.me .gauge-marker-dot{filter:drop-shadow(0 0 8px #fbbf24);transform:scale(1.25)}
+  #tier-pop-overlay{align-items:flex-start;padding-top:18vh}
+  #world{position:fixed;inset:0;z-index:1;pointer-events:none;will-change:transform}
+  .krc{position:absolute}
+  body.diving .glass-card,body.diving #depth-gauge{backdrop-filter:none !important;background:rgba(7,25,48,.92)}
+  /* v5 */
+  #screen-game.dive-hidden{opacity:0;visibility:hidden;transform:translateY(-14px) scale(.97);
+    transition:opacity .25s ease,transform .25s ease,visibility 0s .25s}
+  #screen-game{transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1),visibility 0s}
+  #round-details{margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(4,15,32,.6);
+    border:1px solid rgba(125,211,252,.22);animation:rdIn .5s ease both}
+  @keyframes rdIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .glass-card:not(.minimized-qna) #round-details{display:none}
+  .rd-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+  .rd-word{font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700}
+  .rd-tier{font-size:.74rem;font-weight:800;letter-spacing:.06em}
+  .rd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+  .rd-grid div{background:rgba(255,255,255,.06);border-radius:10px;padding:8px 4px}
+  .rd-grid b{display:block;font-size:1rem;color:#fff}
+  .rd-grid small{font-size:.64rem;color:#bae6fd;text-transform:uppercase}
+  .rd-zone{margin-top:10px;font-size:.82rem;color:#bae6fd;font-weight:600;text-align:center}
+  @media (max-width:540px){.rd-grid{grid-template-columns:repeat(2,1fr)}}
+  #zone-banner{position:fixed;left:50%;top:14vh;transform:translate(-50%,-10px);z-index:32;pointer-events:none;opacity:0;
+    text-align:center;padding:16px 28px;border-radius:20px;background:rgba(2,8,20,.9);border:2px solid var(--zc,#38bdf8);
+    box-shadow:0 0 40px var(--zc,#38bdf8);transition:opacity .4s ease,transform .4s ease;max-width:88vw}
+  #zone-banner.show{opacity:1;transform:translate(-50%,0)}
+  #zone-banner b{display:block;font-family:'Fredoka',sans-serif;font-size:1.6rem;color:var(--zc,#38bdf8)}
+  #zone-banner span{font-size:.9rem;color:#e0f2fe}
+  #deep-dark{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity 2s ease;
+    background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,12,.9) 100%)}
+  .orb{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle,var(--oc) 0%,transparent 70%);
+    animation:orbPulse var(--op,3s) ease-in-out infinite alternate}
+  @keyframes orbPulse{from{opacity:.25;transform:scale(.8)}to{opacity:.9;transform:scale(1.2)}}
+  .eyes{position:absolute;pointer-events:none;display:flex;gap:var(--eg,14px);animation:eyeBlink 4s infinite}
+  .eyes i{display:block;width:var(--es,6px);height:var(--es,6px);border-radius:50%;background:var(--ec);
+    box-shadow:0 0 10px var(--ec),0 0 22px var(--ec)}
+  @keyframes eyeBlink{0%,42%,48%,100%{opacity:1}45%{opacity:0}}
+  .landmark{position:absolute;pointer-events:none;opacity:.22;filter:grayscale(1) brightness(.6)}
+  /* v6 dive log */
+  #log-modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,8,20,.7);padding:16px}
+  #log-modal.show{display:flex}
+  .lg-panel{width:min(640px,100%);max-height:84vh;overflow:auto;background:rgba(7,25,48,.97);border:1px solid rgba(125,211,252,.35);border-radius:20px;padding:18px}
+  .lg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:sticky;top:-18px;padding:8px 0;background:rgba(7,25,48,.97);z-index:1}
+  .lg-sum{font-weight:700;color:#7dd3fc;margin-bottom:10px;font-size:.9rem}
+  .lg-item{background:rgba(255,255,255,.05);border:1px solid rgba(125,211,252,.16);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+  .lg-q{display:flex;gap:8px;align-items:center;margin-bottom:2px}
+  .lg-n{font-family:'Fredoka',sans-serif;font-weight:700;color:#fff}
+  .lg-cat{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#7dd3fc;background:rgba(14,165,233,.2);padding:2px 8px;border-radius:99px}
+  .lg-prompt{font-size:.9rem;color:#e0f2fe;margin-bottom:6px}
+  .lg-row{display:grid;grid-template-columns:1.3fr 1.3fr auto 44px;gap:8px;align-items:center;padding:5px 6px;border-radius:8px;font-size:.88rem}
+  .lg-row.me{background:rgba(251,191,36,.12);outline:1px solid rgba(251,191,36,.35)}
+  .lg-ans{font-weight:800;word-break:break-word}
+  .lg-tier{font-size:.64rem;font-weight:800;color:#bae6fd;letter-spacing:.04em}
+  .lg-pts{text-align:right;font-weight:800;color:#7dd3fc}
+  .lg-empty{color:#bae6fd;padding:10px;text-align:center}
+  #final-log{margin-bottom:20px}
+  #final-log h3{margin-bottom:10px}
+  @media (max-width:540px){.lg-row{grid-template-columns:1fr 1fr 44px}.lg-tier{display:none}}
+</style>
+<div id="dive-vignette"></div>
+
+<script>
+(() => {
+  /* ---------- 2. Cinematic dive ----------
+     +1 : slow, shallow, calm sink
+     +5 : fast accelerating plunge to the bottom, speed lines, dark vignette, then a slow float back */
+  const CFG = {
+    0: { dur: 0.9, peak: 0,   sx: 1,   sy: 1 },
+    1: { dur: 2.6, peak: 1.0, sx: 1.02, sy: 1.04 },
+    2: { dur: 3.0, peak: 2.5, sx: 1.04, sy: 1.1 },
+    3: { dur: 3.4, peak: 5,   sx: 1.06, sy: 1.18 },
+    4: { dur: 3.8, peak: 8,   sx: 1.08, sy: 1.28 },
+    5: { dur: 4.2, peak: 12,  sx: 1.1,  sy: 1.4 }
+  };
+  let anim = null, timer = null, worldRaf = 0;
+
+  const vignette = document.getElementById('dive-vignette');
+  const sc = document.createElement('canvas');
+  sc.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2';
+  document.body.appendChild(sc);
+  const sctx = sc.getContext('2d');
+
+  function stopWorld() {
+    cancelAnimationFrame(worldRaf);
+    sctx.clearRect(0, 0, sc.width, sc.height);
+    vignette.style.opacity = 0;
+  }
+
+  // drives particle speed, speed lines and vignette with one smooth bell curve
+  function runWorld(tier, color, durMs) {
+    stopWorld();
+    const cfg = CFG[tier];
+    if (!cfg.peak) return;
+    sc.width = window.innerWidth; sc.height = window.innerHeight;
+    const lines = Array.from({ length: 14 + tier * 10 }, () => ({
+      x: Math.random() * sc.width, y: Math.random() * sc.height, v: 0.6 + Math.random() * 0.8
+    }));
+    const t0 = performance.now();
+    (function frame(now) {
+      const p = Math.min(1, (now - t0) / durMs);
+      const b = Math.pow(Math.sin(Math.PI * p), 1.3);
+      diveBurstSpeed = cfg.peak * b;
+      sctx.clearRect(0, 0, sc.width, sc.height);
+      if (tier >= 2) {
+        sctx.strokeStyle = color; sctx.lineWidth = 1.5; sctx.globalAlpha = 0.35 * b;
+        lines.forEach(l => {
+          l.y -= l.v * cfg.peak * b * 2.2;
+          const len = 8 + cfg.peak * b * 5;
+          if (l.y + len < 0) { l.y = sc.height + 10; l.x = Math.random() * sc.width; }
+          sctx.beginPath(); sctx.moveTo(l.x, l.y); sctx.lineTo(l.x, l.y + len); sctx.stroke();
+        });
+        sctx.globalAlpha = 1;
+      }
+      vignette.style.opacity = tier >= 3 ? Math.min(0.75, b * (tier - 2) * 0.28) : 0;
+      if (p < 1) worldRaf = requestAnimationFrame(frame); else stopWorld();
+    })(t0);
+  }
+
+  function clearDive() {
+    clearTimeout(window.__krZoneT);
+    gameCard.classList.remove('dive-hidden');
+    if (window.__krWord) { window.__krWord.remove(); window.__krWord = null; }
+    if (anim) { anim.cancel(); anim = null; }
+    clearTimeout(timer);
+    stopWorld();
+    diverBubbleRing.classList.remove('plunging');
+    document.body.classList.remove('abyss-shake', 'diving');
+  }
+
+  const origReset = resetDiverForNextQuestion;
+  resetDiverForNextQuestion = function (total) {
+    clearDive();
+    diverInner.style.setProperty('--aura', '#38bdf8');
+    gaugeFill.style.transition = '';
+    origReset(total);
+  };
+
+  /* ---------- Avatar only lives on the depth bar during play ---------- */
+  /* ---------- Dive Log: every previous question + answer (single & multiplayer) ---------- */
+  let roundLog = [];
+  const logBtn = document.createElement('button');
+  logBtn.className = 'icon-btn'; logBtn.id = 'log-btn'; logBtn.style.display = 'none'; logBtn.textContent = '📜 Log';
+  document.querySelector('.top-actions').insertBefore(logBtn, document.getElementById('home-btn'));
+  const logModal = document.createElement('div');
+  logModal.id = 'log-modal';
+  logModal.innerHTML = '<div class="lg-panel"><div class="lg-top"><h3>📜 Dive Log</h3><button class="icon-btn" id="log-close">✕</button></div><div id="log-body"></div></div>';
+  document.body.appendChild(logModal);
+  const isMe = r => r.id === 'local' || (state.peer && r.id === state.peer.id);
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+
+  function renderLog(box) {
+    box.textContent = '';
+    const items = roundLog.filter(Boolean);
+    if (!items.length) { box.appendChild(mk('div', 'lg-empty', 'No questions answered yet. Answers appear here after each round.')); return; }
+    let mine = 0;
+    items.forEach(it => { const me = it.rows.find(isMe); if (me) mine += me.pts; });
+    box.appendChild(mk('div', 'lg-sum', `${items.length} question${items.length > 1 ? 's' : ''} • You scored ${mine} pts`));
+    items.forEach(it => {
+      const item = mk('div', 'lg-item');
+      const q = mk('div', 'lg-q');
+      q.append(mk('span', 'lg-n', 'Q' + it.n), mk('span', 'lg-cat', it.category));
+      item.append(q, mk('div', 'lg-prompt', it.prompt));
+      it.rows.forEach(r => {
+        const row = mk('div', 'lg-row' + (isMe(r) ? ' me' : ''));
+        const ans = mk('span', 'lg-ans', r.answer);
+        ans.style.color = r.tier ? TIER_META[r.tier].color : '#94a3b8';
+        row.append(mk('span', 'lg-who', `${r.avatar} ${r.name}`), ans,
+          mk('span', 'lg-tier', TIER_META[r.tier].shortTitle), mk('span', 'lg-pts', '+' + r.pts));
+        item.appendChild(row);
+      });
+      box.appendChild(item);
+    });
+  }
+
+  const openLog = () => { renderLog(document.getElementById('log-body')); logModal.classList.add('show'); };
+  const closeLog = () => logModal.classList.remove('show');
+  logBtn.addEventListener('click', openLog);
+  document.getElementById('log-close').addEventListener('click', closeLog);
+  logModal.addEventListener('click', e => { if (e.target === logModal) closeLog(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLog(); });
+
+  // record every round once answers are revealed (works for solo and for all players in multiplayer)
+  const origRender = renderQuestionStandingsTable;
+  renderQuestionStandingsTable = function (playersArr, reveal) {
+    origRender(playersArr, reveal);
+    if (!reveal) return;
+    const q = state.questions[state.currentIndex];
+    if (!q) return;
+    const rows = playersArr.filter(p => p.role === 'player').map(p => ({
+      id: p.id, name: p.name, avatar: p.avatar,
+      answer: p.answered ? (p.answer || '-') : '-', tier: p.tier || 0, pts: p.qPoints || 0
+    })).sort((a, b) => b.pts - a.pts);
+    roundLog[state.currentIndex] = { n: state.currentIndex + 1, category: q.category, prompt: q.prompt, rows };
+    if (logModal.classList.contains('show')) renderLog(document.getElementById('log-body'));
+  };
+
+  const origShowScreen = showScreen;
+  showScreen = function (id) {
+    origShowScreen(id);
+    document.body.classList.toggle('in-game', id === 'screen-game');
+    if (['screen-menu', 'screen-single-setup', 'screen-multi-entry', 'screen-lobby'].includes(id)) roundLog = [];
+    logBtn.style.display = (id === 'screen-game' || id === 'screen-results') ? 'inline-flex' : 'none';
+    if (id !== 'screen-game' && id !== 'screen-results') closeLog();
+  };
+
+  // full log on the final results screen
+  const origFinal = showFinalPodium;
+  showFinalPodium = function (ranked) {
+    origFinal(ranked);
+    const res = document.getElementById('screen-results');
+    let sec = document.getElementById('final-log');
+    if (!sec) { sec = document.createElement('div'); sec.id = 'final-log'; res.insertBefore(sec, document.getElementById('play-again-btn').parentElement); }
+    sec.textContent = '';
+    sec.appendChild(mk('h3', '', '📜 Dive Log'));
+    const body = mk('div', ''); sec.appendChild(body);
+    renderLog(body);
+  };
+
+  /* ---------- Lighter, frame-rate independent particle loop ---------- */
+  let lastF = performance.now();
+  animateOcean = function (now) {
+    now = now || performance.now();
+    const dt = Math.min(2.5, (now - lastF) / 16.67); lastF = now;
+    ctx.shadowBlur = 0;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const deep = currentDepthMeters >= 900;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.y += p.vy * dt - diveBurstSpeed * dt * (0.5 + p.r * 0.18);
+      p.x += p.vx * dt;
+      if (p.temp) p.alpha *= Math.pow(0.975, dt);
+      if (p.y < -25 || (p.temp && p.alpha < 0.05)) {
+        if (p.temp) { particles.splice(i, 1); continue; }
+        p.y = canvas.height + 15; p.x = Math.random() * canvas.width;
+      }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832);
+      ctx.fillStyle = p.tint ? `${p.tint}${p.alpha})` : deep ? `rgba(192,132,252,${p.alpha})` : `rgba(224,242,254,${p.alpha})`;
+      ctx.fill();
+    }
+    diveBurstSpeed = diveBurstSpeed > 0.05 ? diveBurstSpeed * Math.pow(0.93, dt) : 0;
+    requestAnimationFrame(animateOcean);
+  };
+
+  scheduleAutoAdvance = function () {
+    clearTimeout(state.autoAdvanceTimeout);
+    const bar = document.getElementById('auto-advance-bar');
+    let sec = 3;
+    bar.textContent = `Next question in ${sec}s...`;
+    const iv = setInterval(() => { sec--; if (sec > 0) bar.textContent = `Next question in ${sec}s...`; else clearInterval(iv); }, 1000);
+    state.autoAdvanceTimeout = setTimeout(() => { clearInterval(iv); goToNextQuestionOrFinish(); }, 3200);
+  };
+
+  /* ---------- The answer word stays centered; the camera dives with it ---------- */
+  const FS = ['2rem', '2.2rem', '2.6rem', '3rem', '3.5rem', '4rem'];
+
+  triggerCleanDiveSequence = function (tier, earnedPts, newTotalDepth, statusNoteText, onComplete) {
+    const meta = TIER_META[tier], cfg = CFG[tier];
+    const inp = document.getElementById('answer-input');
+    const rect = inp.getBoundingClientRect();           // measure before the card collapses
+    const startY = rect.height ? rect.top + rect.height / 2 : 260;
+    let word = (state.mode === 'single' && state.players.local && state.players.local.answered)
+      ? state.players.local.answer : inp.value;
+    word = String(word || '').trim();
+    if (tier === 0 || !word) word = "Time's up";
+    word = word.charAt(0).toUpperCase() + word.slice(1);
+
+    clearDive();
+    gameCard.classList.add('dive-hidden');
+    showTierPopup(tier, earnedPts, meta.depthGain);
+
+    appShell.classList.add('minimized-mode');
+    gameCard.classList.add('minimized-qna');
+    document.getElementById('mini-q-label').textContent = `Q${state.currentIndex + 1}/${state.questions.length}`;
+    const badge = document.getElementById('mini-tier-badge');
+    badge.textContent = meta.label; badge.style.color = meta.color;
+    document.getElementById('mini-status-note').textContent = statusNoteText || '';
+
+    diverTag.textContent = `${state.name} • Total: ${newTotalDepth}m`;
+    gaugeFill.style.transition = `height ${cfg.dur}s cubic-bezier(.22,1,.36,1)`;
+    updateDepthGaugeUI(newTotalDepth, Object.values(state.players));
+
+    const el = document.createElement('div');
+    el.id = 'dive-word';
+    el.textContent = word;
+    el.style.cssText = `top:50%;font-size:${FS[tier]};--wc:${meta.color};--trail:${tier * 18}px`;
+    document.body.appendChild(el);
+    window.__krWord = el;
+
+    const dy = startY - window.innerHeight / 2;
+    const intro = 550, out = 700, dive = Math.max(900, cfg.dur * 1000), total = intro + dive + out;
+    const Y = (y, sx, sy) => `translate(-50%,-50%) translateY(${y}px) scale(${sx},${sy})`;
+    anim = el.animate([
+      { transform: Y(dy, .7, .7), opacity: 0, filter: 'blur(0px)', offset: 0, easing: 'cubic-bezier(.2,.9,.3,1.15)' },
+      { transform: Y(0, 1.12, 1.12), opacity: 1, filter: 'blur(0px)', offset: intro / total, easing: 'ease-in-out' },
+      { transform: Y(0, cfg.sx, cfg.sy), opacity: 1, filter: 'blur(0px)', offset: (intro + dive * .88) / total, easing: 'ease-in' },
+      { transform: Y(0, .9, 1), opacity: 0, filter: 'blur(8px)', offset: 1 }
+    ], { duration: total, fill: 'forwards' });
+    anim.onfinish = () => { el.remove(); if (window.__krWord === el) window.__krWord = null; };
+
+    if (tier > 0) {
+      document.body.classList.add('diving');
+      setTimeout(() => {
+        spawnTierDiveEffects(tier, window.innerHeight * .6);
+        runWorld(tier, meta.color, dive);
+        if (tier >= 4) { spawnAmbient(true, true, true); document.body.classList.add('abyss-shake'); }
+      }, intro - 100);
+    }
+
+    const zNow = zoneInfo(newTotalDepth), zPrev = zoneInfo(newTotalDepth - meta.depthGain);
+    if (tier > 0 && zNow !== zPrev) window.__krZoneT = setTimeout(() => showZoneBanner(zNow), intro + dive * .3);
+
+    timer = setTimeout(() => {
+      document.body.classList.remove('abyss-shake', 'diving');
+      const totalScore = state.mode === 'single' ? state.score : state.score + earnedPts;
+      fillRoundDetails(word, tier, meta, earnedPts, newTotalDepth, totalScore);
+      refreshDeep();
+      gameCard.classList.remove('dive-hidden');
+      document.getElementById('zone-banner').classList.remove('show');
+      if (typeof onComplete === 'function') onComplete();
+    }, total + 150);
+  };
+
+  /* ---------- Living ocean that scrolls with the camera ---------- */
+  const ZONES = {
+    shallow: ['🐟', '🐠', '🐡', '🐢', '🐬', '🐟', '🐠', '🦀'],
+    mid:     ['🐠', '🦈', '🐬', '🐢', '🦑', '🐙', '🪼', '🐋'],
+    deep:    ['🦑', '🐙', '🪼', '🦈', '🐋', '🦞', '🪼']
+  };
+  const SCHOOL = ['🐟', '🐠', '🐡'], BIG = ['🐋', '🦈'], GLOW = ['🪼', '🦑', '🐙'];
+  const zoneNow = () => currentDepthMeters > 1500 ? 'deep' : currentDepthMeters > 600 ? 'mid' : 'shallow';
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const live = new Set();
+  let camY = 0;
+
+  const world = document.createElement('div');
+  world.id = 'world';
+  document.body.appendChild(world);
+  const seabed = document.createElement('div');
+  seabed.id = 'seabed';
+  seabed.textContent = '🪸🌿🐚🪸🌿🦀🪸🌿🐚🪸🌿';
+  document.body.appendChild(seabed);
+
+  function makeCreature(emoji, size, far, flip) {
+    const el = document.createElement('div');
+    el.className = 'krc';
+    const glow = zoneNow() === 'deep' && GLOW.includes(emoji);
+    el.style.cssText = `font-size:${size}px;opacity:${.6 - far * .35}` +
+      (glow ? ';text-shadow:0 0 16px #67e8f9,0 0 32px #a78bfa' : '');
+    const fw = document.createElement('div');
+    fw.style.transform = flip ? 'scaleX(-1)' : 'none';
+    const bob = document.createElement('div');
+    const n = SCHOOL.includes(emoji) ? Math.floor(rnd(3, 7)) : 1;
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('span');
+      s.textContent = emoji;
+      s.style.cssText = `display:inline-block;margin-left:${i ? -size * .25 : 0}px;transform:translateY(${(i % 3 - 1) * size * .45}px)`;
+      bob.appendChild(s);
+    }
+    bob.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${rnd(-16, -6)}px)` }],
+      { duration: rnd(2200, 4200), iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+    fw.appendChild(bob); el.appendChild(fw);
+    return el;
+  }
+
+  function spawnAmbient(warm, below, forceBig) {
+    if (!forceBig && (live.size >= (diveBurstSpeed > 1 ? 26 : 9) || document.hidden)) return;
+    const e = forceBig ? pick(BIG) : pick(ZONES[zoneNow()]);
+    const big = BIG.includes(e), far = forceBig ? .1 : Math.random();
+    const size = big ? rnd(110, 190) * (1 - far * .3) : rnd(26, 56) * (1 - far * .35);
+    const dir = Math.random() < .5 ? -1 : 1;
+    const el = makeCreature(e, size, far, dir > 0);
+    const top = camY + (below ? window.innerHeight + rnd(30, 260) : rnd(.06, .8) * window.innerHeight);
+    el.style.top = top + 'px';
+    world.appendChild(el);
+    const w = window.innerWidth, a0 = -size * 7, a1 = w + 40;
+    const dur = (big ? rnd(38000, 60000) : rnd(16000, 34000)) * (1 + far * .6);
+    const a = el.animate([{ transform: `translateX(${dir > 0 ? a0 : a1}px)` }, { transform: `translateX(${dir > 0 ? a1 : a0}px)` }],
+      { duration: dur, easing: 'linear', fill: 'forwards' });
+    if (warm || below) a.currentTime = rnd(.15, .6) * dur;
+    a._top = top; a._el = el;
+    live.add(a);
+    a.onfinish = () => { el.remove(); live.delete(a); };
+  }
+
+  // camera: the whole sea scrolls up while the word dives, new creatures rise from below
+  let lastC = performance.now();
+  (function cam(now) {
+    const dt = Math.min(2.5, (now - lastC) / 16.67); lastC = now;
+    camY += (0.15 + diveBurstSpeed * 2.6) * dt;
+    world.style.transform = `translate3d(0,${-camY}px,0)`;
+    if (diveBurstSpeed > 1.2 && Math.random() < diveBurstSpeed * 0.012 * dt) spawnAmbient(false, true);
+    if (diveBurstSpeed > 1.2 && Math.random() < diveBurstSpeed * 0.01 * dt) spawnDeco(true);
+    requestAnimationFrame(cam);
+  })(lastC);
+
+  /* ---------- Ocean zones + round details ---------- */
+  const ZONE_LIST = [
+    { min: 0,    name: 'Sunlight Zone',  icon: '☀️', color: '#38bdf8', desc: 'Bright water full of life.' },
+    { min: 300,  name: 'Twilight Zone',  icon: '🌅', color: '#818cf8', desc: 'Sunlight fades. Lanternfish start to glow.' },
+    { min: 1000, name: 'Midnight Zone',  icon: '🌑', color: '#c084fc', desc: 'No sunlight. Creatures make their own light.' },
+    { min: 2500, name: 'Abyssal Zone',   icon: '🦑', color: '#f472b6', desc: 'Near-freezing water and crushing pressure.' },
+    { min: 5000, name: 'Hadal Trench',   icon: '💀', color: '#fbbf24', desc: 'The deepest trenches. Almost nothing lives here.' }
+  ];
+  function zoneInfo(d) { let z = ZONE_LIST[0]; for (const x of ZONE_LIST) if (d >= x.min) z = x; return z; }
+
+  const banner = document.createElement('div');
+  banner.id = 'zone-banner';
+  banner.innerHTML = '<b></b><span></span>';
+  document.body.appendChild(banner);
+  let bannerT;
+  function showZoneBanner(z) {
+    banner.style.setProperty('--zc', z.color);
+    banner.querySelector('b').textContent = `${z.icon} ${z.name}`;
+    banner.querySelector('span').textContent = `${z.min.toLocaleString()}m+ • ${z.desc}`;
+    banner.classList.add('show');
+    clearTimeout(bannerT);
+    bannerT = setTimeout(() => banner.classList.remove('show'), 2200);
+  }
+
+  function fillRoundDetails(word, tier, meta, pts, depth, score) {
+    let box = document.getElementById('round-details');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'round-details';
+      gameCard.insertBefore(box, document.getElementById('q-table-card'));
+    }
+    const z = zoneInfo(depth), atm = Math.round(depth / 10 + 1);
+    box.innerHTML = `<div class="rd-head"><span class="rd-word"></span><span class="rd-tier" style="color:${meta.color}">${meta.shortTitle}</span></div>
+      <div class="rd-grid">
+        <div><b>+${pts}</b><small>points</small></div>
+        <div><b>${tier ? '⬇ ' + meta.depthGain : '0'}m</b><small>dove</small></div>
+        <div><b>${score}</b><small>total pts</small></div>
+        <div><b>${depth.toLocaleString()}m</b><small>total depth</small></div>
+      </div>
+      <div class="rd-zone">${z.icon} ${z.name} • about ${atm.toLocaleString()} atm pressure</div>`;
+    const w = box.querySelector('.rd-word');
+    w.textContent = word; w.style.color = meta.color;
+    box.style.animation = 'none'; void box.offsetWidth; box.style.animation = '';
+  }
+
+  /* ---------- Super-deep details: darkness, glowing orbs, eyes, wrecks ---------- */
+  const deco = new Set();
+  const deepDark = document.createElement('div');
+  deepDark.id = 'deep-dark';
+  document.body.appendChild(deepDark);
+  const ORB = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6'];
+  const WRECKS = ['🚢', '⚓', '🏛️', '🗿', '🦴'];
+  let seabedKey = '';
+
+  function refreshDeep() {
+    const d = currentDepthMeters;
+    deepDark.style.opacity = Math.min(.7, Math.max(0, (d - 1200) / 4500));
+    const key = d > 2500 ? 'deep' : d > 1000 ? 'mid' : 'top';
+    if (key !== seabedKey) {
+      seabedKey = key;
+      seabed.textContent = key === 'deep' ? '🪨🌋🪨🦠🪨🌋🪨🦠🪨🌋🪨' : key === 'mid' ? '🪨🪸🐚🪨🦀🪸🪨🐚🪨🪸🪨' : '🪸🌿🐚🪸🌿🦀🪸🌿🐚🪸🌿';
+    }
+    seabed.style.opacity = d > 1500 ? .9 : d > 600 ? .55 : .3;
+  }
+
+  function spawnDeco(below) {
+    const d = currentDepthMeters;
+    if (d < 1500 || document.hidden || deco.size >= (diveBurstSpeed > 1 ? 30 : 14)) return;
+    const top = camY + (below ? window.innerHeight + rnd(30, 300) : rnd(.05, .9) * window.innerHeight);
+    const r = Math.random();
+    const el = document.createElement('div');
+    el.style.left = rnd(2, 94) + 'vw'; el.style.top = top + 'px';
+    if (r < .6 || d < 2500) {                       // glowing plankton orbs
+      const s = rnd(10, 34);
+      el.className = 'orb';
+      el.style.cssText += `;width:${s}px;height:${s}px;--oc:${pick(ORB)};--op:${rnd(2, 5)}s`;
+      el.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${rnd(-50, 50)}px)` }],
+        { duration: rnd(6000, 12000), iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+    } else if (r < .85) {                           // watching eyes in the dark
+      const c = pick(['#fbbf24', '#f87171', '#67e8f9']);
+      el.className = 'eyes';
+      el.style.cssText += `;--ec:${c};--es:${rnd(5, 9)}px;--eg:${rnd(12, 22)}px;animation-delay:${rnd(0, 3)}s`;
+      el.innerHTML = '<i></i><i></i>';
+    } else {                                        // sunken wrecks and ruins
+      el.className = 'landmark';
+      el.textContent = pick(WRECKS);
+      el.style.fontSize = rnd(90, 160) + 'px';
+    }
+    world.appendChild(el);
+    deco.add({ el, top });
+  }
+
+  for (let i = 0; i < 6; i++) spawnAmbient(true);
+  setInterval(() => {
+    live.forEach(a => { if (a._top < camY - 500) { a.cancel(); a._el.remove(); live.delete(a); } });
+    spawnAmbient(false); spawnDeco(false);
+    deco.forEach(d => { if (d.top < camY - 500) { d.el.remove(); deco.delete(d); } });
+    refreshDeep();
+  }, 2000);
+
+  /* ---------- 3. Legit rarity ----------
+     a) common answers always win over rare duplicates (checks tier 1 -> 5)
+     b) exact matches are checked before typo-tolerant matches
+     c) answers re-tiered by how often people would actually say them */
+  evaluateAnswer = function (q, raw) {
+    const cleaned = normalizePhrase(raw);
+    if (!cleaned) return { tier: 0, points: 0, matched: '' };
+    const squash = s => s.replace(/[\s-]/g, '');
+    for (let t = 1; t <= 5; t++) {
+      for (const c of q.answers[t] || []) {
+        const n = normalizePhrase(c);
+        if (cleaned === n || squash(cleaned) === squash(n)) return { tier: t, points: t, matched: c };
+      }
+    }
+    for (let t = 1; t <= 5; t++) {
+      for (const c of q.answers[t] || []) {
+        const n = normalizePhrase(c);
+        if (cleaned.length >= 5 && Math.abs(cleaned.length - n.length) <= 1 && levenshteinDist(cleaned, n) === 1)
+          return { tier: t, points: t, matched: c };
+      }
+    }
+    return { tier: 0, points: 0, matched: raw.trim() };
+  };
+
+  // word: tier  (0 = remove from this question)
+  const FIX = {
+    'Fruits': { plum:2, raspberry:2, blackberry:2, blueberry:2, melon:2, grapefruit:2, tangerine:2,
+      pomegranate:3, fig:3, 'passion fruit':3, jackfruit:3, apricot:3, nectarine:3, 'dragon fruit':3,
+      kumquat:4, soursop:4 },
+    'Colors': { beige:3, maroon:3, turquoise:3, indigo:3, tan:2, rose:2 },
+    'Land Animals': { sheep:2, donkey:2, camel:2, gorilla:2, hamster:2, panda:2, koala:2, kangaroo:2, zebra:2,
+      orangutan:4, capybara:4, meerkat:4, armadillo:4, axolotl:0, turtle:0 },
+    'World Geography': { mexico:2, taiwan:2, pakistan:3, bangladesh:3, iran:3, israel:3, ukraine:3,
+      greece:3, portugal:3, poland:3, ireland:3, brunei:4, nepal:4, 'sri lanka':4, kenya:4, nigeria:4,
+      finland:4, denmark:4, austria:4, belgium:4, croatia:4 },
+    'Marine Life': { salmon:1, tuna:1, clownfish:2, orca:2, 'killer whale':2, narwhal:3, beluga:3,
+      piranha:3, 'sea cucumber':4 },
+    'Food & Dishes': { salad:1, noodle:1, 'hot dog':2, sushi:2, ramen:2, steak:2, tofu:3, tacos:3,
+      burrito:3, croissant:3, kebab:3, pho:4, hummus:4, falafel:4 },
+    'Drinks & Beverages': { chai:3, cider:3, oolong:4 },
+    'Sports & Games': { cricket:2, rugby:3, snooker:3, billiards:3, equestrian:4 },
+    'Transport & Vehicles': { raft:3, barge:4, maglev:4 },
+    'School & Science': { accounting:2, astronomy:3, geology:3, zoology:3, optics:4 },
+    'Musical Instruments': { xylophone:2, accordion:3, sitar:4, gong:4 },
+    'Clothing & Footwear': { cap:2, poncho:3, kimono:3, tuxedo:3, kilt:4, sari:4, sarong:4 },
+    'Birds': { emu:3, 'blue jay':3, ibis:4, hornbill:4 },
+    'Planets & Space': { sirius:4 }
+  };
+  Object.entries(FIX).forEach(([cat, words]) => {
+    const q = QUESTIONS.find(x => x.category === cat);
+    if (!q) return;
+    Object.entries(words).forEach(([w, tier]) => {
+      for (let t = 1; t <= 5; t++) q.answers[t] = (q.answers[t] || []).filter(a => a !== w);
+      if (tier > 0) (q.answers[tier] = q.answers[tier] || []).push(w);
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
