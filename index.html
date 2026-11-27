@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>KRILLION — Deep Sea Rarity Trivia</title>
   <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -552,6 +552,11 @@
       margin-bottom: 8px;
     }
 
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    button, input, a, label { touch-action: manipulation; }
+    /* iOS Safari zooms into any input whose font-size is under 16px. */
+    input, textarea, select { font-size: 16px; }
+
     .text-input {
       width: 100%;
       background: rgba(6, 20, 38, 0.72);
@@ -560,9 +565,11 @@
       padding: 13px 16px;
       color: #fff;
       font-family: inherit;
-      font-size: 1.05rem;
+      font-size: max(16px, 1.05rem);
       font-weight: 600;
       outline: none;
+      -webkit-appearance: none;
+      appearance: none;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
@@ -1150,7 +1157,7 @@
             <h3 style="margin-bottom:10px;">🧭 Join a Room</h3>
             <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Enter the room code shared by your host.</p>
             <label class="field-label" for="join-code-input">Room Code</label>
-            <input id="join-code-input" class="text-input" type="text" maxlength="8" placeholder="e.g. KRL42" style="text-transform:uppercase;letter-spacing:0.15em;text-align:center;font-size:1.3rem;" />
+            <input id="join-code-input" class="text-input" type="text" maxlength="8" placeholder="e.g. KRL42" style="text-transform:uppercase;letter-spacing:0.15em;text-align:center;font-size:max(16px,1.3rem);" />
           </div>
           <div style="margin-top:16px;">
             <button class="primary-btn" id="mp-join-btn">Join Room</button>
@@ -1794,6 +1801,8 @@
       timeLeft: 30,
       lockedCurrent: false,
       isEvaluating: false,
+      roundRevealed: false,
+      diveDone: false,
 
       peer: null,
       isHost: false,
@@ -1887,6 +1896,8 @@
     function cleanupAndGoHome() {
       clearInterval(state.timerInterval);
       clearTimeout(state.autoAdvanceTimeout);
+      clearTimeout(state.revealCapTimeout);
+      clearInterval(state.revealCountdownInterval);
       if (state.peer) {
         try { state.peer.destroy(); } catch (e) {}
         state.peer = null;
@@ -2068,6 +2079,11 @@
       const q = state.questions[state.currentIndex];
       state.lockedCurrent = false;
       state.isEvaluating = false;
+      state.roundRevealed = false;
+      state.diveDone = false;
+      state.countdownStarted = false;
+      clearTimeout(state.revealCapTimeout);
+      clearInterval(state.revealCountdownInterval);
       state.timeLeft = state.timeLimit;
 
       if (state.mode === 'single') {
@@ -2195,8 +2211,16 @@
           points: evalRes.points
         };
 
+        state.diveDone = false;
         triggerCleanDiveSequence(evalRes.tier, evalRes.points, nextTotalDepth, 'Waiting for other players...', () => {
-          renderQuestionStandingsTable(Object.values(state.players), false);
+          state.diveDone = true;
+          if (state.roundRevealed) {
+            document.getElementById('mini-status-note').textContent = 'All Players Finished!';
+            renderQuestionStandingsTable(Object.values(state.players), true);
+            reportTableShown();
+          } else {
+            renderQuestionStandingsTable(Object.values(state.players), false);
+          }
         });
 
         if (state.isHost) {
@@ -2418,6 +2442,7 @@
           delete state.players[conn.peer];
           state.connections = state.connections.filter(c => c !== conn);
           broadcastLobbyState();
+          if (state.roundRevealed && !state.countdownStarted) hostMarkTableShown(state.peer.id);
         });
       });
 
@@ -2613,6 +2638,8 @@
         broadcastLobbyState();
       } else if (data.type === 'SUBMIT_ANSWER') {
         hostProcessSubmission(data);
+      } else if (data.type === 'TABLE_SHOWN') {
+        hostMarkTableShown(data.playerId);
       }
     }
 
@@ -2717,6 +2744,11 @@
     }
 
     function hostFinalizeRound() {
+      if (state.roundRevealed) return;
+      state.tableAcks = new Set();
+      clearTimeout(state.revealCapTimeout);
+      // Safety net: if someone's screen is slow, still start the countdown.
+      state.revealCapTimeout = setTimeout(hostStartRevealCountdown, 7000);
       Object.values(state.players).forEach(p => {
         if (p.role === 'player' && !p.answered) {
           p.answered = true;
@@ -2753,7 +2785,7 @@
       } else if (data.type === 'QUESTION_PROGRESS') {
         state.players = data.players;
         updateDepthGaugeUI(state.totalDepth, Object.values(state.players));
-        if (state.lockedCurrent || (state.isHost && state.hostRole === 'spectator')) {
+        if (!state.roundRevealed && (state.lockedCurrent || (state.isHost && state.hostRole === 'spectator'))) {
           renderQuestionStandingsTable(Object.values(state.players), false);
         }
       } else if (data.type === 'ROUND_REVEAL') {
@@ -2766,34 +2798,82 @@
           document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
         }
         revealMultiplayerQuestionTable();
+      } else if (data.type === 'COUNTDOWN') {
+        document.getElementById('auto-advance-bar').textContent = `Next question in ${data.sec}s...`;
       } else if (data.type === 'GAME_OVER') {
         showFinalPodium(data.rankings);
       }
     }
 
     function revealMultiplayerQuestionTable() {
+      state.roundRevealed = true;
       const me = state.players[state.peer.id];
       const tier = me ? (me.tier || 0) : 0;
       const qPts = me ? (me.qPoints || 0) : 0;
 
       if (!state.lockedCurrent) {
+        // This player never answered (time ran out): play the time-up dive first.
         state.lockedCurrent = true;
         document.getElementById('answer-input').disabled = true;
         document.getElementById('answer-submit-btn').disabled = true;
+        state.diveDone = false;
         triggerCleanDiveSequence(tier, qPts, state.totalDepth, 'All Players Finished!', () => {
+          state.diveDone = true;
           renderQuestionStandingsTable(Object.values(state.players), true);
+          reportTableShown();
         });
-      } else {
+      } else if (state.diveDone) {
         document.getElementById('mini-status-note').textContent = 'All Players Finished!';
         updateDepthGaugeUI(state.totalDepth, Object.values(state.players));
         renderQuestionStandingsTable(Object.values(state.players), true);
+        reportTableShown();
       }
+      // else: this player's own dive is still playing; its callback shows the table.
 
+      document.getElementById('auto-advance-bar').textContent =
+        'Everyone finished! Check out all the answers...';
+    }
+
+    // Each player tells the host once the revealed table is actually on screen.
+    function reportTableShown() {
       if (state.isHost) {
-        scheduleAutoAdvance();
-      } else {
-        document.getElementById('auto-advance-bar').textContent = 'Answers revealed! Host is advancing to the next question...';
+        hostMarkTableShown(state.peer.id);
+      } else if (state.hostConn && state.hostConn.open) {
+        state.hostConn.send({ type: 'TABLE_SHOWN', playerId: state.peer.id });
       }
+    }
+
+    function hostMarkTableShown(playerId) {
+      if (!state.isHost || !state.roundRevealed || state.countdownStarted) return;
+      if (!state.tableAcks) state.tableAcks = new Set();
+      state.tableAcks.add(playerId);
+      const everyone = Object.keys(state.players);
+      if (everyone.every(id => state.tableAcks.has(id))) hostStartRevealCountdown();
+    }
+
+    // 5 seconds with everyone looking at the table, then the host moves on.
+    const REVEAL_SECONDS = 5;
+    function hostStartRevealCountdown() {
+      if (!state.isHost || state.countdownStarted) return;
+      state.countdownStarted = true;
+      clearTimeout(state.revealCapTimeout);
+      clearInterval(state.revealCountdownInterval);
+      let sec = REVEAL_SECONDS;
+      const bar = document.getElementById('auto-advance-bar');
+      const tick = () => {
+        bar.textContent = `Next question in ${sec}s...`;
+        broadcastToGuests({ type: 'COUNTDOWN', sec });
+      };
+      tick();
+      state.revealCountdownInterval = setInterval(() => {
+        sec--;
+        if (sec > 0) {
+          tick();
+        } else {
+          clearInterval(state.revealCountdownInterval);
+          goToNextQuestionOrFinish();
+        }
+      }, 1000);
     }
 
     function getSortedMultiplayerPlayers() {
