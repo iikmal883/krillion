@@ -1241,7 +1241,7 @@
 
         <div id="answer-input-area">
           <form class="answer-form" id="answer-form" autocomplete="off">
-            <input id="answer-input" class="text-input" type="text" placeholder="Type an English answer..." />
+            <textarea id="answer-input" class="text-input" rows="1" maxlength="60" placeholder="Type an English answer..." enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
             <button type="submit" id="answer-submit-btn" class="primary-btn" style="width:auto;padding:13px 26px;">Dive! 🤿</button>
           </form>
           <div class="retry-notice" id="retry-notice"></div>
@@ -1902,6 +1902,7 @@
         document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         state.avatar = av.emoji;
+        state.avatarPicked = true;
         syncProfileFromInputs();
       };
       avatarGrid.appendChild(btn);
@@ -1931,6 +1932,7 @@
     });
 
     function cleanupAndGoHome() {
+      exitInviteMode();
       clearInterval(state.timerInterval);
       clearTimeout(state.autoAdvanceTimeout);
       clearTimeout(state.revealCapTimeout);
@@ -2149,6 +2151,7 @@
       const ansInput = document.getElementById('answer-input');
       const submitBtn = document.getElementById('answer-submit-btn');
       ansInput.value = '';
+      growAnswer();
       ansInput.disabled = false;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Dive! 🤿';
@@ -2174,6 +2177,25 @@
       fill.style.width = `${pct}%`;
       fill.style.background = pct < 28 ? 'linear-gradient(90deg, #f43f5e, #fb923c)' : 'linear-gradient(90deg, #34d399, #38bdf8)';
     }
+
+    function growAnswer() {
+      const t = document.getElementById('answer-input');
+      t.style.height = 'auto';
+      t.style.height = Math.min(t.scrollHeight + 2, 130) + 'px';
+    }
+    (function () {
+      const t = document.getElementById('answer-input');
+      t.addEventListener('input', () => {
+        if (/[\r\n]/.test(t.value)) t.value = t.value.replace(/[\r\n]+/g, ' ');
+        growAnswer();
+      });
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          document.getElementById('answer-form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      });
+    })();
 
     document.getElementById('answer-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -2212,6 +2234,7 @@
         submitBtn.disabled = false;
         submitBtn.textContent = 'Dive! 🤿';
         ansInput.value = '';
+        growAnswer();
         ansInput.focus();
         return;
       }
@@ -2431,20 +2454,81 @@
       return code;
     }
 
+    // ---- Invite link flow: the guest must type a name and pick an avatar first ----
+    function enterInviteMode(code) {
+      state.mode = 'multi';          // IMPORTANT: link guests must play in multiplayer mode
+      state.inviteCode = code;
+      state.avatarPicked = false;
+      document.getElementById('join-code-input').value = code;
+
+      const nameInput = document.getElementById('player-name-input');
+      nameInput.value = '';
+      nameInput.placeholder = 'Type your diver name';
+      document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
+
+      const modeBlock = document.querySelector('#screen-menu .mode-grid').parentElement;
+      modeBlock.style.display = 'none';
+
+      let panel = document.getElementById('invite-panel');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'invite-panel';
+        modeBlock.parentElement.insertBefore(panel, modeBlock);
+      }
+      panel.innerHTML = `
+        <div class="invite-title">🎟️ You're invited to a room!</div>
+        <div class="invite-code-line">Room code: <strong>${esc(code)}</strong></div>
+        <p class="invite-help">Type your diver name and tap an avatar, then join.</p>
+        <button class="primary-btn" id="invite-join-btn" type="button">🌊 Join Room ${esc(code)}</button>`;
+      document.getElementById('invite-join-btn').addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        if (!name) {
+          showToast('Please enter your diver name first.');
+          nameInput.focus();
+          return;
+        }
+        if (!state.avatarPicked) {
+          showToast('Please choose your avatar first.');
+          document.getElementById('avatar-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        syncProfileFromInputs();
+        state.mode = 'multi';
+        startGuestJoinFlow(state.inviteCode);
+      });
+      showScreen('screen-menu');
+      showToast(`Invite loaded! Enter your name & choose an avatar.`);
+    }
+
+    function exitInviteMode() {
+      if (!state.inviteCode) return;
+      state.inviteCode = null;
+      const panel = document.getElementById('invite-panel');
+      if (panel) panel.remove();
+      const modeBlock = document.querySelector('#screen-menu .mode-grid').parentElement;
+      modeBlock.style.display = '';
+      const nameInput = document.getElementById('player-name-input');
+      nameInput.placeholder = 'e.g. Captain Coral';
+      if (!nameInput.value.trim()) nameInput.value = 'Diver';
+      if (!state.avatarPicked) {
+        const first = document.querySelector('.avatar-btn');
+        if (first) first.classList.add('selected');
+        state.avatar = AVATARS[0].emoji;
+      }
+      try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room');
       if (roomParam) {
         const cleanCode = roomParam.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-        if (cleanCode) {
-          document.getElementById('join-code-input').value = cleanCode;
-          showScreen('screen-multi-entry');
-          showToast(`Invite code ${cleanCode} loaded! Enter your name & click Join.`);
-        }
+        if (cleanCode) enterInviteMode(cleanCode);
       }
     });
 
     function createHostPeerWithCode(code) {
+      state.mode = 'multi';
       const fullPeerId = ROOM_PREFIX + code;
       if (state.peer) {
         try { state.peer.destroy(); } catch (e) {}
@@ -2562,6 +2646,7 @@
     });
 
     function startGuestJoinFlow(cleanCode) {
+      state.mode = 'multi';
       state.isHost = false;
       state.roomCode = cleanCode;
 
@@ -3371,6 +3456,18 @@
     el.style.cssText = `top:50%;font-size:${FS[tier]};--wc:${meta.color};--trail:${tier * 18}px`;
     document.body.appendChild(el);
     window.__krWord = el;
+    // long answers: wrap onto new lines so the word never leaves the screen
+    {
+      const avail = window.innerWidth * 0.9;
+      const sMax = Math.max(1.12, cfg.sx || 1);
+      if (el.getBoundingClientRect().width * sMax > avail) {
+        el.style.whiteSpace = 'normal';
+        el.style.textAlign = 'center';
+        el.style.lineHeight = '1.1';
+        el.style.overflowWrap = 'anywhere';
+        el.style.width = Math.floor(avail / sMax) + 'px';
+      }
+    }
 
     const dy = startY - window.innerHeight / 2;
     const intro = 550, out = 700, dive = Math.max(900, cfg.dur * 1000), total = intro + dive + out;
@@ -3687,6 +3784,34 @@
     .final-table { font-size: .85rem; }
     .final-table th, .final-table td { padding: 8px 8px; }
     #start-countdown .sc-num { font-size: 7rem; }
+  }
+</style>
+
+<style id="krillion-v8">
+  /* invite panel */
+  #invite-panel { background: rgba(251,191,36,.10); border: 1px solid rgba(251,191,36,.4); border-radius: 18px; padding: 16px; margin: 4px 0 18px; text-align: center; }
+  #invite-panel .invite-title { font-family: 'Fredoka', sans-serif; font-size: 1.3rem; font-weight: 700; color: #fde68a; }
+  #invite-panel .invite-code-line { margin-top: 4px; color: #e0f2fe; }
+  #invite-panel .invite-code-line strong { color: #fbbf24; letter-spacing: .15em; font-size: 1.15rem; }
+  #invite-panel .invite-help { color: var(--text-muted); font-size: .88rem; margin: 8px 0 12px; }
+
+  /* answer box: wraps long answers instead of scrolling sideways */
+  textarea#answer-input { resize: none; overflow: hidden; line-height: 1.3; min-height: 48px; display: block;
+    white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+  .answer-form { align-items: flex-start; }
+
+  /* no black outlines / seams around the sound + menu buttons */
+  button, a, label { -webkit-tap-highlight-color: transparent; }
+  .icon-btn { -webkit-appearance: none; appearance: none; outline: none; box-shadow: none; white-space: nowrap;
+    background: rgba(14,40,72,.78); border: 1px solid rgba(125,211,252,.32); color: #e0f2fe;
+    -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .icon-btn:focus { outline: none; }
+  .icon-btn:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+  .logo-pill { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(14,40,72,.78); }
+  @media (max-width: 640px) {
+    .top-bar { padding: 10px 12px; }
+    .top-actions { gap: 6px; }
+    .icon-btn { padding: 7px 11px; font-size: .8rem; }
   }
 </style>
 </body>
