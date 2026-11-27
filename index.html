@@ -1290,6 +1290,12 @@
     </section>
   </main>
 
+  <div id="start-countdown">
+    <div class="sc-label">Get ready!</div>
+    <div class="sc-num" id="sc-num">5</div>
+    <div class="sc-sub">Diving in...</div>
+  </div>
+
   <div id="toast">Copied!</div>
 
   <script>
@@ -1495,6 +1501,34 @@
       } catch (e) {}
     }
 
+    function esc(t) {
+      return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    // true when this row/player is the person holding this device
+    function isMePlayer(p) {
+      if (!p) return false;
+      if (state.mode === 'single' || p.id === 'local') return true;
+      return !!(state.peer && p.id === state.peer.id);
+    }
+    function nameHTML(p) {
+      return `<span class="${isMePlayer(p) ? 'me-name' : ''}">${esc(p.name)}</span>`;
+    }
+
+    // 5..1 "get ready" overlay shown to everyone when the host starts the game
+    function showStartCountdown(sec) {
+      const el = document.getElementById('start-countdown');
+      const num = document.getElementById('sc-num');
+      el.classList.add('show');
+      num.textContent = sec;
+      num.classList.remove('pop');
+      void num.offsetWidth;
+      num.classList.add('pop');
+      playTone(sec === 1 ? 880 : 520, 'sine', 0.16, 0, 0.12);
+    }
+    function hideStartCountdown() {
+      document.getElementById('start-countdown').classList.remove('show');
+    }
+
     function playRetryBuzz() {
       playTone(220, 'triangle', 0.14, 0, 0.09);
       playTone(175, 'triangle', 0.16, 0.09, 0.09);
@@ -1644,6 +1678,7 @@
       const maxScale = getMaxExpeditionDepth();
       const pct = Math.min(100, Math.max(4, (myTotalDepth / maxScale) * 100));
       gaugeFill.style.height = `${pct}%`;
+      gaugeFill.style.setProperty('--fillpct', `${pct}%`);
 
       gaugeMarkers.innerHTML = '';
       const list = allPlayersList.length
@@ -1658,6 +1693,8 @@
         const marker = document.createElement('div');
         marker.className = 'gauge-marker' + (isMe ? ' me' : '');
         marker.style.top = `${topPct}%`;
+        marker.style.setProperty('--pos', `${topPct}%`);
+        marker.style.setProperty('--off', (!isMe && list.length > 1) ? `${idx % 2 === 0 ? -7 : 7}px` : '0px');
         if (!isMe && list.length > 1) {
           marker.style.left = `${50 + ((idx % 2 === 0 ? -1 : 1) * 14)}%`;
         }
@@ -1898,6 +1935,10 @@
       clearTimeout(state.autoAdvanceTimeout);
       clearTimeout(state.revealCapTimeout);
       clearInterval(state.revealCountdownInterval);
+      clearInterval(state.startCountdownInterval);
+      state.startingGame = false;
+      const sb = document.getElementById('lobby-start-btn'); if (sb) sb.disabled = false;
+      hideStartCountdown();
       if (state.peer) {
         try { state.peer.destroy(); } catch (e) {}
         state.peer = null;
@@ -2073,6 +2114,7 @@
 
     function startQuestionRound() {
       clearTimeout(state.autoAdvanceTimeout);
+      hideStartCountdown();
       showScreen('screen-game');
       resetDiverForNextQuestion(state.totalDepth);
 
@@ -2278,7 +2320,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>#${idx + 1}</strong></td>
-          <td>${p.avatar} <strong>${p.name}</strong> ${p.answered ? '✅' : '⏳'}</td>
+          <td>${p.avatar} <strong>${nameHTML(p)}</strong> ${p.answered ? '✅' : '⏳'}</td>
           <td><span class="${ansClass}" style="color:${tierColor};">${ansText}</span></td>
           <td style="text-align:right;font-weight:800;color:#7dd3fc;">+${qPts} pts</td>
         `;
@@ -2671,7 +2713,7 @@
         div.innerHTML = `
           <span style="font-size:1.6rem;">${p.avatar}</span>
           <div>
-            <div style="font-weight:700;font-size:0.95rem;">${p.name}</div>
+            <div style="font-weight:700;font-size:0.95rem;">${nameHTML(p)}</div>
             <div style="font-size:0.75rem;color:#7dd3fc;">${p.role === 'spectator' ? '🔭 Spectator' : '🤿 Diver'}</div>
           </div>
         `;
@@ -2687,11 +2729,35 @@
         showToast('At least 1 Diver is required to start!');
         return;
       }
+      if (state.startingGame) return;
       state.questions = pickRandomQuestions(state.questionCount);
       state.currentIndex = 0;
       state.score = 0;
       state.totalDepth = 0;
-      hostStartNextQuestion();
+
+      // 5,4,3,2,1 so everybody is ready, then the first question starts.
+      state.startingGame = true;
+      const startBtn = document.getElementById('lobby-start-btn');
+      startBtn.disabled = true;
+      let sec = 5;
+      const tick = () => {
+        showStartCountdown(sec);
+        broadcastToGuests({ type: 'GAME_COUNTDOWN', sec });
+      };
+      tick();
+      clearInterval(state.startCountdownInterval);
+      state.startCountdownInterval = setInterval(() => {
+        sec--;
+        if (sec > 0) {
+          tick();
+        } else {
+          clearInterval(state.startCountdownInterval);
+          state.startingGame = false;
+          startBtn.disabled = false;
+          hideStartCountdown();
+          hostStartNextQuestion();
+        }
+      }, 1000);
     });
 
     function hostStartNextQuestion() {
@@ -2798,6 +2864,8 @@
           document.getElementById('hud-score').textContent = `🌊 ${state.score} pts`;
         }
         revealMultiplayerQuestionTable();
+      } else if (data.type === 'GAME_COUNTDOWN') {
+        showStartCountdown(data.sec);
       } else if (data.type === 'COUNTDOWN') {
         document.getElementById('auto-advance-bar').textContent = `Next question in ${data.sec}s...`;
       } else if (data.type === 'GAME_OVER') {
@@ -2888,7 +2956,7 @@
       showScreen('screen-results');
       playDiveSound(5);
 
-      const topMe = rankedPlayers.find(p => p.name === state.name) || rankedPlayers[0];
+      const topMe = rankedPlayers.find(isMePlayer) || rankedPlayers[0];
       document.getElementById('final-depth-summary').textContent =
         topMe ? `${topMe.avatar} ${topMe.name} reached ${topMe.depth || state.totalDepth}m with ${topMe.score} points!` : '';
 
@@ -2908,7 +2976,7 @@
           col.innerHTML = `
             <div style="font-size:0.85rem;font-weight:800;margin-bottom:6px;">${medals[rankIdx]}</div>
             <div style="font-size:2.3rem;margin-bottom:4px;">${p.avatar}</div>
-            <div style="font-weight:800;font-size:1rem;word-break:break-word;">${p.name}</div>
+            <div style="font-weight:800;font-size:1rem;word-break:break-word;">${nameHTML(p)}</div>
             <div style="color:#7dd3fc;font-weight:800;font-size:1.1rem;margin-top:4px;">${p.score} pts</div>
             <div style="font-size:0.75rem;color:var(--text-muted);">${p.depth || 0}m deep</div>
           `;
@@ -2919,16 +2987,25 @@
         podiumGrid.appendChild(col);
       });
 
-      rankedPlayers.slice(3).forEach((p, idx) => {
-        const row = document.createElement('div');
-        row.className = 'player-chip';
-        row.style.justifyContent = 'space-between';
-        row.innerHTML = `
-          <span><strong>#${idx + 4}</strong> ${p.avatar} ${p.name}</span>
-          <span style="font-weight:800;color:#7dd3fc;">${p.score} pts (${p.depth || 0}m)</span>
-        `;
-        restList.appendChild(row);
-      });
+      // Ranking table: only when there are more than 3 players, starting at #4.
+      const rest = rankedPlayers.slice(3);
+      if (rest.length) {
+        const rows = rest.map((p, idx) => `
+          <tr class="${isMePlayer(p) ? 'me-row' : ''}">
+            <td><strong>#${idx + 4}</strong></td>
+            <td>${p.avatar} ${nameHTML(p)}</td>
+            <td class="ft-num">${p.score} pts</td>
+            <td class="ft-num ft-depth">${p.depth || 0}m</td>
+          </tr>`).join('');
+        restList.innerHTML = `
+          <div class="final-table-wrap">
+            <div class="final-table-title">📋 Ranking #4 – #${rankedPlayers.length}</div>
+            <table class="final-table">
+              <thead><tr><th>#</th><th>Diver</th><th class="ft-num">Score</th><th class="ft-num ft-depth">Depth</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      }
     }
   </script>
 <!-- ===== KRILLION UPGRADE v6 =====
@@ -3562,5 +3639,55 @@
 })();
 </script>
 
+
+<style id="krillion-v7">
+  /* gold name = the player using this device */
+  .me-name { color: #fbbf24 !important; font-weight: 800; text-shadow: 0 0 8px rgba(251,191,36,.4); }
+  .lg-row.me .lg-who { color: #fbbf24; font-weight: 800; }
+
+  /* start countdown overlay */
+  #start-countdown { position: fixed; inset: 0; z-index: 9000; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px; background: rgba(2,12,28,.86); text-align: center; }
+  #start-countdown.show { display: flex; }
+  #start-countdown .sc-label { font-family: 'Fredoka', sans-serif; font-size: 1.5rem; font-weight: 700; color: #7dd3fc; letter-spacing: .06em; }
+  #start-countdown .sc-num { font-family: 'Fredoka', sans-serif; font-size: 9rem; line-height: 1; font-weight: 700; color: #fbbf24;
+    text-shadow: 0 0 26px rgba(251,191,36,.55), 0 8px 22px rgba(0,0,0,.5); }
+  #start-countdown .sc-num.pop { animation: scPop .9s cubic-bezier(.2,.9,.3,1.2); }
+  #start-countdown .sc-sub { color: #bae6fd; font-weight: 600; }
+  @keyframes scPop { 0% { transform: scale(1.6); opacity: 0; } 35% { transform: scale(1); opacity: 1; } 100% { transform: scale(.92); opacity: .85; } }
+
+  /* final ranking table (#4 onwards) */
+  .final-table-wrap { background: rgba(15,38,68,.72); border: 1px solid rgba(125,211,252,.22); border-radius: 14px; overflow: hidden; }
+  .final-table-title { padding: 10px 14px; font-weight: 800; color: #7dd3fc; font-size: .9rem; border-bottom: 1px solid rgba(125,211,252,.18); }
+  .final-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .final-table th { text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 8px 12px; }
+  .final-table td { padding: 9px 12px; border-top: 1px solid rgba(125,211,252,.12); word-break: break-word; }
+  .final-table .ft-num { text-align: right; white-space: nowrap; font-weight: 800; color: #7dd3fc; }
+  .final-table .ft-depth { color: var(--text-muted); font-weight: 700; }
+  .final-table tr.me-row td { background: rgba(251,191,36,.10); }
+
+  /* depth indicator: lighter track (no dark line) */
+  .gauge-track { background: rgba(186,230,253,.28) !important; border: 1px solid rgba(186,230,253,.35) !important; }
+
+  /* PHONES: depth indicator becomes a slim bar at the very bottom, clear of the answer box */
+  @media (max-width: 640px) {
+    #depth-gauge { left: 8px; right: 8px; top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); transform: none;
+      flex-direction: row; align-items: center; gap: 10px; min-width: 0; padding: 8px 12px; border-radius: 16px;
+      -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(7,25,48,.9);
+      border: 1px solid rgba(125,211,252,.25); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+    #depth-gauge .gauge-title { font-size: .62rem; }
+    #depth-gauge .gauge-track-wrap { flex: 1; width: auto; height: 28px; display: block; }
+    #depth-gauge .gauge-track { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); width: auto; height: 8px; }
+    #depth-gauge .gauge-fill { top: 0; bottom: 0; left: 0; height: 100% !important; width: var(--fillpct, 4%);
+      transition: width 1.1s cubic-bezier(.22,1,.36,1) !important; background: linear-gradient(90deg, #38bdf8, #818cf8, #fbbf24); }
+    #depth-gauge .gauge-marker { left: var(--pos, 4%) !important; top: calc(50% + var(--off, 0px)) !important;
+      transition: left 1.1s cubic-bezier(.22,1,.36,1) !important; }
+    #depth-gauge .gauge-total-box { width: auto; flex: none; white-space: nowrap; padding: 3px 10px; }
+    body.in-game .app-shell { margin-bottom: 96px; }
+    .final-table { font-size: .85rem; }
+    .final-table th, .final-table td { padding: 8px 8px; }
+    #start-countdown .sc-num { font-size: 7rem; }
+  }
+</style>
 </body>
 </html>
